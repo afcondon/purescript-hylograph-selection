@@ -1,3 +1,10 @@
+workspace:
+  packageSet:
+    registry: 67.0.1
+  extraPackages:
+    psd3-tree:
+      path: ../purescript-psd3-tree
+
 package:
   name: psd3-selection
   description: Type-safe D3 selection and attribute library for PureScript

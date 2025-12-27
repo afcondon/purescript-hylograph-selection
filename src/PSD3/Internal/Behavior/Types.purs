@@ -19,10 +19,15 @@ module PSD3.Internal.Behavior.Types
   , onMouseLeaveWithInfo
   , onMouseDown
   , onMouseDownWithInfo
+  -- Tier 2: Coordinated highlighting
+  , HighlightClass(..)
+  , CoordinatedHighlightConfig
+  , onCoordinatedHighlight
   ) where
 
 import Prelude
 
+import Data.Maybe (Maybe)
 import Effect (Effect)
 
 -- | Scale extent for zoom (min and max zoom levels)
@@ -63,6 +68,57 @@ type MouseEventInfo datum =
   , pageY :: Number
   , offsetX :: Number
   , offsetY :: Number
+  }
+
+-- =============================================================================
+-- Tier 2: Coordinated Highlighting
+-- =============================================================================
+
+-- | Classification of an element's highlight state
+-- |
+-- | When an element is hovered, ALL elements with CoordinatedHighlight behavior
+-- | are classified based on their relationship to the hovered element.
+-- |
+-- | - `Primary`: The hovered element itself
+-- | - `Related`: Connected/related to the hovered element
+-- | - `Dimmed`: Not related (de-emphasized)
+-- | - `Neutral`: No highlight state change (default appearance)
+data HighlightClass
+  = Primary   -- The hovered element (receives .highlight-primary)
+  | Related   -- Related elements (receives .highlight-related)
+  | Dimmed    -- Unrelated elements (receives .highlight-dimmed)
+  | Neutral   -- No change (no class added)
+
+derive instance Eq HighlightClass
+
+instance Show HighlightClass where
+  show Primary = "Primary"
+  show Related = "Related"
+  show Dimmed = "Dimmed"
+  show Neutral = "Neutral"
+
+-- | Configuration for coordinated highlighting
+-- |
+-- | - `identify`: Extract a unique identity string from the datum
+-- | - `classify`: Given the hovered id and this element's datum, return highlight class
+-- | - `group`: Optional group name to scope highlighting (default: global)
+-- |
+-- | Example:
+-- | ```purescript
+-- | config :: CoordinatedHighlightConfig MyNode
+-- | config =
+-- |   { identify: _.name
+-- |   , classify: \hoveredId datum ->
+-- |       if datum.name == hoveredId then Primary
+-- |       else if hoveredId `elem` datum.connections then Related
+-- |       else Dimmed
+-- |   , group: Nothing  -- global coordination
+-- |   }
+-- | ```
+type CoordinatedHighlightConfig datum =
+  { identify :: datum -> String
+  , classify :: String -> datum -> HighlightClass
+  , group :: Maybe String  -- Optional group name to scope coordination
   }
 
 derive instance Eq ScaleExtent
@@ -119,12 +175,16 @@ instance Show DragConfig where
 -- |
 -- | Parameterized by datum type to enable typed event handlers.
 -- |
+-- | **Tier 1 (element-local):**
 -- | - `Zoom`: Pan and zoom with mouse/touch
 -- | - `Drag`: Drag elements with mouse/touch (simple or simulation-aware)
 -- | - `Click`: Click handler without datum access
 -- | - `ClickWithDatum`: Click handler with typed datum access
--- | - `MouseEnter`: Mouse enter handler with typed datum access
--- | - `MouseLeave`: Mouse leave handler with typed datum access
+-- | - `MouseEnter`/`MouseLeave`: Hover handlers with datum access
+-- | - `Highlight`: Simple style changes on hover (Tier 1)
+-- |
+-- | **Tier 2 (coordinated across views):**
+-- | - `CoordinatedHighlight`: Cross-view synchronized highlighting
 data Behavior datum
   = Zoom ZoomConfig
   | Drag DragConfig
@@ -132,7 +192,8 @@ data Behavior datum
   | ClickWithDatum (datum -> Effect Unit)
   | MouseEnter (datum -> Effect Unit)
   | MouseLeave (datum -> Effect Unit)
-  | Highlight HighlightStyle  -- Hover highlighting with style changes
+  | Highlight HighlightStyle  -- Tier 1: simple hover highlighting with style changes
+  | CoordinatedHighlight (CoordinatedHighlightConfig datum)  -- Tier 2: cross-view coordination
   | MouseMoveWithInfo (MouseEventInfo datum -> Effect Unit)
   | MouseEnterWithInfo (MouseEventInfo datum -> Effect Unit)
   | MouseLeaveWithInfo (MouseEventInfo datum -> Effect Unit)
@@ -149,6 +210,7 @@ instance Show (Behavior datum) where
   show (MouseEnter _) = "MouseEnter <handler>"
   show (MouseLeave _) = "MouseLeave <handler>"
   show (Highlight _) = "Highlight <styles>"
+  show (CoordinatedHighlight _) = "CoordinatedHighlight <config>"
   show (MouseMoveWithInfo _) = "MouseMoveWithInfo <handler>"
   show (MouseEnterWithInfo _) = "MouseEnterWithInfo <handler>"
   show (MouseLeaveWithInfo _) = "MouseLeaveWithInfo <handler>"
@@ -320,3 +382,47 @@ onMouseDown = MouseDown
 -- | ```
 onMouseDownWithInfo :: forall datum. (MouseEventInfo datum -> Effect Unit) -> Behavior datum
 onMouseDownWithInfo = MouseDownWithInfo
+
+-- =============================================================================
+-- Tier 2: Coordinated Highlighting
+-- =============================================================================
+
+-- | Coordinated highlight behavior (Tier 2)
+-- |
+-- | Enables synchronized highlighting across multiple views. When any element
+-- | with this behavior is hovered, ALL elements with CoordinatedHighlight
+-- | receive CSS classes based on their relationship to the hovered element.
+-- |
+-- | CSS classes applied:
+-- | - `.highlight-primary` - the hovered element
+-- | - `.highlight-related` - elements related to hovered
+-- | - `.highlight-dimmed` - unrelated elements
+-- |
+-- | Example:
+-- | ```purescript
+-- | -- Simple same-id highlighting across views
+-- | _ <- on (onCoordinatedHighlight
+-- |   { identify: _.moduleName
+-- |   , classify: \hoveredId d ->
+-- |       if d.moduleName == hoveredId then Primary
+-- |       else Dimmed
+-- |   , group: Nothing
+-- |   }) bubblePackNodes
+-- |
+-- | -- Same config on chord arcs - they coordinate automatically
+-- | _ <- on (onCoordinatedHighlight config) chordArcs
+-- | ```
+-- |
+-- | For relationship-aware highlighting:
+-- | ```purescript
+-- | _ <- on (onCoordinatedHighlight
+-- |   { identify: _.name
+-- |   , classify: \hoveredId d ->
+-- |       if d.name == hoveredId then Primary
+-- |       else if hoveredId `elem` d.dependencies then Related
+-- |       else Dimmed
+-- |   , group: Nothing
+-- |   }) nodes
+-- | ```
+onCoordinatedHighlight :: forall datum. CoordinatedHighlightConfig datum -> Behavior datum
+onCoordinatedHighlight = CoordinatedHighlight

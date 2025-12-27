@@ -28,6 +28,9 @@ module PSD3.Internal.Behavior.FFI
   , attachMouseEnterWithInfo_
   , attachMouseLeaveWithInfo_
   , MouseEventInfoJS
+  -- Tier 2: Coordinated highlighting
+  , attachCoordinatedHighlight_
+  , clearAllHighlights_
   ) where
 
 import Prelude
@@ -313,3 +316,37 @@ foreign import attachSimulationDragNestedById_
   :: Element
   -> String     -- Simulation ID to look up in registry
   -> Effect Element
+
+-- =============================================================================
+-- Tier 2: Coordinated Highlighting
+-- =============================================================================
+
+-- | Attach coordinated highlight behavior to an element
+-- |
+-- | Parameters:
+-- | - element: DOM element to attach to
+-- | - identifyFn: Function to extract identity string from datum
+-- | - classifyFn: Function (hoveredId, datum) -> highlightClass (0=Primary, 1=Related, 2=Dimmed, 3=Neutral)
+-- | - group: Optional group name (null for global)
+-- |
+-- | The library manages global highlight state. On mouseenter:
+-- | 1. Gets identity from datum using identifyFn
+-- | 2. Broadcasts to all registered elements
+-- | 3. Each element calls classifyFn to determine its highlight class
+-- | 4. Applies CSS classes (.highlight-primary, .highlight-related, .highlight-dimmed)
+-- |
+-- | Returns element for chaining.
+foreign import attachCoordinatedHighlight_
+  :: forall datum
+   . Element
+  -> (datum -> String)         -- identifyFn
+  -> (String -> datum -> Int)  -- classifyFn (returns 0=Primary, 1=Related, 2=Dimmed, 3=Neutral)
+  -> Nullable String           -- group (null for global)
+  -> Effect Element
+
+-- | Clear all highlight classes from all registered elements
+-- |
+-- | Removes .highlight-primary, .highlight-related, .highlight-dimmed
+-- | from all elements participating in coordinated highlighting.
+foreign import clearAllHighlights_
+  :: Effect Unit

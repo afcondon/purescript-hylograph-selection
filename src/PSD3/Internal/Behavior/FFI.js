@@ -731,3 +731,157 @@ export function attachLineTooltip_(svgElement) {
     return pathElement;
   };
 }
+
+// =============================================================================
+// Tier 2: Coordinated Highlighting
+// =============================================================================
+
+// Global registry of elements participating in coordinated highlighting
+// Key: group name (or "_global" for ungrouped)
+// Value: Array of { element, datum, identifyFn, classifyFn }
+const highlightRegistry = new Map();
+
+// CSS class names
+const HIGHLIGHT_PRIMARY = 'highlight-primary';
+const HIGHLIGHT_RELATED = 'highlight-related';
+const HIGHLIGHT_DIMMED = 'highlight-dimmed';
+const ALL_HIGHLIGHT_CLASSES = [HIGHLIGHT_PRIMARY, HIGHLIGHT_RELATED, HIGHLIGHT_DIMMED];
+
+// HighlightClass enum values (must match PureScript)
+const HC_PRIMARY = 0;
+const HC_RELATED = 1;
+const HC_DIMMED = 2;
+const HC_NEUTRAL = 3;
+
+/**
+ * Get or create a highlight group
+ * @param {string|null} groupName - Group name or null for global
+ * @returns {Array} The group's element array
+ */
+function getHighlightGroup(groupName) {
+  const key = groupName || '_global';
+  if (!highlightRegistry.has(key)) {
+    highlightRegistry.set(key, []);
+  }
+  return highlightRegistry.get(key);
+}
+
+/**
+ * Apply highlight classes to all elements in a group based on hovered id
+ * @param {string|null} groupName - Group name
+ * @param {string} hoveredId - The identity of the hovered element
+ */
+function applyHighlights(groupName, hoveredId) {
+  const group = getHighlightGroup(groupName);
+
+  group.forEach(entry => {
+    const { element, classifyFn } = entry;
+    // IMPORTANT: Read datum fresh from element, not from cached entry
+    // because __data__ may not have been set when behavior was attached
+    const datum = element.__data__;
+    const sel = select(element);
+
+    // Remove all highlight classes first
+    ALL_HIGHLIGHT_CLASSES.forEach(cls => sel.classed(cls, false));
+
+    // Skip if no datum bound to element
+    if (!datum) {
+      console.warn('[CoordHighlight] applyHighlights: No datum on element', element);
+      return;
+    }
+
+    // Get classification from PureScript function
+    // classifyFn is curried: hoveredId -> datum -> Int
+    const classification = classifyFn(hoveredId)(datum);
+
+    // Apply appropriate class
+    switch (classification) {
+      case HC_PRIMARY:
+        sel.classed(HIGHLIGHT_PRIMARY, true);
+        break;
+      case HC_RELATED:
+        sel.classed(HIGHLIGHT_RELATED, true);
+        break;
+      case HC_DIMMED:
+        sel.classed(HIGHLIGHT_DIMMED, true);
+        break;
+      case HC_NEUTRAL:
+      default:
+        // No class applied
+        break;
+    }
+  });
+}
+
+/**
+ * Clear all highlight classes from a group
+ * @param {string|null} groupName - Group name
+ */
+function clearHighlightsInGroup(groupName) {
+  const group = getHighlightGroup(groupName);
+
+  group.forEach(entry => {
+    const sel = select(entry.element);
+    ALL_HIGHLIGHT_CLASSES.forEach(cls => sel.classed(cls, false));
+  });
+}
+
+/**
+ * Attach coordinated highlight behavior to an element
+ *
+ * When this element is hovered, ALL elements in the same group receive
+ * highlight classes based on their classifyFn.
+ *
+ * @param {Element} element - The DOM element to attach to
+ * @param {Function} identifyFn - PureScript (datum -> String)
+ * @param {Function} classifyFn - PureScript (String -> datum -> Int)
+ * @param {string|null} groupName - Optional group name (null for global)
+ * @returns {Element} The element (for chaining)
+ */
+export function attachCoordinatedHighlight_(element) {
+  return identifyFn => classifyFn => groupName => () => {
+    const sel = select(element);
+    const group = groupName; // null means global
+    const groupKey = group || '_global';
+
+    // Register this element (note: datum may not be set yet, will be read fresh in applyHighlights)
+    const entry = { element, identifyFn, classifyFn };
+    getHighlightGroup(group).push(entry);
+
+    console.log(`[CoordHighlight] Registered element to group '${groupKey}'. Registry size: ${getHighlightGroup(group).length}`);
+
+    // Attach mouseenter handler
+    sel.on('mouseenter.coordinated', function(event) {
+      const d = this.__data__;
+      if (!d) {
+        console.warn('[CoordHighlight] mouseenter: No datum on element');
+        return;
+      }
+      const id = identifyFn(d);
+      console.log(`[CoordHighlight] mouseenter: id='${id}', broadcasting to ${getHighlightGroup(group).length} elements`);
+      applyHighlights(group, id);
+    });
+
+    // Attach mouseleave handler
+    sel.on('mouseleave.coordinated', function(event) {
+      clearHighlightsInGroup(group);
+    });
+
+    return element;
+  };
+}
+
+/**
+ * Clear all highlight classes from all groups
+ * Also clears the registry (useful for cleanup before re-rendering)
+ */
+export function clearAllHighlights_() {
+  highlightRegistry.forEach((group, key) => {
+    group.forEach(entry => {
+      const sel = select(entry.element);
+      ALL_HIGHLIGHT_CLASSES.forEach(cls => sel.classed(cls, false));
+    });
+  });
+  // Clear registry - elements will re-register on next render
+  highlightRegistry.clear();
+}

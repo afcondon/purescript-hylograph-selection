@@ -42,7 +42,7 @@ import Effect.Class.Console (log)
 import Effect.Uncurried (mkEffectFn2)
 import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
-import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..))
+import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..))
 import PSD3.Internal.Selection.Join as Join
 import PSD3.Internal.Selection.Types (ElementType(..), JoinResult(..), RenderContext(..), SBoundInherits, SBoundOwns, SEmpty, SExiting, SPending, Selection(..), SelectionImpl(..), elementContext)
 import PSD3.Internal.Transition.FFI as TransitionFFI
@@ -881,6 +881,14 @@ querySelectorAllElements selector parents = do
   -- Flatten the array of arrays
   pure $ Array.concat nodeArrays
 
+-- | Convert HighlightClass to Int for FFI
+-- | Must match the constants in FFI.js: HC_PRIMARY=0, HC_RELATED=1, HC_DIMMED=2, HC_NEUTRAL=3
+highlightClassToInt :: HighlightClass -> Int
+highlightClassToInt Primary = 0
+highlightClassToInt Related = 1
+highlightClassToInt Dimmed = 2
+highlightClassToInt Neutral = 3
+
 -- | Apply a behavior to a single DOM element
 -- |
 -- | This is the core function that attaches D3 behaviors to elements.
@@ -952,6 +960,17 @@ applyBehaviorToElement (MouseDownWithInfo handler) element =
       , offsetX: offsetX evt
       , offsetY: offsetY evt
       }
+applyBehaviorToElement (CoordinatedHighlight config) element =
+  -- Convert classify function to return Int for FFI
+  let
+    classifyAsInt :: String -> _ -> Int
+    classifyAsInt hoveredId datum = highlightClassToInt (config.classify hoveredId datum)
+  in
+    void $ BehaviorFFI.attachCoordinatedHighlight_
+      element
+      config.identify
+      classifyAsInt
+      (toNullable config.group)
 
 -- | Attach a behavior (zoom, drag, etc.) to a selection
 -- |
