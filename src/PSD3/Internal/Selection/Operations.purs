@@ -42,7 +42,7 @@ import Effect.Class.Console (log)
 import Effect.Uncurried (mkEffectFn2)
 import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
-import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..))
+import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
 import PSD3.Internal.Selection.Join as Join
 import PSD3.Internal.Selection.Types (ElementType(..), JoinResult(..), RenderContext(..), SBoundInherits, SBoundOwns, SEmpty, SExiting, SPending, Selection(..), SelectionImpl(..), elementContext)
 import PSD3.Internal.Transition.FFI as TransitionFFI
@@ -889,6 +889,13 @@ highlightClassToInt Related = 1
 highlightClassToInt Dimmed = 2
 highlightClassToInt Neutral = 3
 
+-- | Convert TooltipTrigger to Int for FFI
+-- | Must match the constants in FFI.js: TT_ON_HOVER=0, TT_WHEN_PRIMARY=1, TT_WHEN_RELATED=2
+tooltipTriggerToInt :: TooltipTrigger -> Int
+tooltipTriggerToInt OnHover = 0
+tooltipTriggerToInt WhenPrimary = 1
+tooltipTriggerToInt WhenRelated = 2
+
 -- | Apply a behavior to a single DOM element
 -- |
 -- | This is the core function that attaches D3 behaviors to elements.
@@ -965,12 +972,20 @@ applyBehaviorToElement (CoordinatedHighlight config) element =
   let
     classifyAsInt :: String -> _ -> Int
     classifyAsInt hoveredId datum = highlightClassToInt (config.classify hoveredId datum)
+
+    -- Extract tooltip content function and trigger
+    tooltipContentFn = config.tooltip <#> _.content
+    tooltipTrigger = case config.tooltip of
+      Just tc -> tooltipTriggerToInt tc.showWhen
+      Nothing -> 0  -- Default, but won't be used since contentFn is null
   in
     void $ BehaviorFFI.attachCoordinatedHighlight_
       element
       config.identify
       classifyAsInt
       (toNullable config.group)
+      (toNullable tooltipContentFn)
+      tooltipTrigger
 
 -- | Attach a behavior (zoom, drag, etc.) to a selection
 -- |

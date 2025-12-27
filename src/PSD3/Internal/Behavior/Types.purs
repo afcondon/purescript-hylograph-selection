@@ -21,6 +21,8 @@ module PSD3.Internal.Behavior.Types
   , onMouseDownWithInfo
   -- Tier 2: Coordinated highlighting
   , HighlightClass(..)
+  , TooltipTrigger(..)
+  , TooltipConfig
   , CoordinatedHighlightConfig
   , onCoordinatedHighlight
   ) where
@@ -97,11 +99,38 @@ instance Show HighlightClass where
   show Dimmed = "Dimmed"
   show Neutral = "Neutral"
 
+-- | When to show a tooltip
+-- |
+-- | - `OnHover`: Traditional tooltip - only when mouse is directly over element
+-- | - `WhenPrimary`: Show when this element becomes Primary (from any view's hover)
+-- | - `WhenRelated`: Show when this element becomes Related (use judiciously!)
+data TooltipTrigger
+  = OnHover      -- Only when mouse is directly over this element
+  | WhenPrimary  -- When this element becomes Primary (direct label)
+  | WhenRelated  -- When this element becomes Related
+
+derive instance Eq TooltipTrigger
+
+instance Show TooltipTrigger where
+  show OnHover = "OnHover"
+  show WhenPrimary = "WhenPrimary"
+  show WhenRelated = "WhenRelated"
+
+-- | Tooltip configuration for coordinated highlighting
+-- |
+-- | - `content`: Function to generate tooltip text from datum
+-- | - `showWhen`: Condition for showing the tooltip
+type TooltipConfig datum =
+  { content :: datum -> String
+  , showWhen :: TooltipTrigger
+  }
+
 -- | Configuration for coordinated highlighting
 -- |
 -- | - `identify`: Extract a unique identity string from the datum
 -- | - `classify`: Given the hovered id and this element's datum, return highlight class
 -- | - `group`: Optional group name to scope highlighting (default: global)
+-- | - `tooltip`: Optional tooltip configuration
 -- |
 -- | Example:
 -- | ```purescript
@@ -113,12 +142,14 @@ instance Show HighlightClass where
 -- |       else if hoveredId `elem` datum.connections then Related
 -- |       else Dimmed
 -- |   , group: Nothing  -- global coordination
+-- |   , tooltip: Just { content: _.name, showWhen: OnHover }
 -- |   }
 -- | ```
 type CoordinatedHighlightConfig datum =
   { identify :: datum -> String
   , classify :: String -> datum -> HighlightClass
   , group :: Maybe String  -- Optional group name to scope coordination
+  , tooltip :: Maybe (TooltipConfig datum)  -- Optional tooltip
   }
 
 derive instance Eq ScaleExtent

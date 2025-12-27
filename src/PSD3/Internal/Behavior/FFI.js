@@ -747,11 +747,135 @@ const HIGHLIGHT_RELATED = 'highlight-related';
 const HIGHLIGHT_DIMMED = 'highlight-dimmed';
 const ALL_HIGHLIGHT_CLASSES = [HIGHLIGHT_PRIMARY, HIGHLIGHT_RELATED, HIGHLIGHT_DIMMED];
 
-// HighlightClass enum values (must match PureScript)
+// TODO: TECH DEBT - These enum mappings assume specific Int representation from PureScript
+// highlightClassToInt and tooltipTriggerToInt. This is fragile. A safer approach would be
+// to pass the class name as a string or use a tagged union that can be introspected.
+// For now, the PureScript side explicitly converts via highlightClassToInt/tooltipTriggerToInt
+// in Operations.purs to ensure alignment.
 const HC_PRIMARY = 0;
 const HC_RELATED = 1;
 const HC_DIMMED = 2;
 const HC_NEUTRAL = 3;
+
+const TT_ON_HOVER = 0;
+const TT_WHEN_PRIMARY = 1;
+const TT_WHEN_RELATED = 2;
+
+// =============================================================================
+// Tooltip Management
+// =============================================================================
+
+// Container for all coordinated tooltips
+let tooltipContainer = null;
+// Map of element -> tooltip div (for WhenPrimary/WhenRelated tooltips)
+const elementTooltips = new Map();
+// The currently active hover tooltip (for OnHover)
+let hoverTooltip = null;
+
+/**
+ * Get or create the tooltip container
+ */
+function getTooltipContainer() {
+  if (!tooltipContainer) {
+    tooltipContainer = document.createElement('div');
+    tooltipContainer.className = 'coordinated-tooltip-container';
+    tooltipContainer.style.cssText = 'position: fixed; top: 0; left: 0; pointer-events: none; z-index: 10000;';
+    document.body.appendChild(tooltipContainer);
+  }
+  return tooltipContainer;
+}
+
+/**
+ * Create a tooltip element
+ * @returns {HTMLDivElement}
+ */
+function createTooltipElement() {
+  const tooltip = document.createElement('div');
+  tooltip.className = 'coordinated-tooltip';
+  tooltip.style.cssText = `
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    color: #e2e8f0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: system-ui, -apple-system, sans-serif;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  `;
+  getTooltipContainer().appendChild(tooltip);
+  return tooltip;
+}
+
+/**
+ * Position a tooltip near an element
+ * @param {HTMLElement} tooltip - The tooltip element
+ * @param {Element} targetElement - The element to position near
+ */
+function positionTooltipNearElement(tooltip, targetElement) {
+  const rect = targetElement.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+
+  // Position above the element, centered
+  let x = rect.left + rect.width / 2 - tooltipRect.width / 2;
+  let y = rect.top - tooltipRect.height - 8;
+
+  // Keep within viewport
+  x = Math.max(8, Math.min(x, window.innerWidth - tooltipRect.width - 8));
+  if (y < 8) {
+    // Position below if not enough space above
+    y = rect.bottom + 8;
+  }
+
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+}
+
+/**
+ * Position a tooltip at mouse position
+ * @param {HTMLElement} tooltip - The tooltip element
+ * @param {MouseEvent} event - The mouse event
+ */
+function positionTooltipAtMouse(tooltip, event) {
+  const x = event.clientX + 12;
+  const y = event.clientY - 8;
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+}
+
+/**
+ * Show a tooltip with content
+ * @param {HTMLElement} tooltip - The tooltip element
+ * @param {string} content - The text content
+ */
+function showTooltip(tooltip, content) {
+  tooltip.textContent = content;
+  tooltip.style.opacity = '1';
+}
+
+/**
+ * Hide a tooltip
+ * @param {HTMLElement} tooltip - The tooltip element
+ */
+function hideTooltip(tooltip) {
+  if (tooltip) {
+    tooltip.style.opacity = '0';
+  }
+}
+
+/**
+ * Hide all tooltips
+ */
+function hideAllTooltips() {
+  if (hoverTooltip) {
+    hideTooltip(hoverTooltip);
+  }
+  elementTooltips.forEach(tooltip => hideTooltip(tooltip));
+}
 
 /**
  * Get or create a highlight group
@@ -767,15 +891,17 @@ function getHighlightGroup(groupName) {
 }
 
 /**
- * Apply highlight classes to all elements in a group based on hovered id
+ * Apply highlight classes and tooltips to all elements in a group based on hovered id
  * @param {string|null} groupName - Group name
  * @param {string} hoveredId - The identity of the hovered element
+ * @param {Element} triggerElement - The element that triggered the highlight (for OnHover tooltips)
+ * @param {MouseEvent|null} event - The mouse event (for positioning OnHover tooltips)
  */
-function applyHighlights(groupName, hoveredId) {
+function applyHighlights(groupName, hoveredId, triggerElement, event) {
   const group = getHighlightGroup(groupName);
 
   group.forEach(entry => {
-    const { element, classifyFn } = entry;
+    const { element, classifyFn, tooltipContentFn, tooltipTrigger } = entry;
     // IMPORTANT: Read datum fresh from element, not from cached entry
     // because __data__ may not have been set when behavior was attached
     const datum = element.__data__;
@@ -810,11 +936,44 @@ function applyHighlights(groupName, hoveredId) {
         // No class applied
         break;
     }
+
+    // Handle tooltips if configured
+    if (tooltipContentFn) {
+      const content = tooltipContentFn(datum);
+      const shouldShow =
+        (tooltipTrigger === TT_ON_HOVER && element === triggerElement) ||
+        (tooltipTrigger === TT_WHEN_PRIMARY && classification === HC_PRIMARY) ||
+        (tooltipTrigger === TT_WHEN_RELATED && (classification === HC_PRIMARY || classification === HC_RELATED));
+
+      if (shouldShow) {
+        // Get or create tooltip for this element
+        let tooltip = elementTooltips.get(element);
+        if (!tooltip) {
+          tooltip = createTooltipElement();
+          elementTooltips.set(element, tooltip);
+        }
+
+        showTooltip(tooltip, content);
+
+        // Position based on trigger type
+        if (tooltipTrigger === TT_ON_HOVER && event) {
+          positionTooltipAtMouse(tooltip, event);
+        } else {
+          positionTooltipNearElement(tooltip, element);
+        }
+      } else {
+        // Hide tooltip if it exists
+        const tooltip = elementTooltips.get(element);
+        if (tooltip) {
+          hideTooltip(tooltip);
+        }
+      }
+    }
   });
 }
 
 /**
- * Clear all highlight classes from a group
+ * Clear all highlight classes and tooltips from a group
  * @param {string|null} groupName - Group name
  */
 function clearHighlightsInGroup(groupName) {
@@ -823,6 +982,12 @@ function clearHighlightsInGroup(groupName) {
   group.forEach(entry => {
     const sel = select(entry.element);
     ALL_HIGHLIGHT_CLASSES.forEach(cls => sel.classed(cls, false));
+
+    // Hide tooltip if it exists
+    const tooltip = elementTooltips.get(entry.element);
+    if (tooltip) {
+      hideTooltip(tooltip);
+    }
   });
 }
 
@@ -836,19 +1001,20 @@ function clearHighlightsInGroup(groupName) {
  * @param {Function} identifyFn - PureScript (datum -> String)
  * @param {Function} classifyFn - PureScript (String -> datum -> Int)
  * @param {string|null} groupName - Optional group name (null for global)
+ * @param {Function|null} tooltipContentFn - Optional PureScript (datum -> String) for tooltip content
+ * @param {number} tooltipTrigger - When to show tooltip (0=OnHover, 1=WhenPrimary, 2=WhenRelated)
  * @returns {Element} The element (for chaining)
  */
 export function attachCoordinatedHighlight_(element) {
-  return identifyFn => classifyFn => groupName => () => {
+  return identifyFn => classifyFn => groupName => tooltipContentFn => tooltipTrigger => () => {
     const sel = select(element);
     const group = groupName; // null means global
     const groupKey = group || '_global';
 
-    // Register this element (note: datum may not be set yet, will be read fresh in applyHighlights)
-    const entry = { element, identifyFn, classifyFn };
+    // Register this element with tooltip config
+    // Note: datum may not be set yet, will be read fresh in applyHighlights
+    const entry = { element, identifyFn, classifyFn, tooltipContentFn, tooltipTrigger };
     getHighlightGroup(group).push(entry);
-
-    console.log(`[CoordHighlight] Registered element to group '${groupKey}'. Registry size: ${getHighlightGroup(group).length}`);
 
     // Attach mouseenter handler
     sel.on('mouseenter.coordinated', function(event) {
@@ -858,8 +1024,7 @@ export function attachCoordinatedHighlight_(element) {
         return;
       }
       const id = identifyFn(d);
-      console.log(`[CoordHighlight] mouseenter: id='${id}', broadcasting to ${getHighlightGroup(group).length} elements`);
-      applyHighlights(group, id);
+      applyHighlights(group, id, element, event);
     });
 
     // Attach mouseleave handler
@@ -872,7 +1037,7 @@ export function attachCoordinatedHighlight_(element) {
 }
 
 /**
- * Clear all highlight classes from all groups
+ * Clear all highlight classes and tooltips from all groups
  * Also clears the registry (useful for cleanup before re-rendering)
  */
 export function clearAllHighlights_() {
@@ -882,6 +1047,15 @@ export function clearAllHighlights_() {
       ALL_HIGHLIGHT_CLASSES.forEach(cls => sel.classed(cls, false));
     });
   });
+
+  // Hide and remove all tooltips
+  elementTooltips.forEach(tooltip => {
+    if (tooltip.parentNode) {
+      tooltip.parentNode.removeChild(tooltip);
+    }
+  });
+  elementTooltips.clear();
+
   // Clear registry - elements will re-register on next render
   highlightRegistry.clear();
 }

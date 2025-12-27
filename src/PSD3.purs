@@ -115,7 +115,7 @@ import PSD3.Interpreter.D3 (D3v2M, D3v2Selection_, runD3v2M, reselectD3v2) as X
 
 -- Internal Types (for advanced use)
 import PSD3.Internal.Selection.Types (SEmpty, SBoundOwns, SBoundInherits, SPending, SExiting, Selection(..)) as X
-import PSD3.Internal.Behavior.Types (Behavior(..), defaultDrag, ScaleExtent(..), HighlightClass(..), onCoordinatedHighlight) as X
+import PSD3.Internal.Behavior.Types (Behavior(..), defaultDrag, ScaleExtent(..), HighlightClass(..), TooltipTrigger(..), TooltipConfig, CoordinatedHighlightConfig, onCoordinatedHighlight) as X
 
 -- Shared data types
 import PSD3.Data.Node (SimulationNode) as X

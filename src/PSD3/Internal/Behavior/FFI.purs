@@ -328,25 +328,31 @@ foreign import attachSimulationDragNestedById_
 -- | - identifyFn: Function to extract identity string from datum
 -- | - classifyFn: Function (hoveredId, datum) -> highlightClass (0=Primary, 1=Related, 2=Dimmed, 3=Neutral)
 -- | - group: Optional group name (null for global)
+-- | - tooltipContentFn: Optional function (datum -> String) for tooltip content
+-- | - tooltipTrigger: When to show tooltip (0=OnHover, 1=WhenPrimary, 2=WhenRelated)
 -- |
 -- | The library manages global highlight state. On mouseenter:
 -- | 1. Gets identity from datum using identifyFn
 -- | 2. Broadcasts to all registered elements
 -- | 3. Each element calls classifyFn to determine its highlight class
 -- | 4. Applies CSS classes (.highlight-primary, .highlight-related, .highlight-dimmed)
+-- | 5. Shows tooltips based on trigger conditions
 -- |
 -- | Returns element for chaining.
 foreign import attachCoordinatedHighlight_
   :: forall datum
    . Element
-  -> (datum -> String)         -- identifyFn
-  -> (String -> datum -> Int)  -- classifyFn (returns 0=Primary, 1=Related, 2=Dimmed, 3=Neutral)
-  -> Nullable String           -- group (null for global)
+  -> (datum -> String)              -- identifyFn
+  -> (String -> datum -> Int)       -- classifyFn (returns 0=Primary, 1=Related, 2=Dimmed, 3=Neutral)
+  -> Nullable String                -- group (null for global)
+  -> Nullable (datum -> String)     -- tooltipContentFn (null if no tooltip)
+  -> Int                            -- tooltipTrigger (0=OnHover, 1=WhenPrimary, 2=WhenRelated)
   -> Effect Element
 
 -- | Clear all highlight classes from all registered elements
 -- |
 -- | Removes .highlight-primary, .highlight-related, .highlight-dimmed
 -- | from all elements participating in coordinated highlighting.
+-- | Also hides all tooltips.
 foreign import clearAllHighlights_
   :: Effect Unit
