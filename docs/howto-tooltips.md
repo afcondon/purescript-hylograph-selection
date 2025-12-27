@@ -1,0 +1,240 @@
+# How To: Coordinated Tooltips
+
+Tooltips in PSD3 are integrated with the coordinated highlighting system. This enables three distinct tooltip behaviors, from traditional mouse-following tooltips to direct labels that appear on elements across views.
+
+## Quick Start
+
+Add a tooltip to any element with coordinated highlighting:
+
+```purescript
+import PSD3.Internal.Behavior.Types (HighlightClass(..), TooltipTrigger(..), onCoordinatedHighlight)
+import Data.Maybe (Maybe(..))
+
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onCoordinatedHighlight
+        { identify: \d -> d.name
+        , classify: \hoveredId d ->
+            if d.name == hoveredId then Primary else Dimmed
+        , group: Nothing
+        , tooltip: Just
+            { content: \d -> d.name <> ": " <> show d.value
+            , showWhen: OnHover
+            }
+        }
+    ]
+```
+
+## Tooltip Triggers
+
+### OnHover: Traditional Tooltip
+
+Shows a single tooltip that follows the mouse cursor. Only the element directly under the mouse shows its tooltip.
+
+```purescript
+tooltip: Just
+  { content: \d -> d.name
+  , showWhen: OnHover
+  }
+```
+
+**Use when:** You want classic tooltip behavior - one tooltip, at the mouse position, for the element being pointed at.
+
+**Behavior:**
+- Tooltip appears near mouse cursor
+- Moves with mouse
+- Only one tooltip visible at a time
+- Disappears on mouse leave
+
+### WhenPrimary: Direct Labels
+
+Shows tooltips on ALL elements that classify as `Primary` across all views. This implements the "direct labeling" principle - information appears right where it's relevant.
+
+```purescript
+tooltip: Just
+  { content: \d -> d.name
+  , showWhen: WhenPrimary
+  }
+```
+
+**Use when:** You want to label corresponding elements across views. When you hover on "ModuleA" in the bubble chart, "ModuleA" labels appear on the chord diagram and matrix too.
+
+**Behavior:**
+- Multiple tooltips can appear simultaneously
+- Each tooltip positioned near its element
+- Great for showing "this is the same thing" across views
+- Labels stay fixed (don't follow mouse)
+
+### WhenRelated: Labels on Connections
+
+Shows tooltips on ALL elements that classify as `Primary` OR `Related`. This can show a lot of information - use judiciously.
+
+```purescript
+tooltip: Just
+  { content: \d -> d.relationship  -- e.g., "depends on" or "imported by"
+  , showWhen: WhenRelated
+  }
+```
+
+**Use when:** You want to show relationship information. Hovering on a module could label all its dependencies and dependents with their relationship type.
+
+**Behavior:**
+- Many tooltips can appear at once
+- Can become visually busy
+- Powerful for understanding connections
+- Consider using for specific relationship views only
+
+## Content Functions
+
+The `content` function receives the element's datum and returns a string:
+
+```purescript
+-- Simple name
+content: \d -> d.name
+
+-- With value
+content: \d -> d.name <> ": " <> show d.value
+
+-- Multi-line (newlines work)
+content: \d -> d.name <> "\n" <>
+               "Deps: " <> show (length d.dependencies) <> "\n" <>
+               "Cluster: " <> show d.cluster
+
+-- Contextual based on element type
+content: \cell ->
+  if cell.value > 0.0
+    then cell.rowName <> " depends on " <> cell.colName
+    else cell.rowName <> " / " <> cell.colName
+```
+
+## Styling Tooltips
+
+The library creates tooltips with default styling. Override with CSS:
+
+```css
+.coordinated-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  color: #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Make primary tooltips more prominent */
+.highlight-primary + .coordinated-tooltip {
+  background: rgba(251, 191, 36, 0.95);
+  color: #1e293b;
+}
+```
+
+## Patterns and Recipes
+
+### Different Tooltips Per View
+
+Each element can have its own tooltip content. Use this to show view-specific information:
+
+```purescript
+-- Bubble pack: show metrics
+bubbleTooltip = Just
+  { content: \d -> d.name <> "\n" <>
+                   "Size: " <> show d.size <> "\n" <>
+                   "Cluster: " <> show d.cluster
+  , showWhen: OnHover
+  }
+
+-- Chord diagram: show connection count
+chordTooltip = Just
+  { content: \d -> d.name <> "\n" <>
+                   "Connections: " <> show d.connectionCount
+  , showWhen: OnHover
+  }
+
+-- Matrix: show relationship
+matrixCellTooltip = Just
+  { content: \d -> d.rowName <> " → " <> d.colName
+  , showWhen: OnHover
+  }
+```
+
+### Hover-Only Elements (No Tooltip)
+
+Some elements might only need highlighting, not tooltips:
+
+```purescript
+-- Links just highlight, no tooltip
+onCoordinatedHighlight
+  { identify: \l -> l.source.name
+  , classify: \hoveredId l -> ...
+  , group: Nothing
+  , tooltip: Nothing  -- No tooltip for links
+  }
+```
+
+### Primary Labels + Hover Details
+
+Combine `WhenPrimary` for labels with `OnHover` for details on different element types:
+
+```purescript
+-- Nodes get simple labels across views
+nodeConfig = onCoordinatedHighlight
+  { identify: _.name
+  , classify: ...
+  , group: Nothing
+  , tooltip: Just { content: _.name, showWhen: WhenPrimary }
+  }
+
+-- The hovered element also gets detailed tooltip
+detailConfig = onCoordinatedHighlight
+  { identify: _.name
+  , classify: ...
+  , group: Nothing
+  , tooltip: Just
+      { content: \d -> d.name <> "\n" <> "Full details..."
+      , showWhen: OnHover
+      }
+  }
+```
+
+### Conditional Tooltips
+
+The content function can return empty strings or minimal content based on conditions:
+
+```purescript
+tooltip: Just
+  { content: \d ->
+      if d.isImportant
+        then d.name <> " (critical path)"
+        else ""  -- No tooltip for unimportant items
+  , showWhen: WhenPrimary
+  }
+```
+
+## Performance Considerations
+
+- `OnHover`: Single tooltip, minimal overhead
+- `WhenPrimary`: Multiple tooltips, but only on matching elements
+- `WhenRelated`: Can create many tooltips - test with your data scale
+
+For large datasets, consider:
+- Using `OnHover` for most elements
+- Only enabling `WhenPrimary` for key navigation elements
+- Avoiding `WhenRelated` unless the relationship count is bounded
+
+## Design Philosophy
+
+The tooltip system follows the principle of **direct labeling** from data visualization best practices:
+
+> "Labels should be placed as close as possible to the data they describe."
+
+- `OnHover` is indirect (cursor → separate tooltip)
+- `WhenPrimary` is direct (label on the element itself)
+- `WhenRelated` extends direct labeling to show connections
+
+Choose based on information density and user task:
+- **Exploration**: `OnHover` keeps the view uncluttered
+- **Comparison**: `WhenPrimary` shows corresponding elements
+- **Understanding relationships**: `WhenRelated` reveals connections
