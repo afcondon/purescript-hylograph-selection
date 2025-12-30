@@ -1,6 +1,7 @@
 module PSD3.Internal.Capabilities.Selection
   ( class SelectionM
   , select
+  , selectElement
   , selectAll
   , selectAllWithData
   , openSelection
@@ -70,6 +71,24 @@ class Monad m <= SelectionM sel m | m -> sel where
   select
     :: forall datum
      . String -- CSS selector
+    -> m (sel SEmpty Element datum)
+
+  -- | Select from a DOM element directly
+  -- |
+  -- | This is useful for framework integration (React, Vue, etc.) where you have
+  -- | a reference to a DOM element rather than a CSS selector.
+  -- |
+  -- | Example (React):
+  -- | ```purescript
+  -- | useEffect do
+  -- |   for_ (toMaybe containerRef.current) \element -> do
+  -- |     void $ runD3 do
+  -- |       container <- selectElement element
+  -- |       renderTree container myVisualization
+  -- | ```
+  selectElement
+    :: forall datum
+     . Element
     -> m (sel SEmpty Element datum)
 
   -- | Select all elements matching selector within a parent selection

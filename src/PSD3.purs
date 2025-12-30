@@ -107,7 +107,7 @@ import PSD3.Expr.Friendly (computed, computedStr, computedWithIndex, computedStr
 import PSD3.Render (runD3, D3M, D3Selection) as X
 
 -- Selection & Transition Capabilities
-import PSD3.Internal.Capabilities.Selection (class SelectionM, select, appendChildInheriting, appendData, renderTree, renderData, setAttrs, on, clear) as X
+import PSD3.Internal.Capabilities.Selection (class SelectionM, select, selectElement, appendChildInheriting, appendData, renderTree, renderData, setAttrs, on, clear) as X
 import PSD3.Internal.Capabilities.Transition (class TransitionM, withTransition, withTransitionExit) as X
 
 -- Legacy type names (keep for backwards compatibility, prefer D3M/D3Selection)

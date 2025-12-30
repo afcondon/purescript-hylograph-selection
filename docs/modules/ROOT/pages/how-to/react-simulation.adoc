@@ -1,0 +1,176 @@
+= Force Simulations in React
+:description: How to run PSD3 force simulations in React with tick callbacks and drag
+:keywords: React, simulation, force, drag, animation
+
+Force-directed layouts require continuous animation during simulation. This guide shows how to integrate PSD3's force engine with React components.
+
+== The Challenge
+
+Force simulations run at ~60fps, updating node positions each tick. You need to:
+
+1. Create and configure the simulation
+2. Update DOM positions on each tick (fast path, not React re-renders)
+3. Support drag interaction that reheats the simulation
+4. Clean up properly when the component unmounts
+
+== Complete Example
+
+[source,purescript]
+----
+import PSD3.ForceEngine.Simulation as Sim
+import PSD3.ForceEngine.Types (ForceSpec(..))
+
+mkForceGraph :: Component {}
+mkForceGraph = do
+  containerId <- useContainerId
+
+  component "ForceGraph" \_props -> React.do
+    isRunning /\ setIsRunning <- useState true
+
+    useEffectOnce do
+      -- Create sample data
+      let nodes = createNodes 20
+          links = createLinks nodes
+
+      -- 1. Create simulation
+      sim <- Sim.create Sim.defaultConfig
+
+      -- 2. Set up tick callback for DOM updates
+      Sim.onTick (updateDOMPositions containerId) sim
+
+      -- 3. Configure simulation
+      Sim.setNodes nodes sim
+      Sim.setLinks links sim
+
+      -- 4. Add forces
+      Sim.addForce (ManyBody "charge"
+        { strength: -30.0, theta: 0.9, distanceMin: 1.0, distanceMax: 1000.0 }) sim
+      Sim.addForce (Link "link"
+        { distance: 30.0, strength: 1.0, iterations: 1 }) sim
+      Sim.addForce (Center "center"
+        { x: 200.0, y: 150.0, strength: 1.0 }) sim
+
+      -- 5. Render initial state
+      void $ runD3 do
+        let selector = "#" <> containerId
+        clear selector
+        container <- select selector
+        renderTree container (forceGraphAST nodes)
+
+      -- 6. Start simulation
+      Sim.start sim
+
+      -- 7. Attach drag behavior
+      nodeElements <- Sim.querySelectorElements ("#" <> containerId <> " circle")
+      Sim.attachDrag nodeElements sim
+
+      -- 8. Cleanup on unmount
+      pure do
+        Sim.stop sim
+        setIsRunning (\_ -> false)
+
+    pure $ R.div
+      { id: containerId
+      , style: R.css { width: "400px", height: "300px" }
+      }
+----
+
+== The Tick Callback
+
+The tick callback runs ~60fps during simulation. Use direct DOM manipulation for performance:
+
+[source,purescript]
+----
+-- PureScript
+updateDOMPositions :: String -> Effect Unit
+updateDOMPositions containerId = do
+  circles <- Sim.querySelectorElements ("#" <> containerId <> " circle")
+  updateCirclePositions circles
+
+-- FFI (JavaScript) - direct DOM access is fastest
+foreign import updateCirclePositions :: Array Element -> Effect Unit
+----
+
+[source,javascript]
+----
+// JavaScript FFI
+export const updateCirclePositions = (circles) => () => {
+  for (const circle of circles) {
+    const d = circle.__data__;  // D3's bound data
+    if (d) {
+      circle.setAttribute('cx', d.x);
+      circle.setAttribute('cy', d.y);
+    }
+  }
+};
+----
+
+WARNING: Don't trigger React re-renders in the tick callback. Direct DOM manipulation is essential for 60fps performance.
+
+== Drag Behavior
+
+`Sim.attachDrag` provides simulation-aware drag:
+
+[source,purescript]
+----
+-- After rendering, attach drag to node elements
+nodeElements <- Sim.querySelectorElements ("#" <> containerId <> " circle")
+Sim.attachDrag nodeElements sim
+----
+
+This sets up D3 drag handlers that:
+
+1. **Drag start**: Reheat simulation (alpha → 1.0)
+2. **During drag**: Fix node position (`fx`/`fy` set to pointer position)
+3. **Drag end**: Release node (`fx`/`fy` cleared, node floats free)
+
+== Alternative: Pinning Drag
+
+For exploration interfaces where users want to "pin" nodes:
+
+[source,purescript]
+----
+Sim.attachPinningDrag nodeElements sim
+----
+
+Behavior:
+- First drag: pins the node where dropped
+- Subsequent drags: small movement (<3px) unpins, larger movement repositions
+
+== Node Data Structure
+
+Simulation nodes need specific fields:
+
+[source,purescript]
+----
+type ForceNode =
+  { id :: Int
+  , x :: Number, y :: Number      -- Position (mutated by simulation)
+  , vx :: Number, vy :: Number    -- Velocity (mutated by forces)
+  , fx :: Nullable Number         -- Fixed x (set during drag)
+  , fy :: Nullable Number         -- Fixed y (set during drag)
+  , group :: Int                  -- Your custom data
+  }
+----
+
+== Cleanup
+
+Always stop the simulation when the component unmounts:
+
+[source,purescript]
+----
+useEffectOnce do
+  -- ... setup ...
+
+  -- Return cleanup function
+  pure do
+    Sim.stop sim
+----
+
+This cancels the animation frame loop and prevents memory leaks.
+
+== Next Steps
+
+* xref:how-to/react-events.adoc[React Events from PSD3] - Click handlers
+* xref:how-to/react-integration.adoc[PSD3 in a React App] - Basic integration
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Compare approaches

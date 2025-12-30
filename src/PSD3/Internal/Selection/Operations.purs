@@ -1,5 +1,6 @@
 module PSD3.Internal.Selection.Operations
   ( select
+  , selectElement
   , selectAll
   , selectAllWithData
   , append
@@ -97,6 +98,28 @@ select selector = liftEffect do
       { parentElements: [ element ]
       , document: doc
       }
+
+-- | Select from a DOM element directly
+-- |
+-- | This is useful for framework integration (React, Vue, etc.) where you have
+-- | a reference to a DOM element rather than a CSS selector.
+-- |
+-- | Example:
+-- | ```purescript
+-- | selectElement element >>= renderTree myVisualization
+-- | ```
+selectElement
+  :: forall m datum
+   . MonadEffect m
+  => Element -- DOM element
+  -> m (Selection SEmpty Element datum)
+selectElement element = liftEffect do
+  htmlDoc <- window >>= document
+  let doc = toDocument htmlDoc
+  pure $ Selection $ EmptySelection
+    { parentElements: [ element ]
+    , document: doc
+    }
 
 -- | Select all elements matching the CSS selector within a parent selection
 -- |
@@ -427,9 +450,10 @@ appendChildWithDatum
   => ElementType
   -> Array (Attribute datumOut)
   -> Maybe datumOut -- Optional datum for attribute functions
+  -> Int -- Logical index for IndexedAttr
   -> Selection SEmpty parent datum
   -> m (Selection SEmpty Element datumOut)
-appendChildWithDatum elemType attrs datumOpt (Selection impl) = liftEffect do
+appendChildWithDatum elemType attrs datumOpt logicalIndex (Selection impl) = liftEffect do
   let
     { parentElements, document: doc } = unsafePartial case impl of
       EmptySelection r -> r
@@ -442,7 +466,7 @@ appendChildWithDatum elemType attrs datumOpt (Selection impl) = liftEffect do
       datum = case datumOpt of
         Just d -> d
         Nothing -> unsafeCoerce unit :: datumOut
-    applyAttributes element datum 0 attrs
+    applyAttributes element datum logicalIndex attrs
     -- Append to parent
     let elementNode = toNode element
     let parentNode = toNode parent
@@ -1241,18 +1265,20 @@ getElementsFromBoundSelection (Selection impl) =
 -- Declarative Tree Rendering
 -- ============================================================================
 
--- | Helper: Render a single node with an explicit datum for attribute application
+-- | Helper: Render a single node with an explicit datum and index for attribute application
 -- | When datumOpt is Just, uses that datum for attribute functions instead of a dummy
+-- | The logicalIndex is used for IndexedAttr functions
 renderNodeHelperWithDatum
   :: forall p pd d
    . Ord d -- Needed for joinData
   => Selection SEmpty p pd
   -> Tree d
   -> Maybe d -- Optional datum to use for attribute functions
+  -> Int -- Logical index for IndexedAttr
   -> Effect (Tuple Element (Map String (Selection SBoundOwns Element d)))
-renderNodeHelperWithDatum parentSel (Node node) datumOpt = do
-  -- Create this element with proper datum for attributes
-  childSel <- appendChildWithDatum node.elemType node.attrs datumOpt parentSel
+renderNodeHelperWithDatum parentSel (Node node) datumOpt logicalIndex = do
+  -- Create this element with proper datum and index for attributes
+  childSel <- appendChildWithDatum node.elemType node.attrs datumOpt logicalIndex parentSel
 
   -- Get the first element from the created selection
   let Selection impl = childSel
@@ -1266,8 +1292,9 @@ renderNodeHelperWithDatum parentSel (Node node) datumOpt = do
   -- Attach behaviors to this element
   traverse_ (\behavior -> applyBehaviorToElement behavior element) node.behaviors
 
-  -- Recursively render children, passing datum through
-  childMaps <- traverse (\child -> renderNodeHelperWithDatum childSel child datumOpt) node.children
+  -- Recursively render children, passing datum and index through
+  -- Children inherit the same index as their parent (index is per-datum, not per-element)
+  childMaps <- traverse (\child -> renderNodeHelperWithDatum childSel child datumOpt logicalIndex) node.children
   let combinedChildMap = Array.foldl Map.union Map.empty (map snd childMaps)
 
   -- Add this node to the map if it has a name
@@ -1279,21 +1306,21 @@ renderNodeHelperWithDatum parentSel (Node node) datumOpt = do
   pure $ Tuple element selectionsMap
 
 -- For non-Node cases called via renderNodeHelperWithDatum, delegate to renderNodeHelper
--- (Join cases manage their own data through the join logic, no datum passing needed)
-renderNodeHelperWithDatum parentSel tree@(Join _) _ = renderNodeHelper parentSel tree
-renderNodeHelperWithDatum parentSel tree@(NestedJoin _) _ = renderNodeHelper parentSel tree
-renderNodeHelperWithDatum parentSel tree@(UpdateJoin _) _ = renderNodeHelper parentSel tree
-renderNodeHelperWithDatum parentSel tree@(UpdateNestedJoin _) _ = renderNodeHelper parentSel tree
-renderNodeHelperWithDatum parentSel tree@(LocalCoordSpace _) _ = renderNodeHelper parentSel tree
+-- (Join cases manage their own data through the join logic, index is tracked there)
+renderNodeHelperWithDatum parentSel tree@(Join _) _ _ = renderNodeHelper parentSel tree
+renderNodeHelperWithDatum parentSel tree@(NestedJoin _) _ _ = renderNodeHelper parentSel tree
+renderNodeHelperWithDatum parentSel tree@(UpdateJoin _) _ _ = renderNodeHelper parentSel tree
+renderNodeHelperWithDatum parentSel tree@(UpdateNestedJoin _) _ _ = renderNodeHelper parentSel tree
+renderNodeHelperWithDatum parentSel tree@(LocalCoordSpace _) _ _ = renderNodeHelper parentSel tree
 
 -- ConditionalRender needs the datum to evaluate predicates
-renderNodeHelperWithDatum parentSel (ConditionalRender { cases }) (Just datum) = do
+renderNodeHelperWithDatum parentSel (ConditionalRender { cases }) (Just datum) logicalIndex = do
   -- Find the first matching case
   case Array.find (\c -> c.predicate datum) cases of
     Just matchingCase -> do
       -- Render the matching spec with the datum
       let chosenTree = matchingCase.spec datum
-      renderNodeHelperWithDatum parentSel chosenTree (Just datum)
+      renderNodeHelperWithDatum parentSel chosenTree (Just datum) logicalIndex
     Nothing -> do
       -- No matching case - render nothing (could also render a default/fallback)
       let Selection impl = parentSel
@@ -1304,7 +1331,7 @@ renderNodeHelperWithDatum parentSel (ConditionalRender { cases }) (Just datum) =
       pure $ Tuple dummyElement Map.empty
 
 -- ConditionalRender without datum context - can't evaluate predicates
-renderNodeHelperWithDatum parentSel (ConditionalRender _) Nothing =
+renderNodeHelperWithDatum parentSel (ConditionalRender _) Nothing _ =
   renderNodeHelper parentSel (ConditionalRender { cases: [] })  -- Delegate to stub
 
 -- | Helper: Render a single node and its children (no explicit datum)
@@ -1315,8 +1342,8 @@ renderNodeHelper
   => Selection SEmpty p pd
   -> Tree d
   -> Effect (Tuple Element (Map String (Selection SBoundOwns Element d)))
--- For Node, delegate to renderNodeHelperWithDatum with Nothing (no datum passed)
-renderNodeHelper parentSel (Node node) = renderNodeHelperWithDatum parentSel (Node node) Nothing
+-- For Node, delegate to renderNodeHelperWithDatum with Nothing and index 0
+renderNodeHelper parentSel (Node node) = renderNodeHelperWithDatum parentSel (Node node) Nothing 0
 
 -- Render a data join
 -- This is where the magic happens: we create N copies of the template,
@@ -1839,10 +1866,10 @@ renderNestedTemplatesForPendingSelection decomposer templateFn wrapperType pendi
             -- Decompose to get inner data
             let innerDataArray = decomposer outerDatum
 
-            -- Render template for each inner datum
+            -- Render template for each inner datum with proper index tracking
             -- Type erasure: innerDataArray has Array outerDatum, but contains actual inner data at runtime
-            innerMaps <- traverse
-              ( \innerDatumErased -> do
+            innerMaps <- traverseWithIndex
+              ( \innerIdx innerDatumErased -> do
                   let innerDatum = unsafeCoerce innerDatumErased :: innerDatum
                   let tree = unsafeCoerce templateFn innerDatumErased :: Tree innerDatum
 
@@ -1852,8 +1879,8 @@ renderNestedTemplatesForPendingSelection decomposer templateFn wrapperType pendi
                       , document: doc
                       }
 
-                  -- Pass the inner datum for attribute functions
-                  Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel tree (Just innerDatum)
+                  -- Pass the inner datum and inner index for attribute functions
+                  Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel tree (Just innerDatum) innerIdx
                   pure childSelections
               )
               innerDataArray
@@ -1905,8 +1932,8 @@ renderTemplatesForPendingSelection templateFn pendingSel = do
                   , document: doc
                   }
 
-              -- Render the tree with the datum for attribute functions
-              Tuple element childSelections <- renderNodeHelperWithDatum singleParentSel tree (Just datum)
+              -- Render the tree with the datum and index for attribute functions
+              Tuple element childSelections <- renderNodeHelperWithDatum singleParentSel tree (Just datum) idx
 
               -- CRITICAL: Bind the datum to the root element created by the template
               -- This allows future joins to match this element with updated data
@@ -2004,8 +2031,8 @@ appendChildrenFromTemplate templateFn boundSel = do
                 , document: doc
                 }
 
-            -- Render the child tree with datum for attribute functions
-            Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel childTree (Just datum)
+            -- Render the child tree with datum and index for attribute functions
+            Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel childTree (Just datum) idx
             pure childSelections
     )
     dataArray
@@ -2045,9 +2072,9 @@ appendChildrenFromNestedTemplate decomposer templateFn boundSel = do
             -- Decompose outer datum to get inner data
             let innerDataArray = decomposer outerDatum
 
-            -- For each inner datum, render the template
-            innerMaps <- traverse
-              ( \innerDatum -> do
+            -- For each inner datum, render the template with index tracking
+            innerMaps <- traverseWithIndex
+              ( \innerIdx innerDatum -> do
                   -- Build the template tree for this inner datum
                   let childTree = templateFn innerDatum
 
@@ -2058,8 +2085,8 @@ appendChildrenFromNestedTemplate decomposer templateFn boundSel = do
                       , document: doc
                       }
 
-                  -- Render the child tree with datum for attribute functions
-                  Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel childTree (Just innerDatum)
+                  -- Render the child tree with datum and inner index for attribute functions
+                  Tuple _ childSelections <- renderNodeHelperWithDatum singleParentSel childTree (Just innerDatum) innerIdx
                   pure childSelections
               )
               innerDataArray

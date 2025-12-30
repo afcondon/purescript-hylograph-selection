@@ -1,0 +1,33 @@
+.Getting Started
+* xref:getting-started/your-first-selection.adoc[Your First Selection]
+* xref:getting-started/bar-chart.adoc[Building a Bar Chart]
+* xref:getting-started/from-d3.adoc[From D3.js to PSD3]
+* xref:getting-started/webapp-architecture.adoc[Web App Architecture]
+
+.How-To Guides
+* xref:how-to/simple-webpage.adoc[PSD3 in a Simple Web Page]
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3]
+* xref:how-to/react-integration.adoc[PSD3 in a React App]
+* xref:how-to/react-events.adoc[React Events from PSD3]
+* xref:how-to/react-simulation.adoc[Force Simulations in React]
+* xref:how-to/css-hover.adoc[Simple CSS Hover Effects]
+* xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting]
+* xref:how-to/tooltips.adoc[Tooltips]
+* xref:how-to/linked-brushing.adoc[Linked Brushing]
+* xref:how-to/zoom.adoc[Zoomable Visualizations]
+* xref:how-to/data-joins.adoc[Data Joins Deep Dive]
+* xref:how-to/transitions.adoc[Animated Transitions]
+
+.Understanding
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture]
+* xref:understanding/the-ast.adoc[The Selection AST]
+* xref:understanding/interpreters.adoc[Interpreters]
+* xref:understanding/functional-spreadsheets.adoc[Functional Spreadsheets]
+* xref:understanding/unified-dsl.adoc[Unified Data DSL]
+* xref:understanding/design-decisions.adoc[Design Decisions]
+* xref:understanding/graph-algorithms.adoc[Graph Algorithms]
+* xref:understanding/future-directions.adoc[Future Directions]
+
+.Reference
+* xref:reference/modules.adoc[Module Overview]
+* https://pursuit.purescript.org/packages/purescript-psd3-selection[API Docs (Pursuit)^]

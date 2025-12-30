@@ -61,6 +61,10 @@ instance SelectionM D3v2Selection_ D3v2M where
     sel <- Ops.select selector
     pure $ D3v2Selection_ sel
 
+  selectElement element = D3v2M do
+    sel <- Ops.selectElement element
+    pure $ D3v2Selection_ sel
+
   selectAll selector (D3v2Selection_ sel) = D3v2M do
     result <- Ops.selectAll selector sel
     pure $ D3v2Selection_ result

@@ -1,0 +1,135 @@
+= React Events from PSD3 Visualizations
+:description: How to surface click and interaction events from PSD3 to React state
+:keywords: React, events, clicks, callbacks, useState
+
+When building a React application with PSD3 visualizations, you need to bridge events from the D3 world back to React's state system. This guide shows you how.
+
+== The Challenge
+
+PSD3 visualizations live in the DOM, managed by D3. React manages your component state. When a user clicks something in the visualization, you need to:
+
+1. Capture the event in PSD3 via behaviors
+2. Extract relevant data (which element was clicked, its datum)
+3. Call a React state setter
+4. React re-renders to reflect the new state
+
+== Solution: The Callback Bridge
+
+Pass React's state setter into your visualization AST:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (onClickWithDatum)
+import React.Basic.Hooks (useState, (/\))
+
+mkInteractiveBarChart :: Component { chartData :: Array Number }
+mkInteractiveBarChart = do
+  containerId <- useContainerId
+
+  component "InteractiveBarChart" \props -> React.do
+    -- React state: which bar index is selected
+    selectedBar /\ setSelectedBar <- useState (Nothing :: Maybe Int)
+
+    useEffectOnce do
+      void $ runD3 do
+        let selector = "#" <> containerId
+        clear selector
+        container <- select selector
+        -- Pass the state setter into the AST builder
+        renderTree container (barChartAST props.chartData setSelectedBar)
+      pure mempty
+
+    -- React re-renders when selectedBar changes
+    pure $ R.div_
+      [ R.div { id: containerId }
+      , R.p_ [ R.text $ case selectedBar of
+            Nothing -> "Click a bar to select it"
+            Just idx -> "Selected bar " <> show (idx + 1) ]
+      ]
+----
+
+== The AST with Click Behavior
+
+Use `withBehaviors` to attach event handlers, and `onClickWithDatum` to access the bound data:
+
+[source,purescript]
+----
+barChartAST :: Array Number -> ((Maybe Int -> Maybe Int) -> Effect Unit) -> A.AST Number
+barChartAST dataset setSelectedBar =
+  A.elem SVG
+    [ computed "width" (num 500.0)
+    , computed "height" (num 300.0)
+    ]
+    `A.withChild`
+      A.joinData "bars" "rect" dataset \_ ->
+        A.elem Rect
+          [ fromWithIndex "x" (\_ i -> toNumber i * 60.0 + 20.0)
+          , fromWithIndex "y" (\val _ -> 280.0 - val * 2.5)
+          , computed "width" (num 50.0)
+          , fromWithIndex "height" (\val _ -> val * 2.5)
+          , computedStr "cursor" (text "pointer")  -- Visual feedback
+          ]
+          `A.withBehaviors`
+            [ onClickWithDatum \clickedValue -> do
+                -- Find the index of the clicked value
+                let mIdx = Array.findIndex (_ == clickedValue) dataset
+                case mIdx of
+                  Just idx -> setSelectedBar (\_ -> Just idx)
+                  Nothing -> pure unit
+            ]
+----
+
+== How It Works
+
+1. **`onClickWithDatum`** - Receives the datum bound to the clicked element (from D3's `__data__` property)
+2. **`setSelectedBar`** - React's state setter, passed through from the component
+3. **State update** - `setSelectedBar (\_ -> Just idx)` triggers React re-render
+4. **UI updates** - React shows the new selection in the paragraph
+
+== Available Event Behaviors
+
+PSD3 provides several event behaviors:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types
+  ( onClick           -- Effect Unit (no datum)
+  , onClickWithDatum  -- (datum -> Effect Unit)
+  , onMouseEnter      -- (datum -> Effect Unit)
+  , onMouseLeave      -- (datum -> Effect Unit)
+  , onMouseEnterWithInfo  -- (MouseEventInfo datum -> Effect Unit)
+  , onMouseLeaveWithInfo  -- (MouseEventInfo datum -> Effect Unit)
+  )
+----
+
+`MouseEventInfo` includes position data for tooltips:
+
+[source,purescript]
+----
+type MouseEventInfo datum =
+  { datum :: datum
+  , clientX :: Number, clientY :: Number  -- Viewport-relative
+  , pageX :: Number, pageY :: Number      -- Document-relative
+  , offsetX :: Number, offsetY :: Number  -- Element-relative
+  }
+----
+
+== Pattern: Multiple Event Types
+
+Handle different events on the same element:
+
+[source,purescript]
+----
+A.elem Circle [...]
+  `A.withBehaviors`
+    [ onClickWithDatum \d -> setSelected (Just d.id)
+    , onMouseEnter \d -> setHovered (Just d.id)
+    , onMouseLeave \_ -> setHovered Nothing
+    ]
+----
+
+== Next Steps
+
+* xref:how-to/react-simulation.adoc[Force Simulations in React] - Tick-driven updates
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Compare with Halogen
+* xref:how-to/react-integration.adoc[PSD3 in a React App] - Basic integration
