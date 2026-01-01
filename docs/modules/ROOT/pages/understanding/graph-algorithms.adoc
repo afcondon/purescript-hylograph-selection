@@ -1,0 +1,223 @@
+= Graph Algorithms Library Design
+:description: Comprehensive design for purescript-psd3-graph
+:keywords: graph, algorithms, pathfinding, centrality, community detection
+
+A companion library to `psd3-simulation` for graph algorithms, analysis, and layout.
+
+== Core Types
+
+[source,purescript]
+----
+-- Graph representations
+newtype NodeId = NodeId String
+type Edge r = { from :: NodeId, to :: NodeId | r }
+type WeightedEdge = Edge (weight :: Number)
+
+-- Multiple representations for different use cases
+data Graph a =
+  | AdjacencyList (Map NodeId (Array { neighbor :: NodeId | a }))
+  | EdgeList (Array (Edge a))
+----
+
+== Pathfinding Algorithms
+
+[cols="1,2,2"]
+|===
+| Algorithm | Use Case | Complexity
+
+| *A**
+| Single-source with heuristic
+| O((V+E) log V)
+
+| *Dijkstra*
+| Single-source, no heuristic
+| O((V+E) log V)
+
+| *Bellman-Ford*
+| Handles negative weights
+| O(VE)
+
+| *Floyd-Warshall*
+| All-pairs shortest paths
+| O(V³)
+
+| *BFS*
+| Unweighted shortest path
+| O(V+E)
+|===
+
+[source,purescript]
+----
+-- With tracing for visualization
+findPathWithTrace :: NodeId -> NodeId -> Graph ->
+  { result :: PathResult
+  , explored :: Array NodeId      -- nodes visited
+  , frontier :: Array NodeId      -- final frontier
+  , steps :: Array SearchStep     -- for animation!
+  }
+----
+
+*Visualization potential*: Animate the search process - show explored nodes, current frontier, backtracking.
+
+== Connectivity Analysis
+
+[source,purescript]
+----
+-- Connected components
+connectedComponents :: Graph -> Array (Set NodeId)
+
+-- For directed graphs
+stronglyConnectedComponents :: Graph -> Array (Set NodeId)  -- Tarjan's
+
+-- Critical infrastructure
+bridges :: Graph -> Array Edge           -- edges whose removal disconnects
+articulationPoints :: Graph -> Array NodeId  -- nodes whose removal disconnects
+----
+
+*Visualization potential*: Color components differently, highlight bridges/articulation points.
+
+== Centrality Measures
+
+These are *gold* for visualization - size/color nodes by importance.
+
+[source,purescript]
+----
+type Centrality = Map NodeId Number
+
+degreeCentrality :: Graph -> Centrality           -- simple: count edges
+betweennessCentrality :: Graph -> Centrality      -- how often on shortest paths
+closenessCentrality :: Graph -> Centrality        -- average distance to all others
+eigenvectorCentrality :: Graph -> Centrality      -- connected to important nodes
+pageRank :: Number -> Graph -> Centrality         -- the classic
+----
+
+*Visualization potential*:
+
+* Node size = centrality
+* Color gradient by centrality
+* "Most important nodes" highlighting
+
+== Community Detection
+
+[source,purescript]
+----
+-- Louvain algorithm (fast, good results)
+detectCommunities :: Graph -> Array (Set NodeId)
+
+-- With modularity score
+detectCommunitiesWithScore :: Graph ->
+  { communities :: Array (Set NodeId), modularity :: Number }
+
+-- Hierarchical community structure
+type Dendrogram = Tree (Set NodeId)
+hierarchicalCommunities :: Graph -> Dendrogram
+----
+
+*Visualization potential*: Color by community, nested circle packing, collapsible clusters.
+
+== Graph Metrics
+
+[source,purescript]
+----
+type GraphMetrics =
+  { nodes :: Int
+  , edges :: Int
+  , density :: Number              -- edges / max possible edges
+  , averageDegree :: Number
+  , diameter :: Maybe Int          -- longest shortest path
+  , radius :: Maybe Int            -- min eccentricity
+  , averagePathLength :: Number
+  , clusteringCoefficient :: Number
+  }
+
+analyze :: Graph -> GraphMetrics
+----
+
+== Layout Algorithms
+
+[source,purescript]
+----
+type Layout = Map NodeId { x :: Number, y :: Number }
+
+-- Hierarchical (for DAGs, trees)
+sugiyamaLayout :: Graph -> Layout
+
+-- Simple deterministic layouts
+circularLayout :: Graph -> Layout
+gridLayout :: Graph -> Layout
+
+-- Tree-specific
+radialTreeLayout :: NodeId -> Graph -> Layout
+tidyTreeLayout :: NodeId -> Graph -> Layout
+----
+
+== API Design: Tracing is Optional
+
+[source,purescript]
+----
+-- Standard API (most users)
+module Data.Graph.Pathfinding where
+
+findPath :: NodeId -> NodeId -> Graph -> PathResult
+dijkstra :: NodeId -> Graph -> Map NodeId Number
+bfs :: NodeId -> Graph -> Array NodeId
+
+-- Traced API (for visualization, opt-in import)
+module Data.Graph.Pathfinding.Traced where
+
+findPathTraced :: NodeId -> NodeId -> Graph -> TracedResult PathResult
+----
+
+Users who just want algorithms import `Data.Graph.Pathfinding`.
+Users building visualizations also import `Data.Graph.Pathfinding.Traced`.
+
+== Integration with PSD3
+
+[source,purescript]
+----
+-- Example: size by PageRank
+centrality <- pageRank 0.85 graph
+let sizeFromRank node = 5.0 + 20.0 * (fromMaybe 0.0 $ Map.lookup node.id centrality)
+setNodeSizes sizeFromRank simulation
+----
+
+== Phased Implementation
+
+=== Phase 1: Consolidation
+* Create psd3-graph repo
+* Move `Data.Graph.Algorithms` from psd3-selection
+* Move tree utilities from psd3-tree
+* Add A* from psd3-astar-demo
+
+=== Phase 2: Pathfinding Suite
+* Dijkstra (A* without heuristic)
+* BFS/DFS with parent tracking
+* Traced variants of all algorithms
+
+=== Phase 3: Analysis
+* Centrality measures (degree, betweenness)
+* Cycle detection
+* Graph metrics
+* Connected components
+
+=== Phase 4: Advanced
+* Community detection (Louvain)
+* PageRank
+* Strongly connected components (Tarjan's)
+
+=== Phase 5: Layouts
+* Sugiyama (hierarchical)
+* Radial tree
+* Circular
+
+== Demo Ideas
+
+1. *Algorithm Visualizer*: Step through A*/Dijkstra/BFS, show exploration
+2. *Social Network Analyzer*: Load graph, compute centralities, detect communities
+3. *Dependency Graph*: Topological sort, cycle detection, critical path
+4. *Network Resilience*: Remove nodes/edges, show component fragmentation
+
+== See Also
+
+* xref:how-to/zoom.adoc[Zoomable Visualizations] - For large graphs
+* xref:understanding/the-ast.adoc[The Selection AST] - Tree structures

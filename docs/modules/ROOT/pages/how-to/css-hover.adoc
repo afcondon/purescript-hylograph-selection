@@ -1,0 +1,200 @@
+= Simple CSS Hover Effects
+:description: How to implement lightweight hover effects using CSS
+:keywords: CSS, hover, effects, simple, performance
+
+For simple hover effects that only affect the hovered element, CSS is faster and simpler than JavaScript. This guide shows how to implement CSS-based hover effects with PSD3.
+
+== When to Use CSS Hover
+
+Use CSS hover when:
+
+* The effect only affects the hovered element itself
+* You want maximum performance (no JavaScript on mouse move)
+* The effect is purely visual (color, size, opacity changes)
+
+Use JavaScript hover (see xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting]) when:
+
+* Multiple elements should respond to one hover
+* You need to access datum values
+* Effects span multiple views
+
+== Basic CSS Hover
+
+=== 1. Add a Class to Your Elements
+
+[source,purescript]
+----
+import PSD3.Expr.Friendly (class_)
+
+myVisualization =
+  A.joinData "circles" "circle" myData \d ->
+    A.elem Circle
+      [ cx (from _.x)
+      , cy (from _.y)
+      , r (num 5.0)
+      , fill (text "steelblue")
+      , class_ (text "data-point")  -- Add a class for CSS targeting
+      ]
+----
+
+=== 2. Define CSS Hover Rules
+
+[source,css]
+----
+.data-point {
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+}
+
+.data-point:hover {
+  r: 8;  /* SVG attribute - grows the circle */
+  fill: coral;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+----
+
+== Common Hover Patterns
+
+=== Highlight on Hover
+
+[source,css]
+----
+.node {
+  transition: opacity 0.2s, stroke-width 0.2s;
+}
+
+.node:hover {
+  opacity: 1 !important;
+  stroke: #fbbf24;
+  stroke-width: 2px;
+}
+----
+
+=== Scale Up on Hover
+
+[source,css]
+----
+.bar {
+  transition: transform 0.15s ease-out;
+  transform-origin: bottom center;
+}
+
+.bar:hover {
+  transform: scaleY(1.05);
+}
+----
+
+=== Glow Effect
+
+[source,css]
+----
+.highlight-target {
+  transition: filter 0.2s;
+}
+
+.highlight-target:hover {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+----
+
+=== Cursor Feedback
+
+[source,css]
+----
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.clickable {
+  cursor: pointer;
+}
+----
+
+== Combining with PSD3 Behaviors
+
+You can use CSS for visual feedback while using PSD3 behaviors for logic:
+
+[source,purescript]
+----
+A.elem Circle
+  [ class_ (text "data-point clickable")
+  , cx (from _.x)
+  , cy (from _.y)
+  ]
+  `A.withBehaviors`
+    [ onClick \d -> handleClick d.id  -- JavaScript handles the click
+    -- CSS handles the hover effect (no behavior needed)
+    ]
+----
+
+[source,css]
+----
+/* CSS handles all the visual hover feedback */
+.data-point {
+  transition: all 0.15s;
+}
+
+.data-point:hover {
+  fill: coral;
+  r: 8;
+}
+
+.clickable {
+  cursor: pointer;
+}
+----
+
+== Performance Tips
+
+1. *Use `transform` and `opacity`* for animations - they're GPU-accelerated
+2. *Avoid animating `width`, `height`, `top`, `left`* - they trigger layout
+3. *Keep transitions short* (150-200ms) for responsive feel
+4. *Use `will-change`* sparingly for complex animations
+
+[source,css]
+----
+.optimized-hover {
+  will-change: transform, opacity;
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+.optimized-hover:hover {
+  transform: scale(1.1);
+  opacity: 0.9;
+}
+----
+
+== SVG-Specific Considerations
+
+SVG attributes like `r`, `cx`, `cy` can be animated with CSS, but browser support varies:
+
+[source,css]
+----
+/* Works in modern browsers */
+circle {
+  transition: r 0.2s;
+}
+
+circle:hover {
+  r: 10;
+}
+
+/* More compatible: use transform instead */
+circle {
+  transition: transform 0.2s;
+  transform-origin: center;
+}
+
+circle:hover {
+  transform: scale(1.5);
+}
+----
+
+== Next Steps
+
+* xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] - Multi-element hover effects
+* xref:how-to/linked-brushing.adoc[Linked Brushing] - Selection across views

@@ -1,0 +1,126 @@
+= PSD3 Selection
+:description: Type-safe D3-style visualization for PureScript
+:doctype: book
+:toc: left
+:toclevels: 2
+:sectnums:
+:source-highlighter: rouge
+:icons: font
+
+// Resolve xrefs for standalone PDF generation
+:xrefstyle: short
+
+[preface]
+== About This Documentation
+
+PSD3 Selection is a type-safe, finally tagless D3-style visualization library for PureScript. This documentation covers the core concepts, how-to guides, and reference material.
+
+// Part I: Getting Started
+= Getting Started
+
+include::modules/ROOT/pages/getting-started/your-first-selection.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/getting-started/bar-chart.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/getting-started/from-d3.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/getting-started/webapp-architecture.adoc[leveloffset=+1]
+
+// Part II: How-To Guides
+= How-To Guides
+
+<<<
+
+include::modules/ROOT/pages/how-to/simple-webpage.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/halogen-events.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/react-integration.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/react-events.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/react-simulation.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/css-hover.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/coordinated-highlighting.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/tooltips.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/linked-brushing.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/zoom.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/data-joins.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/how-to/transitions.adoc[leveloffset=+1]
+
+// Part III: Understanding
+= Understanding the Architecture
+
+<<<
+
+include::modules/ROOT/pages/understanding/finally-tagless.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/the-ast.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/interpreters.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/functional-spreadsheets.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/unified-dsl.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/design-decisions.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/graph-algorithms.adoc[leveloffset=+1]
+
+<<<
+
+include::modules/ROOT/pages/understanding/future-directions.adoc[leveloffset=+1]
+
+// Part IV: Reference
+= Reference
+
+<<<
+
+include::modules/ROOT/pages/reference/modules.adoc[leveloffset=+1]

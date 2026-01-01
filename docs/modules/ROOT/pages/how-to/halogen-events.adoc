@@ -1,0 +1,140 @@
+= Halogen Events from PSD3 Visualizations
+:description: How to trigger Halogen actions from clicks and drags in visualizations
+:keywords: Halogen, events, clicks, drags, callbacks
+
+When building a Halogen application with PSD3 visualizations, you need to bridge events from the D3 world back to Halogen's action system. This guide shows you how.
+
+== The Challenge
+
+PSD3 visualizations live in the DOM, managed by D3. Halogen manages your application state. When a user clicks or drags something in the visualization, you need to:
+
+1. Capture the event in the D3 world
+2. Extract relevant data (which element, position, etc.)
+3. Trigger a Halogen action
+4. Update state and re-render
+
+== Solution: Callback Functions
+
+Pass a callback function from Halogen into your visualization code:
+
+[source,purescript]
+----
+-- Define your visualization events
+data VizEvent
+  = NodeClicked NodeId
+  | NodeDragged NodeId Position
+  | BackgroundClicked
+  | ZoomChanged ZoomTransform
+
+-- In your Halogen component
+handleAction = case _ of
+  Initialize -> do
+    mContainer <- H.getRef vizRef
+    emitter <- H.emitAction  -- Get the action emitter
+    for_ mContainer \el ->
+      liftEffect $ renderViz el state (emitter <<< VizEventReceived)
+
+  VizEventReceived event -> case event of
+    NodeClicked id -> H.modify_ _ { selected = Just id }
+    NodeDragged id pos -> updateNodePosition id pos
+    -- etc.
+----
+
+== Click Events
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (onClick, onClickWithDatum)
+
+-- Simple click (no datum needed)
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ onClick \_ -> onEvent BackgroundClicked ]
+
+-- Click with datum access
+P.joinData "nodes" "g" nodes \node ->
+  P.elem Group [...]
+    `P.withBehaviors`
+      [ onClickWithDatum \d -> onEvent (NodeClicked d.id) ]
+----
+
+== Drag Events
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (Behavior(..), DragBehavior(..))
+
+-- Full drag with start/drag/end
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ Drag $ CustomDrag
+        { onStart: \d pos -> onEvent (DragStarted d.id pos)
+        , onDrag: \d pos -> onEvent (NodeDragged d.id pos)
+        , onEnd: \d pos -> onEvent (DragEnded d.id pos)
+        }
+    ]
+
+-- Simple drag (just position updates)
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ Drag $ SimpleDrag ]  -- Updates __data__.x and __data__.y directly
+----
+
+== Pattern: Effect.Ref for Mutable State
+
+For high-frequency events like dragging, you might not want to trigger Halogen actions on every pixel move. Use `Effect.Ref` for intermediate state:
+
+[source,purescript]
+----
+renderViz container state onEvent = do
+  -- Mutable ref for drag state (doesn't trigger Halogen re-render)
+  dragRef <- Ref.new Nothing
+
+  void $ runD3 do
+    -- ... build viz ...
+    P.elem Circle [...]
+      `P.withBehaviors`
+        [ Drag $ CustomDrag
+            { onStart: \d pos -> Ref.write (Just { id: d.id, start: pos }) dragRef
+            , onDrag: \d pos -> do
+                -- Update DOM directly for smooth dragging
+                updateCirclePosition d.id pos
+            , onEnd: \d pos -> do
+                -- Only notify Halogen when drag ends
+                mDrag <- Ref.read dragRef
+                for_ mDrag \drag ->
+                  onEvent (NodeDragComplete drag.id pos)
+                Ref.write Nothing dragRef
+            }
+        ]
+----
+
+== Pattern: Debouncing Events
+
+For events that fire rapidly (zooming, brushing), debounce before triggering Halogen:
+
+[source,purescript]
+----
+import Effect.Timer (setTimeout)
+
+mkDebouncedEmitter :: Int -> (a -> Effect Unit) -> Effect (a -> Effect Unit)
+mkDebouncedEmitter delayMs emit = do
+  timerRef <- Ref.new Nothing
+  pure \value -> do
+    -- Cancel pending timer
+    mTimer <- Ref.read timerRef
+    for_ mTimer clearTimeout
+    -- Set new timer
+    timer <- setTimeout delayMs (emit value)
+    Ref.write (Just timer) timerRef
+----
+
+== Complete Example
+
+See the Force Explorer showcase for a complete working example of Halogen + PSD3 integration with drag, zoom, and click events.
+
+== Next Steps
+
+* xref:getting-started/webapp-architecture.adoc[Web App Architecture] - The big picture
+* xref:how-to/zoom.adoc[Making Visualizations Zoomable] - Zoom behavior
+* xref:how-to/simple-webpage.adoc[PSD3 without Halogen] - Simpler alternative

@@ -1,0 +1,39 @@
+= Building a Bar Chart
+:description: Create a data-driven bar chart with PSD3
+:keywords: tutorial, bar chart, data binding, joinData
+
+[NOTE]
+====
+This tutorial is coming soon. It will cover:
+
+* Binding data with `joinData`
+* Using `from` for data-driven attributes
+* Scales and axes
+* Adding interactivity
+====
+
+== Preview
+
+[source,purescript]
+----
+barChart :: Array Number -> A.AST Number
+barChart data' =
+  A.elem SVG
+    [ width (num 500.0)
+    , height (num 300.0)
+    ]
+    `A.withChild`
+      A.joinData "bars" "rect" data' \d ->
+        A.elem Rect
+          [ from "x" (\_ i -> toNumber i * 25.0)
+          , from "y" (\val _ -> 300.0 - val)
+          , width (num 20.0)
+          , from "height" (\val _ -> val)
+          , fill (text "steelblue")
+          ]
+----
+
+== Next Steps
+
+* xref:getting-started/your-first-selection.adoc[Your First Selection] - Start here if you haven't
+* xref:how-to/data-joins.adoc[Data Joins Deep Dive] - Advanced join patterns

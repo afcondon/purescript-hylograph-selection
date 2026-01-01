@@ -1,0 +1,80 @@
+= The Selection AST
+:description: Understanding PSD3's tree-based visualization model
+:keywords: AST, tree, declarative, structure
+
+PSD3 visualizations are built as *trees*. This page explains the structure and why it matters.
+
+== Trees, Not Chains
+
+D3.js uses method chaining - each call returns a selection you continue to operate on:
+
+[source,javascript]
+----
+selection.append("g").attr("class", "group").append("circle")...
+----
+
+PSD3 builds a tree data structure:
+
+[source,purescript]
+----
+data Tree datum
+  = Node (TreeNode datum)
+  | Join { name, key, joinData, template }
+  | ...
+----
+
+== Node Structure
+
+Each node contains:
+
+[source,purescript]
+----
+type TreeNode datum =
+  { name :: Maybe String        -- Optional ID for later retrieval
+  , elemType :: ElementType     -- SVG, Circle, Rect, Group, etc.
+  , attrs :: Array (Attribute datum)   -- Attributes to set
+  , behaviors :: Array (Behavior datum) -- Attached behaviors
+  , children :: Array (Tree datum)      -- Child nodes
+  }
+----
+
+== Data Joins as Tree Nodes
+
+The `Join` variant represents a data-driven section:
+
+[source,purescript]
+----
+A.joinData "circles" "circle" myData $ \d ->
+  A.elem Circle [ cx (from _.x), cy (from _.y) ]
+----
+
+This creates a `Join` node with:
+
+* `name`: "circles" (for later retrieval)
+* `key`: "circle" (element type to create)
+* `joinData`: the array of data
+* `template`: a function from datum to subtree
+
+== Why Trees?
+
+1. *Inspectable*: You can examine the structure before rendering
+2. *Transformable*: Tree transformations are well-understood
+3. *Testable*: Compare trees for equality in tests
+4. *Multi-interpretable*: Render to DOM, to strings, to diagrams
+
+== Visualization
+
+The Mermaid interpreter can show your tree structure:
+
+[source,purescript]
+----
+import PSD3.Interpreter.Mermaid (toMermaid)
+
+-- Generates a Mermaid diagram of the AST structure
+diagram = toMermaid myVisualization
+----
+
+== Further Reading
+
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture]
+* xref:understanding/interpreters.adoc[Interpreters]

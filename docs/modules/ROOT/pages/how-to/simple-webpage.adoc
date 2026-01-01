@@ -1,0 +1,179 @@
+= PSD3 in a Simple Web Page
+:description: How to use PSD3 without Halogen or a complex framework
+:keywords: simple, webpage, no-framework, vanilla
+
+Not every visualization needs a full application framework. This guide shows how to use PSD3 in a simple HTML page with minimal setup.
+
+== When to Use This Approach
+
+* Quick prototypes and experiments
+* Static visualizations with no complex state
+* Embedding a visualization in an existing non-PureScript page
+* Learning PSD3 without Halogen complexity
+
+== Basic Setup
+
+=== 1. Create Your HTML
+
+[source,html]
+----
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Visualization</title>
+  <style>
+    #chart { width: 800px; height: 600px; }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="./my-viz.js"></script>
+</body>
+</html>
+----
+
+=== 2. Write Your PureScript
+
+[source,purescript]
+----
+module Main where
+
+import Prelude
+import Effect (Effect)
+import PSD3.AST as A
+import PSD3.AST (ElementType(..))
+import PSD3.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
+import PSD3.Render (runD3, select, renderTree)
+
+main :: Effect Unit
+main = void $ runD3 do
+  container <- select "#chart"
+  renderTree container myVisualization
+
+myVisualization :: A.AST Unit
+myVisualization =
+  A.elem SVG
+    [ width (num 800.0)
+    , height (num 600.0)
+    ]
+    `A.withChild`
+      A.elem Circle
+        [ cx (num 400.0)
+        , cy (num 300.0)
+        , r (num 100.0)
+        , fill (text "steelblue")
+        ]
+----
+
+=== 3. Bundle and Run
+
+[source,bash]
+----
+# Build PureScript
+spago build
+
+# Bundle for browser
+spago bundle --module Main --outfile my-viz.js
+
+# Open in browser
+open index.html
+----
+
+== Adding Interactivity
+
+For simple interactivity, use behaviors directly:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (onClick, onHover)
+import Effect.Console (log)
+
+myVisualization :: A.AST Unit
+myVisualization =
+  A.elem SVG [ width (num 800.0), height (num 600.0) ]
+    `A.withChild`
+      A.elem Circle
+        [ cx (num 400.0), cy (num 300.0), r (num 100.0)
+        , fill (text "steelblue")
+        ]
+        `A.withBehaviors`
+          [ onClick \_ -> log "Circle clicked!"
+          , onHover
+              { enter: [{ attr: "fill", value: "coral" }]
+              , leave: [{ attr: "fill", value: "steelblue" }]
+              }
+          ]
+----
+
+== Managing State with Effect.Ref
+
+For simple state without a framework, use `Effect.Ref`:
+
+[source,purescript]
+----
+import Effect.Ref as Ref
+
+main :: Effect Unit
+main = do
+  -- Mutable state
+  countRef <- Ref.new 0
+
+  void $ runD3 do
+    container <- select "#chart"
+
+    let viz count =
+          A.elem SVG [ width (num 800.0), height (num 600.0) ]
+            `A.withChild`
+              A.elem Text
+                [ x (num 400.0), y (num 300.0)
+                , textContent (text $ "Count: " <> show count)
+                ]
+                `A.withBehaviors`
+                  [ onClick \_ -> do
+                      newCount <- Ref.modify (_ + 1) countRef
+                      -- Re-render with new count
+                      reRender container (viz newCount)
+                  ]
+
+    count <- liftEffect $ Ref.read countRef
+    renderTree container (viz count)
+----
+
+== Loading External Data
+
+[source,purescript]
+----
+import Affjax.Web as Ajax
+import Affjax.ResponseFormat as RF
+
+main :: Effect Unit
+main = launchAff_ do
+  result <- Ajax.get RF.json "/data/points.json"
+  case result of
+    Left err -> log $ "Failed to load data: " <> printError err
+    Right response -> do
+      let points = decodePoints response.body
+      liftEffect $ renderVisualization points
+
+renderVisualization :: Array Point -> Effect Unit
+renderVisualization points = void $ runD3 do
+  container <- select "#chart"
+  renderTree container (scatterplot points)
+----
+
+== When to Graduate to Halogen
+
+Consider moving to Halogen when you need:
+
+* Complex application state
+* Multiple interacting components
+* Routing
+* Server communication with loading states
+* Undo/redo functionality
+
+== Next Steps
+
+* xref:getting-started/your-first-selection.adoc[Your First Selection] - PSD3 basics
+* xref:how-to/css-hover.adoc[Simple CSS Hover Effects] - Lightweight interactivity
+* xref:getting-started/webapp-architecture.adoc[Web App Architecture] - When you're ready for more

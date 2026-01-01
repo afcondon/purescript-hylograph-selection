@@ -1,0 +1,30 @@
+= Animated Transitions
+:description: Adding smooth animations to your visualizations
+:keywords: transitions, animation, easing
+
+[NOTE]
+====
+This guide is coming soon. It will cover:
+
+* Transition configuration
+* Easing functions
+* Sequencing transitions
+* Performance tips
+====
+
+== Quick Reference
+
+[source,purescript]
+----
+import PSD3.Internal.Transition.Types (TransitionConfig)
+
+fadeIn :: TransitionConfig
+fadeIn = { duration: 500, delay: 0, ease: "easeCubicOut" }
+
+slideDown :: TransitionConfig
+slideDown = { duration: 300, delay: 100, ease: "easeBackOut" }
+----
+
+== Next Steps
+
+* xref:how-to/data-joins.adoc[Data Joins Deep Dive]

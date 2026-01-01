@@ -1,0 +1,176 @@
+= Design Decisions
+:description: Key architectural decisions and their rationale
+:keywords: architecture, design, decisions, puresheet, data sources
+
+== Analysis of puresheet
+
+We analyzed https://github.com/albertprz/puresheet[puresheet] (GPL v3) as architectural reference.
+
+=== What Works Well
+
+1. *AST Design* - Clean recursive ADT for expressions:
+   * `FnApply`, `LambdaFn`, `InfixFnApply` - standard constructs
+   * `WhereExpr`, `SwitchExpr`, `CondExpr` - bindings and control flow
+   * Pattern matching with guards
+
+2. *Type Organization* - Layered modules:
+   * `SyntaxTree/` - Pure AST types
+   * `Parser/` - Parsing to AST
+   * `Evaluator/` - AST interpretation
+   * `Printer/` - AST pretty-printing
+
+3. *Halogen Architecture*:
+   * Halogen Store for global state
+   * Component-based UI
+   * Clean separation of concerns
+
+=== Coupling to Avoid
+
+puresheet's AST is coupled to spreadsheet concepts:
+
+[source,purescript]
+----
+-- From puresheet SyntaxTree/FnDef.purs
+data FnBody
+  = ...
+  | Cell' Cell                    -- spreadsheet cell reference
+  | CellValue' CellValue          -- cell literal
+  | CellMatrixRange Cell Cell     -- A1:C3 ranges
+----
+
+We generalize these to data source references:
+
+[source,purescript]
+----
+-- Our approach
+data Expr
+  = ...
+  | DataRef DataSource Path       -- reference any data
+  | DataRange DataSource Selection -- select from any source
+----
+
+== Key Design Decisions
+
+=== 1. Expression Language
+
+Keep the functional core from puresheet's design:
+
+* First-class functions, currying
+* Pattern matching with guards
+* Custom operators with precedence
+* Local bindings (where/let)
+
+But parameterize over the "leaf" type - what expressions can reference.
+
+=== 2. Data Sources as First-Class
+
+Instead of cells, expressions reference abstract data sources:
+
+[source,purescript]
+----
+data DataSource
+  = TableSource TableId           -- in-memory table
+  | QuerySource QueryId           -- SQL query
+  | WebSource WebSourceId         -- scraped web data
+  | ComputedSource ExprId         -- result of another expr
+
+data Selection
+  = All                           -- entire source
+  | Column ColRef                 -- single column
+  | Row RowRef                    -- single row
+  | Range ColRef ColRef RowRef RowRef
+  | Filter Expr                   -- predicate
+----
+
+=== 3. D3-Style Data Joins
+
+Expressions don't just *read* data - they *bind* to it:
+
+[source,purescript]
+----
+data Binding
+  = Enter DataSource Expr         -- new data → create
+  | Update DataSource Expr        -- changed data → transform
+  | Exit DataSource Expr          -- removed data → cleanup
+----
+
+This connects naturally to visualization: the expression forest *is* the visualization pipeline.
+
+=== 4. Visualization as Output
+
+Each expression tree has an output type:
+
+[source,purescript]
+----
+data OutputType
+  = DataOutput                    -- produces data (for chaining)
+  | ChartOutput ChartSpec         -- produces visualization
+  | TreeOutput                    -- self-visualizes as AST
+----
+
+== Implementation Phases
+
+=== Phase 1: Core Language
+
+1. Define `Expr` ADT (generalized from puresheet's `FnBody`)
+2. Define `Pattern` for pattern matching
+3. Define `Literal` for primitive values
+4. Parser using bookhound or similar
+5. Evaluator (pure, no effects)
+6. Pretty printer
+
+=== Phase 2: Data Sources
+
+1. `DataSource` ADT
+2. `Table` - simple in-memory tables
+3. Selection/filtering
+4. Data change tracking (for joins)
+
+=== Phase 3: Charting Demo
+
+1. Integrate PSD3 D3 wrapper
+2. Chart specification types
+3. Expression → Chart rendering
+4. Basic Halogen app
+
+=== Phase 4: AST Visualization
+
+1. Adapt PSD3 PatternTree
+2. Expression → Tree visualization
+3. Interactive exploration
+4. Link to evaluation steps
+
+=== Phase 5: Expression Forest
+
+1. Multi-expression workspace
+2. Expression dependencies
+3. Data flow visualization
+4. Full data join semantics
+
+== Tech Stack
+
+* *Language*: PureScript
+* *UI*: Halogen + Halogen Store
+* *Parsing*: Bookhound (or purescript-parsing)
+* *Visualization*: PSD3 D3 wrappers
+* *Build*: Spago + esbuild
+
+== Relationship to PSD3
+
+*Reuses:*
+
+* `purescript-psd3-tree` - Tree visualization
+* `purescript-psd3-selection` - Selection model
+* `purescript-psd3-layout` - Layout algorithms
+* D3 FFI bindings from psd3-demo-website
+
+*New:*
+
+* Expression language and evaluator
+* Data source abstraction
+* Expression forest workspace
+
+== See Also
+
+* xref:understanding/unified-dsl.adoc[Unified Data DSL] - The unifying vision
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture] - The encoding

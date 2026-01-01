@@ -1,0 +1,60 @@
+# Antora Playbook for PSD3 Documentation
+# Run with: npx antora antora-playbook.yml
+
+site:
+  title: PSD3 Documentation
+  url: https://psd3.github.io
+  start_page: psd3-selection::index.adoc
+
+content:
+  sources:
+    # Primary selection library (local path for development)
+    - url: .
+      branches: HEAD
+      start_path: docs
+
+    # Uncomment these as documentation is added to other repos:
+    # - url: ../purescript-psd3-graph
+    #   branches: HEAD
+    #   start_path: docs
+
+    # - url: ../purescript-psd3-tree
+    #   branches: HEAD
+    #   start_path: docs
+
+    # - url: ../psd3-sheetless
+    #   branches: HEAD
+    #   start_path: docs
+
+    # Cross-cutting documentation (when created):
+    # - url: ../psd3-docs
+    #   branches: HEAD
+    #   start_path: docs
+
+ui:
+  bundle:
+    # Default Antora UI - local copy
+    url: ./ui-bundle.zip
+
+# Output configuration
+output:
+  dir: ./build/site
+
+# Runtime settings
+runtime:
+  cache_dir: ./.cache/antora
+  fetch: true
+
+# Enable source maps for debugging
+asciidoc:
+  attributes:
+    # Enable source highlighting
+    source-highlighter: highlight.js
+    # Show line numbers in code blocks
+    source-linenums-option: ''
+    # Icons for admonitions
+    icons: font
+    # Allow including external content
+    allow-uri-read: ''
+    # PureScript-specific highlighting (uses Haskell as closest match)
+    source-language: haskell

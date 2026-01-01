@@ -1,0 +1,75 @@
+= Future Directions
+:description: Advanced concepts for future exploration
+:keywords: future, comonad, build systems, cellular automata, pedagogy
+
+_Captured for later exploration - the "show people things they didn't know they could do" tier_
+
+== Pedagogic Recursion Schemes
+
+The comonadic spreadsheet abstraction makes recursion schemes approachable:
+
+* Fold trees that visualize how SUM actually computes
+* Histomorphisms for moving averages (each step sees its history)
+* The "Context View" showing what a cell can see (neighbors, position)
+* `extend` as the theory behind "fill down"
+
+This has real teaching potential - spreadsheets as a gateway to FP concepts.
+
+== Spreadsheets as Build Systems
+
+Reference: "Build Systems à la Carte" by Mokhov, Mitchell, Peyton Jones (2018)
+
+Key insight: Excel and Make are both build systems with different rebuild strategies:
+
+* Excel: minimal rebuild based on dependency graph
+* Make: topological ordering with timestamps
+
+Our functional spreadsheet could model:
+
+* *Dependency tracking* via the expression graph
+* *Incremental computation* via selective re-evaluation
+* *Build policies* as different evaluation strategies
+
+This extends naturally to:
+
+* CI/CD pipeline visualization
+* Infrastructure-as-spreadsheet (the Kubernetes joke... but maybe not a joke?)
+* Data pipeline orchestration
+
+== Cellular Automata Demo
+
+Game of Life is already implemented in Data.Sheet and Data.Zipper:
+
+[source,purescript]
+----
+life :: Sheet Boolean -> Boolean
+life s = let alive = extract s
+             count = length (filter identity (neighbors s))
+         in if alive then count == 2 || count == 3 else count == 3
+
+-- One generation
+extend life sheet
+----
+
+Visual demo: animate the grid, show the comonadic context for each cell.
+
+== The Full Vision
+
+[source]
+----
+Entry Point (familiar)     →    Intermediate           →    Advanced
+─────────────────────────────────────────────────────────────────────
+HOFs in formulas               Fold visualization          Comonadic extend
+=MAP(range, fn)                See SUM's tree              Neighbor contexts
+=FILTER(range, pred)           Recursion scheme picker     Build system modeling
+SQL results as tables          Lens-based data paths       Cellular automata
+PSD3 visualizations            Bidirectional editing       Infrastructure DSL
+----
+
+[quote]
+First, do what they already do, but better. Then show them what else is possible.
+
+== See Also
+
+* xref:understanding/functional-spreadsheets.adoc[Functional Spreadsheets] - The comonad foundation
+* xref:understanding/unified-dsl.adoc[Unified Data DSL] - The unifying architecture

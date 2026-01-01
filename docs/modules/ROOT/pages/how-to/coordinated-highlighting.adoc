@@ -1,0 +1,242 @@
+= Coordinated Highlighting
+:description: Synchronize visual emphasis across multiple views
+:keywords: highlighting, hover, interaction, cross-view
+
+Coordinated highlighting synchronizes visual emphasis across multiple views. When a user hovers over an element in one visualization, related elements in all views respond - some highlighted as primary, others as related, and unrelated elements dimmed.
+
+== The Two-Tier Hover System
+
+PSD3 provides two tiers of hover behavior:
+
+=== Tier 1: Element-Local Hover (Simple)
+
+For basic hover effects that only affect the element itself:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (onHover)
+
+-- Simple style change on hover
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onHover
+        { enter: [{ attr: "stroke", value: "#333" }, { attr: "stroke-width", value: "3" }]
+        , leave: [{ attr: "stroke", value: "#ddd" }, { attr: "stroke-width", value: "1.5" }]
+        }
+    ]
+----
+
+This is CSS-speed, element-local, and requires no coordination. Use it for simple feedback.
+
+=== Tier 2: Coordinated Highlighting (Cross-View)
+
+For synchronized highlighting across multiple visualizations:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (HighlightClass(..), onCoordinatedHighlight)
+import Data.Maybe (Maybe(..))
+
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onCoordinatedHighlight
+        { identify: \d -> d.name           -- What does this element represent?
+        , classify: \hoveredId d ->        -- How should it respond to hover?
+            if d.name == hoveredId then Primary
+            else if hoveredId `elem` d.connections then Related
+            else Dimmed
+        , group: Nothing                   -- Coordination scope (Nothing = global)
+        , tooltip: Nothing                 -- Optional tooltip (see tooltip howto)
+        }
+    ]
+----
+
+== Core Concepts
+
+=== Identity: What Does This Element Represent?
+
+The `identify` function extracts a string identity from the element's datum:
+
+[source,purescript]
+----
+identify: \d -> d.moduleName  -- A module node
+identify: \d -> d.id          -- A generic entity
+identify: \d -> show d.row <> "-" <> show d.col  -- A matrix cell
+----
+
+This identity is broadcast when the element is hovered.
+
+=== Classification: How Should Elements Respond?
+
+The `classify` function receives the hovered identity and the element's datum, returning a `HighlightClass`:
+
+[source,purescript]
+----
+data HighlightClass
+  = Primary   -- The hovered element itself (.highlight-primary)
+  | Related   -- Connected/related elements (.highlight-related)
+  | Dimmed    -- Unrelated elements (.highlight-dimmed)
+  | Neutral   -- No change (default appearance)
+----
+
+Example classifications:
+
+[source,purescript]
+----
+-- Simple same-name matching
+classify: \hoveredId d ->
+  if d.name == hoveredId then Primary else Dimmed
+
+-- Relationship-aware (e.g., dependency graph)
+classify: \hoveredId d ->
+  if d.name == hoveredId then Primary
+  else if hoveredId `elem` d.dependencies then Related
+  else if d.name `elem` getReverseDeps hoveredId then Related
+  else Dimmed
+
+-- Matrix cell (row/column relationships)
+classify: \hoveredId d ->
+  if d.rowName == hoveredId && d.colName == hoveredId then Primary
+  else if d.rowName == hoveredId || d.colName == hoveredId then Related
+  else Dimmed
+----
+
+=== Groups: Scoping Coordination
+
+By default, all elements with `group: Nothing` coordinate globally. Use named groups to isolate coordination:
+
+[source,purescript]
+----
+-- These two views coordinate with each other
+onCoordinatedHighlight { ..., group: Just "main-view" }
+
+-- This view has independent highlighting
+onCoordinatedHighlight { ..., group: Just "detail-panel" }
+----
+
+== CSS Classes
+
+The library applies these CSS classes based on classification:
+
+[source,css]
+----
+/* Primary - the hovered element and its equivalents */
+.highlight-primary {
+  opacity: 1 !important;
+  stroke: #fbbf24 !important;
+  stroke-width: 2px !important;
+}
+
+/* Related - connected elements */
+.highlight-related {
+  opacity: 0.85 !important;
+  stroke: #60a5fa !important;
+  stroke-width: 1.5px !important;
+}
+
+/* Dimmed - unrelated elements */
+.highlight-dimmed {
+  opacity: 0.2 !important;
+}
+----
+
+Customize these in your CSS to match your visualization's aesthetic.
+
+== Pattern: Enriched Datum Types
+
+When using data joins with coordinated highlighting, create enriched datum types that carry everything needed for both rendering AND classification:
+
+[source,purescript]
+----
+-- Enriched type with pre-computed relationships
+type NodeDatum =
+  { id :: String
+  , name :: String
+  , x :: Number
+  , y :: Number
+  , dependencies :: Array String    -- For classification
+  , dependents :: Array String      -- For classification
+  , cluster :: Int                  -- For coloring
+  }
+
+-- Build enriched data before the join
+let enrichedNodes = nodes <#> \n ->
+  { id: n.id
+  , name: n.name
+  , x: n.x
+  , y: n.y
+  , dependencies: getDeps n.id graph
+  , dependents: getReverseDeps n.id graph
+  , cluster: n.cluster
+  }
+
+-- Use in data join with template
+T.joinData "nodes" "g" enrichedNodes $ \node ->
+  T.elem Group [...]
+    `T.withBehaviors`
+      [ onCoordinatedHighlight
+          { identify: _.name
+          , classify: \hoveredId d ->
+              if d.name == hoveredId then Primary
+              else if hoveredId `elem` d.dependencies then Related
+              else if hoveredId `elem` d.dependents then Related
+              else Dimmed
+          , group: Nothing
+          , tooltip: Nothing
+          }
+      ]
+----
+
+== Multiple Element Types
+
+Different element types can participate in the same coordination with different classification logic:
+
+[source,purescript]
+----
+-- Nodes: Primary if same name
+nodeHighlight = onCoordinatedHighlight
+  { identify: _.name
+  , classify: \hoveredId d ->
+      if d.name == hoveredId then Primary else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+
+-- Links: Related if either endpoint matches
+linkHighlight = onCoordinatedHighlight
+  { identify: \l -> l.source.name  -- Links identify by source
+  , classify: \hoveredId l ->
+      if l.source.name == hoveredId || l.target.name == hoveredId
+        then Related
+        else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+
+-- Labels: Primary if same name
+labelHighlight = onCoordinatedHighlight
+  { identify: _.name
+  , classify: \hoveredId d ->
+      if d.name == hoveredId then Primary else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+----
+
+== Important: Datum Timing
+
+The library reads `__data__` fresh at event time, not at registration time. This means you can attach behaviors before D3 binds data to elements - a common pattern with the Tree API's `T.withBehaviors`.
+
+== Cleanup
+
+When re-rendering visualizations, call `clearAllHighlights_` to reset state:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.FFI (clearAllHighlights_)
+
+-- Before re-rendering
+liftEffect clearAllHighlights_
+----
+
+This removes all highlight classes and clears the element registry.

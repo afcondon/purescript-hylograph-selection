@@ -1,0 +1,217 @@
+= Unified Data DSL: Bridging Computation and Visualization
+:description: A finally-tagless DSL where spreadsheets and visualizations share the same operations
+:keywords: DSL, finally tagless, data flow, spreadsheet, visualization
+
+== The Core Insight
+
+Traditional thinking separates:
+
+* *Spreadsheets*: compute values from data
+* *Visualizations*: render data to DOM
+
+But at their core, both are doing the same thing: *transforming data through a typed pipeline*. The only difference is what comes out the other end.
+
+[source]
+----
+Data Source → [map/fold/filter] → Output
+                    ↓
+            Spreadsheet: Values
+            Visualization: DOM Trees
+            Analysis: Statistics
+            Export: JSON/CSV
+----
+
+This document describes a *unified finally-tagless DSL* where:
+
+1. Data flow operations are defined once, abstractly
+2. Different interpreters produce different outputs
+3. The same computation can be a spreadsheet cell AND a visualization
+4. Types ensure correctness across both worlds
+
+== Part 1: The Unified DataDSL
+
+=== Core Type Class
+
+[source,purescript]
+----
+-- | The fundamental operations on data, independent of output type
+class DataDSL repr where
+  -- Primitives
+  num    :: Number -> repr Number
+  str    :: String -> repr String
+  bool   :: Boolean -> repr Boolean
+
+  -- Data source binding ("join points")
+  source :: forall a. DataSource a -> repr (Array a)
+
+  -- The universal data operations
+  mapA    :: forall a b. (a -> b) -> repr (Array a) -> repr (Array b)
+  foldA   :: forall a b. (b -> a -> b) -> b -> repr (Array a) -> repr b
+  filterA :: forall a. (a -> Boolean) -> repr (Array a) -> repr (Array a)
+  zipA    :: forall a b. repr (Array a) -> repr (Array b) -> repr (Array (Tuple a b))
+
+  -- Arithmetic
+  add :: repr Number -> repr Number -> repr Number
+  mul :: repr Number -> repr Number -> repr Number
+----
+
+=== Why This is Profound
+
+This captures the essence of D3's data join:
+
+[source,javascript]
+----
+// D3
+selection.selectAll("rect")
+  .data(myData)           // ← source
+  .join("rect")
+  .attr("height", d => d.value)  // ← mapA (\d -> d.value)
+----
+
+And the essence of spreadsheet formulas:
+
+[source]
+----
+=MAP(A1:A10, x => x * 1.1)   -- mapA (\x -> x * 1.1) (source range)
+=SUM(B1:B10)                  -- foldA (+) 0 (source range)
+=FILTER(C1:C10, x => x > 0)   -- filterA (\x -> x > 0) (source range)
+----
+
+*They are the same operations.* Only the interpreter differs.
+
+== Part 2: Data Sources as Join Points
+
+In D3, a data join binds data to DOM elements. In our unified model, a *join point* is where data enters a computation pipeline:
+
+[source,purescript]
+----
+source :: DataSource a -> repr (Array a)
+
+-- This single operation replaces:
+-- - D3's selection.data()
+-- - Spreadsheet's cell range reference
+-- - Database query execution
+-- - File loading
+----
+
+The key insight: *the join point is abstract*. The interpreter decides what "binding data" means:
+
+* In a spreadsheet: look up cell values
+* In D3: bind to DOM selection
+* In analysis: load from database
+* In testing: inject mock data
+
+== Part 3: Display as Profunctor
+
+Display transformations are *typed morphisms* that compose:
+
+[source,purescript]
+----
+-- | Percentage: Number -> String
+-- | Pipeline: scale by 100 → round to 1 decimal → show → add "%"
+percentageD :: forall repr. DisplayPrimitives repr => repr Number String
+percentageD =
+  suffixD "%" `composeD` fixedD 1 `composeD` scaleD 100.0
+
+-- | Currency: Number -> String
+currencyD :: forall repr. DisplayPrimitives repr => repr Number String
+currencyD =
+  prefixD "$" `composeD` fixedD 2
+----
+
+The profunctor structure gives us:
+
+1. *Reusability*: Define `percentageD` once, use it anywhere
+2. *Composability*: Chain transformations type-safely
+3. *Adaptability*: `lmapD` adapts display to any source type
+
+== Part 4: The Same Computation, Multiple Interpretations
+
+[source,purescript]
+----
+-- | Define a computation abstractly
+quarterlyAnalysis :: forall repr. DataDSL repr =>
+  DataSource Quarter -> repr (Array GrowthRate)
+quarterlyAnalysis src =
+  mapA computeGrowth $
+    filterA (_.revenue >>> (_ > 0.0)) $
+      source src
+
+-- | Spreadsheet interpretation: produces cell values
+runAsSheet :: Array GrowthRate
+runAsSheet = evalSheet (quarterlyAnalysis quarterlyData)
+
+-- | Visualization interpretation: produces a bar chart
+runAsViz :: Tree GrowthRate
+runAsViz = evalViz $
+  join (quarterlyAnalysis quarterlyData) \rate ->
+    elem Rect
+      [ height (scaleY rate.value)
+      , fill "steelblue"
+      ]
+
+-- | Analysis interpretation: produces statistics
+runAsStats :: Statistics
+runAsStats = evalStats (quarterlyAnalysis quarterlyData)
+----
+
+== Part 5: Decomposing PSD3's Join Variants
+
+=== Current PSD3 Structure (Problematic)
+
+PSD3 currently has four join constructors:
+
+[source,purescript]
+----
+data Tree datum
+  = Node (TreeNode datum)
+  | Join { ... }              -- Basic
+  | NestedJoin { ... }        -- + decompose
+  | UpdateJoin { ... }        -- + GUP behaviors
+  | UpdateNestedJoin { ... }  -- + decompose + GUP
+----
+
+This is a *Cartesian product* of features, leading to exponential growth.
+
+=== Decomposed Design (Proposed)
+
+Factor into orthogonal, composable concerns:
+
+[source,purescript]
+----
+-- | Core join: bind data to template
+class JoinDSL repr where
+  join :: forall a. repr (Array a) -> (a -> repr (Tree a)) -> repr (Tree a)
+
+-- | Decomposition: extract nested data
+class JoinDSL repr <= NestedJoinDSL repr where
+  withDecompose :: forall outer inner.
+    (outer -> Array inner) -> ...
+
+-- | GUP behaviors: enter/update/exit
+class JoinDSL repr <= GUPDSL repr where
+  withGUP :: forall a. GUPBehaviors a -> ...
+
+-- | Compose them freely
+myViz =
+  withGUP enterFadeIn $
+    withDecompose _.points $
+      join sourceData pointTemplate
+----
+
+== The Philosophical Win
+
+Data visualization and data computation are *not separate disciplines*. They are two views of the same underlying reality: *typed data flowing through transformations*.
+
+By unifying the DSL, we:
+
+1. Eliminate artificial boundaries between "spreadsheet people" and "visualization people"
+2. Enable live links between computed values and their visual representations
+3. Make the full power of functional programming available in both contexts
+4. Create a foundation for tools that truly integrate analysis and presentation
+
+== See Also
+
+* xref:understanding/functional-spreadsheets.adoc[Functional Spreadsheets] - The comonad foundation
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture] - The encoding technique
+* xref:understanding/design-decisions.adoc[Design Decisions] - Pragmatic choices

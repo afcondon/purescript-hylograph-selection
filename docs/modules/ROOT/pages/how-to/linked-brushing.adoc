@@ -1,0 +1,202 @@
+= Linked Brushing
+:description: How to implement linked brushing across multiple views
+:keywords: brushing, linked views, selection, cross-filtering
+
+Linked brushing lets users select elements in one view and see corresponding elements highlighted in all other views. This is a powerful technique for exploring multi-dimensional data.
+
+== What is Linked Brushing?
+
+When you brush (drag to select) in one view:
+
+1. Elements in the brushed region become "selected"
+2. Corresponding elements in other views are highlighted
+3. Non-corresponding elements are dimmed
+
+This creates a coordinated multi-view exploration experience.
+
+== Architecture Overview
+
+[source]
+----
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Scatter Plot  │     │    Bar Chart    │     │   Parallel Coords│
+│                 │     │                 │     │                  │
+│  ┌───┐          │     │  ▓▓▓▓          │     │  ╱╲              │
+│  │   │ brush    │────►│  ░░░░          │     │ ╱  ╲             │
+│  └───┘          │     │  ░░░░          │     │╱    ╲            │
+│                 │     │                 │     │                  │
+└────────┬────────┘     └────────┬────────┘     └────────┬─────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │   Shared Selection Set   │
+                    │   (Effect.Ref or State)  │
+                    └─────────────────────────┘
+----
+
+== Implementation
+
+=== 1. Define Selection State
+
+[source,purescript]
+----
+type SelectionState =
+  { selectedIds :: Set String
+  , brushExtent :: Maybe BrushExtent
+  }
+
+type BrushExtent =
+  { x0 :: Number, y0 :: Number
+  , x1 :: Number, y1 :: Number
+  }
+----
+
+=== 2. Set Up the Brush Behavior
+
+[source,purescript]
+----
+import PSD3.Brush (Brush, brush, brushX, brushY, onBrush, onBrushEnd)
+
+scatterPlot :: Array DataPoint -> (Set String -> Effect Unit) -> A.AST DataPoint
+scatterPlot points onSelectionChange =
+  A.named SVG "scatter" [ width (num 400.0), height (num 400.0) ]
+    `A.withChildren`
+      [ -- Brush overlay (must be on top for events)
+        A.elem Group [ class_ (text "brush") ]
+          `A.withBehaviors`
+            [ brush
+                { extent: [[0.0, 0.0], [400.0, 400.0]]
+                , onBrush: \extent -> do
+                    let selected = findPointsInExtent points extent
+                    onSelectionChange selected
+                , onBrushEnd: \mExtent ->
+                    case mExtent of
+                      Nothing -> onSelectionChange Set.empty  -- Brush cleared
+                      Just extent -> pure unit  -- Keep current selection
+                }
+            ]
+
+      -- Data points
+      , A.joinData "points" "circle" points \d ->
+          A.elem Circle
+            [ cx (from _.x), cy (from _.y), r (num 4.0)
+            , class_ (text "data-point")
+            ]
+      ]
+
+findPointsInExtent :: Array DataPoint -> BrushExtent -> Set String
+findPointsInExtent points { x0, y0, x1, y1 } =
+  Set.fromFoldable
+    $ map _.id
+    $ filter (\p -> p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1) points
+----
+
+=== 3. Apply Selection to All Views
+
+[source,purescript]
+----
+barChart :: Array DataPoint -> Set String -> A.AST DataPoint
+barChart points selectedIds =
+  A.elem SVG [ width (num 400.0), height (num 300.0) ]
+    `A.withChild`
+      A.joinData "bars" "rect" points \d ->
+        A.elem Rect
+          [ x (from \p _ -> toNumber (indexOf p points) * 20.0)
+          , y (from _.value >>> negate >>> (_ + 300.0))
+          , width (num 18.0)
+          , height (from _.value)
+          , class_ (text $ if Set.member d.id selectedIds
+                            then "bar selected"
+                            else "bar dimmed")
+          ]
+----
+
+=== 4. Style Selected vs Dimmed
+
+[source,css]
+----
+.data-point, .bar {
+  transition: opacity 0.15s, fill 0.15s;
+}
+
+.selected {
+  opacity: 1;
+  fill: coral;
+}
+
+.dimmed {
+  opacity: 0.2;
+}
+
+/* When nothing is selected, show everything */
+.data-point:not(.selected):not(.dimmed),
+.bar:not(.selected):not(.dimmed) {
+  opacity: 1;
+}
+----
+
+== Integrating with Halogen
+
+[source,purescript]
+----
+type State =
+  { data :: Array DataPoint
+  , selectedIds :: Set String
+  }
+
+data Action
+  = SelectionChanged (Set String)
+
+render :: State -> H.ComponentHTML Action () m
+render state =
+  HH.div_
+    [ HH.div [ HP.ref scatterRef ] []  -- Scatter with brush
+    , HH.div [ HP.ref barRef ] []      -- Bar chart
+    , HH.div [ HP.ref parallelRef ] [] -- Parallel coordinates
+    ]
+
+handleAction = case _ of
+  SelectionChanged ids -> do
+    H.modify_ _ { selectedIds = ids }
+    -- Re-render all views with new selection
+    state <- H.get
+    renderAllViews state
+----
+
+== Brush Types
+
+PSD3 supports several brush types:
+
+[source,purescript]
+----
+-- 2D rectangular brush
+brush { extent, onBrush, onBrushEnd }
+
+-- Horizontal brush only (for bar charts, timelines)
+brushX { extent, onBrush, onBrushEnd }
+
+-- Vertical brush only
+brushY { extent, onBrush, onBrushEnd }
+----
+
+== Performance Considerations
+
+For large datasets:
+
+1. *Debounce brush events* - Don't update on every pixel
+2. *Use CSS classes* instead of re-rendering for selection changes
+3. *Consider WebGL* for 10k+ points
+
+[source,purescript]
+----
+-- Debounced brush handler
+onBrush: debounce 50 \extent -> do
+  let selected = findPointsInExtent points extent
+  onSelectionChange selected
+----
+
+== Next Steps
+
+* xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] - Hover-based coordination
+* xref:how-to/zoom.adoc[Zoomable Visualizations] - Pan and zoom

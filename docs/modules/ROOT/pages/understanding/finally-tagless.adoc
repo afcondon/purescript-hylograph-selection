@@ -1,0 +1,78 @@
+= Finally Tagless Architecture
+:description: Understanding PSD3's core architectural pattern
+:keywords: finally tagless, architecture, interpreters, DSL
+
+PSD3 uses the *finally tagless* encoding for its attribute expressions. This enables the same visualization code to be interpreted in multiple ways - rendering to the DOM, generating test strings, or producing documentation.
+
+== What is Finally Tagless?
+
+Finally tagless is a technique for building DSLs (domain-specific languages) where:
+
+1. You define operations as type class methods
+2. Different interpreters implement the type class differently
+3. The same expression can be interpreted multiple ways
+
+== The Problem It Solves
+
+Consider attribute expressions. You might want to:
+
+* *Render* them to actual DOM attributes
+* *Stringify* them for testing
+* *Analyze* them for documentation
+
+With a traditional AST (initial encoding), you'd need pattern matching for each use case. With finally tagless, each interpreter just implements the interface.
+
+== PSD3's Expression System
+
+[source,purescript]
+----
+-- The type class defines what operations exist
+class Expr repr where
+  num :: Number -> repr Number
+  text :: String -> repr String
+  plus :: repr Number -> repr Number -> repr Number
+  field :: forall @sym a r. IsSymbol sym => Cons sym a r r'
+        => repr { | r' } -> repr a
+  -- ... more operations
+----
+
+Different interpreters give different meanings:
+
+[source,purescript]
+----
+-- D3 interpreter: produces actual values
+instance Expr D3Expr where
+  num n = D3Expr \_ _ -> n
+  plus a b = D3Expr \d i -> runD3Expr a d i + runD3Expr b d i
+
+-- String interpreter: produces descriptions
+instance Expr StringExpr where
+  num n = StringExpr $ show n
+  plus a b = StringExpr $ "(" <> runStringExpr a <> " + " <> runStringExpr b <> ")"
+----
+
+== Why This Matters for You
+
+1. *Testability*: Your visualization specs can be tested without a browser
+2. *Documentation*: The same code can generate human-readable descriptions
+3. *Debugging*: Multiple views of what your code actually does
+
+== The Practical Upshot
+
+You write:
+
+[source,purescript]
+----
+xPosition = field @"x" `times` num 40.0 `plus` num 50.0
+----
+
+And PSD3 can:
+
+* Evaluate it for rendering: `180.0` (given `{ x: 3.25 }`)
+* Stringify it for testing: `"(x * 40.0 + 50.0)"`
+* Document it: "x coordinate scaled by 40, offset by 50"
+
+== Further Reading
+
+* xref:understanding/the-ast.adoc[The Selection AST]
+* xref:understanding/interpreters.adoc[Interpreters]

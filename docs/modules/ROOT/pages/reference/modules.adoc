@@ -1,0 +1,100 @@
+= Module Overview
+:description: Guide to PSD3 Selection modules
+:keywords: modules, API, reference
+
+This page provides an overview of the module structure. For complete API documentation, see https://pursuit.purescript.org/packages/purescript-psd3-selection[Pursuit^].
+
+== Core Modules
+
+`PSD3`::
+Re-exports the essential API. Start here for most use cases.
+
+`PSD3.AST`::
+Tree building: `elem`, `named`, `withChild`, `joinData`, etc.
+
+`PSD3.Expr.Friendly`::
+Attribute DSL: `num`, `text`, `width`, `cx`, `fill`, etc.
+
+`PSD3.Render`::
+DOM rendering: `runD3`, `select`, `renderTree`.
+
+== Interpreters
+
+`PSD3.Interpreter.D3`::
+The primary DOM renderer.
+
+`PSD3.Interpreter.English`::
+Human-readable descriptions.
+
+`PSD3.Interpreter.Mermaid`::
+AST structure diagrams.
+
+`PSD3.Interpreter.MetaAST`::
+Untyped AST conversion.
+
+== Internal Modules
+
+These are implementation details but useful for advanced use:
+
+`PSD3.Internal.Behavior.Types`::
+Behaviors: `Drag`, `Zoom`, `onCoordinatedHighlight`.
+
+`PSD3.Internal.Selection.*`::
+Low-level selection operations.
+
+`PSD3.Internal.Transition.*`::
+Animation primitives.
+
+== Data Modules
+
+`PSD3.Data.Node`::
+`SimulationNode` for force layouts.
+
+`PSD3.Data.Tree`::
+Tree data structures.
+
+`PSD3.Data.Graph`::
+Graph structures and algorithms.
+
+== Expression System
+
+`PSD3.Expr.Expr`::
+Core expression types.
+
+`PSD3.Expr.Attr`::
+Attribute constructors.
+
+`PSD3.Expr.Interpreter.*`::
+Expression interpreters (Eval, SVG, CodeGen).
+
+== Scale Module
+
+`PSD3.Scale`::
+D3 scale wrappers: `linear`, `ordinal`, `band`, color schemes.
+
+== Import Patterns
+
+=== Basic Visualization
+
+[source,purescript]
+----
+import PSD3.AST as A
+import PSD3.AST (ElementType(..))
+import PSD3.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
+import PSD3.Render (runD3, select, renderTree)
+----
+
+=== With Behaviors
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types
+  (Behavior(..), defaultDrag, defaultZoom, onCoordinatedHighlight)
+----
+
+=== With Scales
+
+[source,purescript]
+----
+import PSD3.Scale (linear, domain, range, applyScale)
+----

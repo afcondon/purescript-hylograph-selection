@@ -1,0 +1,54 @@
+= PSD3 Selection
+:description: Type-safe D3 selection and attribute library for PureScript
+
+Type-safe D3 selection and attribute library for PureScript.
+
+== What is PSD3 Selection?
+
+PSD3 Selection brings D3.js-style data visualization to PureScript with full type safety. Instead of imperative D3 method chaining, you build a *tree AST* that describes your visualization, then interpret it to render.
+
+[source,purescript]
+----
+myViz :: T.Tree Unit
+myViz =
+  T.named SVG "chart"
+    [ attr "width" $ num 400.0
+    , attr "height" $ num 300.0
+    ]
+    `T.withChild`
+      T.elem Circle
+        [ cx $ num 200.0
+        , cy $ num 150.0
+        , r $ num 50.0
+        , fill $ text "steelblue"
+        ]
+----
+
+== Why PSD3?
+
+*Declarative*:: Build visualizations as data structures, not imperative sequences
+*Type-safe*:: Catch errors at compile time, not runtime
+*Testable*:: Multiple interpreters - render to DOM, to strings, to Mermaid diagrams
+*Composable*:: Tree structures compose naturally
+
+== Getting Started
+
+New to PSD3? Start here:
+
+* xref:getting-started/your-first-selection.adoc[Your First Selection] - Create your first visualization in 10 minutes
+* xref:getting-started/bar-chart.adoc[Building a Bar Chart] - A complete example from data to interactive chart
+* xref:getting-started/from-d3.adoc[From D3.js to PSD3] - For users with D3 background
+
+== Installation
+
+[source,bash]
+----
+spago install psd3-selection
+----
+
+== Part of the PSD3 Ecosystem
+
+* *psd3-tree* - Tree data structures (dependency)
+* *psd3-selection* - D3 selection library (this package)
+* *psd3-layouts* - Layout algorithms (trees, Sankey, force)
+* *psd3-graph* - Graph algorithms and analysis

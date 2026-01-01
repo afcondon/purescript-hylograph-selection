@@ -1,0 +1,91 @@
+= Interpreters
+:description: The multiple backends that bring PSD3 visualizations to life
+:keywords: interpreters, D3, rendering, testing
+
+The same PSD3 visualization can be interpreted multiple ways. This page covers the available interpreters and when to use each.
+
+== Available Interpreters
+
+=== D3 Interpreter (Primary)
+
+Renders your visualization to the DOM via D3.js.
+
+[source,purescript]
+----
+import PSD3.Render (runD3, select, renderTree)
+
+main = void $ runD3 do
+  container <- select "#chart"
+  renderTree container myViz
+----
+
+*Use for*: Production rendering in the browser.
+
+=== English Interpreter
+
+Produces a human-readable description of what the visualization will do.
+
+[source,purescript]
+----
+import PSD3.Interpreter.English (toEnglish)
+
+description = toEnglish myViz
+-- "Create an SVG element with width 400 and height 300,
+--  containing a circle at (200, 150) with radius 50..."
+----
+
+*Use for*: Documentation, debugging, accessibility descriptions.
+
+=== Mermaid Interpreter
+
+Generates a Mermaid diagram showing the AST structure.
+
+[source,purescript]
+----
+import PSD3.Interpreter.Mermaid (toMermaid)
+
+diagram = toMermaid myViz
+-- "graph TD\n  A[SVG] --> B[Circle]\n  ..."
+----
+
+*Use for*: Visualizing complex tree structures, documentation.
+
+=== MetaAST Interpreter
+
+Converts the typed AST to a simpler untyped representation.
+
+[source,purescript]
+----
+import PSD3.Interpreter.MetaAST (toMetaAST)
+
+meta = toMetaAST myViz
+----
+
+*Use for*: Serialization, cross-language interop, tooling.
+
+== Writing Custom Interpreters
+
+Since the AST is just data, you can write your own interpreters:
+
+[source,purescript]
+----
+-- Count elements in a visualization
+countElements :: forall datum. Tree datum -> Int
+countElements (Node node) = 1 + sum (map countElements node.children)
+countElements (Join j) = 1  -- Count the join itself
+countElements _ = 1
+----
+
+== The Interpreter Pattern
+
+This is the power of the declarative approach:
+
+1. *Describe* what you want (build the tree)
+2. *Interpret* it however you need (render, test, document)
+
+The same visualization spec serves multiple purposes without modification.
+
+== Further Reading
+
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture]
+* xref:understanding/the-ast.adoc[The Selection AST]

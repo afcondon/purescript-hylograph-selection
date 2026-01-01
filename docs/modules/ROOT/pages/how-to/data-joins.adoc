@@ -1,0 +1,37 @@
+= Data Joins Deep Dive
+:description: Advanced patterns for data binding in PSD3
+:keywords: data joins, enter, update, exit, GUP
+
+[NOTE]
+====
+This guide is coming soon. It will cover:
+
+* The General Update Pattern (GUP)
+* `joinData` vs `updateJoin` vs `nestedJoin`
+* Key functions for identity matching
+* Enter/update/exit transitions
+* Nested data structures
+====
+
+== Quick Reference
+
+[source,purescript]
+----
+-- Simple join (no transitions)
+A.joinData "circles" "circle" myData $ \d ->
+  A.elem Circle [ cx (from _.x), cy (from _.y) ]
+
+-- With enter/update/exit
+A.updateJoin "circles" "circle" myData
+  (\d -> A.elem Circle [ cx (from _.x), cy (from _.y) ])
+  { enter: Just { attrs: [ opacity (num 0.0) ], transition: Just fadeIn }
+  , update: Just { attrs: [], transition: Just move }
+  , exit: Just { attrs: [], transition: Just fadeOut }
+  , keyFn: Just _.id
+  }
+----
+
+== Next Steps
+
+* xref:getting-started/bar-chart.adoc[Building a Bar Chart]
+* xref:how-to/transitions.adoc[Animated Transitions]

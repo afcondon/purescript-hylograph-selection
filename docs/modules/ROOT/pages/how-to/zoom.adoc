@@ -1,0 +1,189 @@
+= Making Visualizations Zoomable
+:description: How to add pan and zoom functionality to visualizations
+:keywords: zoom, pan, interactive, navigation
+
+Zoom and pan allow users to explore large or detailed visualizations. This guide shows how to add zoom behavior to your PSD3 visualizations.
+
+== Basic Zoom Setup
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.Types (Behavior(..), ZoomBehavior(..), ScaleExtent(..))
+
+zoomableViz :: A.AST Unit
+zoomableViz =
+  A.named SVG "svg"
+    [ width (num 800.0)
+    , height (num 600.0)
+    ]
+    `A.withBehaviors`
+      [ Zoom $ defaultZoom (ScaleExtent 0.5 10.0) ".zoom-group" ]
+    `A.withChild`
+      A.named Group "zoom-group"
+        [ class_ (text "zoom-group") ]
+        `A.withChildren`
+          [ -- Your visualization content here
+            A.elem Circle [ cx (num 400.0), cy (num 300.0), r (num 50.0) ]
+          ]
+----
+
+== How It Works
+
+1. *Zoom behavior* attaches to the SVG (captures mouse/touch events)
+2. *Transform* is applied to a child group (the `.zoom-group`)
+3. Content inside the group moves and scales together
+
+[source]
+----
+<svg>                         ← Captures zoom events
+  <g class="zoom-group"       ← Receives transform
+     transform="translate(100,50) scale(2)">
+    <circle .../>             ← Moves with the group
+    <rect .../>
+  </g>
+</svg>
+----
+
+== Zoom Configuration
+
+[source,purescript]
+----
+-- Scale extent: min and max zoom levels
+ScaleExtent 0.1 10.0   -- Can zoom out to 10%, in to 1000%
+ScaleExtent 1.0 5.0    -- No zoom out, up to 5x zoom in
+
+-- Default zoom helper
+defaultZoom :: ScaleExtent -> Selector -> ZoomBehavior
+defaultZoom extent targetSelector = ZoomBehavior
+  { scaleExtent: extent
+  , target: targetSelector
+  , onZoom: Nothing  -- Use default transform behavior
+  }
+----
+
+== Custom Zoom Handlers
+
+For more control, provide a custom zoom handler:
+
+[source,purescript]
+----
+Zoom $ ZoomBehavior
+  { scaleExtent: ScaleExtent 0.5 10.0
+  , target: ".zoom-group"
+  , onZoom: Just \transform -> do
+      -- transform :: { k :: Number, x :: Number, y :: Number }
+      -- k = scale, x/y = translation
+
+      -- Update some state based on zoom
+      when (transform.k > 5.0) do
+        showDetailedLabels
+
+      -- Log zoom level
+      log $ "Zoom: " <> show transform.k
+  }
+----
+
+== Zoom with Semantic Levels
+
+Change what's displayed based on zoom level:
+
+[source,purescript]
+----
+type ZoomLevel = Overview | Intermediate | Detailed
+
+zoomLevelFromScale :: Number -> ZoomLevel
+zoomLevelFromScale k
+  | k < 1.5 = Overview
+  | k < 4.0 = Intermediate
+  | otherwise = Detailed
+
+-- In your visualization, render different content per level
+renderAtZoomLevel :: ZoomLevel -> Array DataPoint -> A.AST DataPoint
+renderAtZoomLevel level points = case level of
+  Overview ->
+    -- Just show dots
+    A.joinData "points" "circle" points \d ->
+      A.elem Circle [ cx (from _.x), cy (from _.y), r (num 3.0) ]
+
+  Intermediate ->
+    -- Show dots with labels on hover
+    A.joinData "points" "g" points \d ->
+      A.elem Group []
+        `A.withChildren`
+          [ A.elem Circle [ cx (from _.x), cy (from _.y), r (num 5.0) ]
+          , A.elem Text [ x (from _.x), y (from _.y), opacity (num 0.0) ]
+              `A.withBehaviors` [ showOnHover ]
+          ]
+
+  Detailed ->
+    -- Always show labels
+    A.joinData "points" "g" points \d ->
+      A.elem Group []
+        `A.withChildren`
+          [ A.elem Circle [ cx (from _.x), cy (from _.y), r (num 8.0) ]
+          , A.elem Text [ x (from _.x), y (from _.y), textContent (from _.name) ]
+          ]
+----
+
+== Zoom to Fit
+
+Programmatically zoom to show all content:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.FFI (zoomTo, zoomIdentity)
+
+-- Zoom to show a specific bounding box
+zoomToFit :: D3Selection -> BoundingBox -> Effect Unit
+zoomToFit svg { x, y, width, height } = do
+  let svgWidth = 800.0
+      svgHeight = 600.0
+      scale = min (svgWidth / width) (svgHeight / height) * 0.9
+      translateX = svgWidth / 2.0 - scale * (x + width / 2.0)
+      translateY = svgHeight / 2.0 - scale * (y + height / 2.0)
+  zoomTo svg { k: scale, x: translateX, y: translateY }
+
+-- Reset zoom to identity
+resetZoom :: D3Selection -> Effect Unit
+resetZoom svg = zoomIdentity svg
+----
+
+== Combining Zoom with Drag
+
+When elements are draggable inside a zoomable container:
+
+[source,purescript]
+----
+-- The zoom group handles panning
+A.named SVG "svg" [...]
+  `A.withBehaviors` [ Zoom $ defaultZoom (ScaleExtent 0.5 5.0) ".zoom-group" ]
+  `A.withChild`
+    A.named Group "zoom-group" [ class_ (text "zoom-group") ]
+      `A.withChild`
+        -- Individual nodes are draggable
+        A.joinData "nodes" "g" nodes \node ->
+          A.elem Group [...]
+            `A.withBehaviors`
+              [ Drag SimpleDrag ]  -- Drag works in zoomed coordinates
+----
+
+== Mobile Touch Support
+
+Zoom behavior automatically handles touch events:
+
+* *Pinch*: Two-finger pinch to zoom
+* *Pan*: One-finger drag to pan (when zoom is active)
+* *Double-tap*: Zoom in
+
+No additional configuration needed.
+
+== Performance Tips
+
+1. *Use CSS transforms* - They're GPU-accelerated
+2. *Throttle zoom callbacks* for expensive operations
+3. *Consider level-of-detail* to reduce rendering at low zoom
+
+== Next Steps
+
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Integrate zoom with app state
+* xref:how-to/linked-brushing.adoc[Linked Brushing] - Another interaction pattern

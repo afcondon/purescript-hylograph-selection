@@ -1,0 +1,54 @@
+= From D3.js to PSD3
+:description: Guide for D3.js developers transitioning to PSD3
+:keywords: D3, migration, comparison
+
+[NOTE]
+====
+This guide is coming soon. It will cover:
+
+* Key conceptual differences
+* Mapping D3 patterns to PSD3
+* Common gotchas
+* When to use the escape hatches
+====
+
+== Quick Comparison
+
+|===
+| D3.js | PSD3
+
+| Imperative method chaining
+| Declarative tree building
+
+| Mutable selections
+| Immutable AST
+
+| Runtime errors
+| Compile-time type safety
+
+| Single interpreter (DOM)
+| Multiple interpreters (DOM, String, Mermaid)
+|===
+
+== The Big Idea
+
+In D3, you *do* things to the DOM:
+
+[source,javascript]
+----
+d3.select("body").append("svg").attr("width", 400)...
+----
+
+In PSD3, you *describe* what you want:
+
+[source,purescript]
+----
+A.elem SVG [ width (num 400.0) ] `A.withChild` ...
+----
+
+Then an interpreter renders it.
+
+== Next Steps
+
+* xref:getting-started/your-first-selection.adoc[Your First Selection]
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture]

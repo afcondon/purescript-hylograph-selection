@@ -1,0 +1,36 @@
+{
+  "name": "purescript-psd3-selection",
+  "version": "1.0.0",
+  "description": "Type-safe D3 selection and attribute library for PureScript.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs": "npx antora antora-playbook.yml",
+    "docs:pdf": "cd docs && asciidoctor-pdf -a allow-uri-read -o ../build/psd3-selection-book.pdf psd3-selection-book.adoc",
+    "docs:serve": "npm run docs && cd build/site && python3 -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afcondon/purescript-psd3-selection.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/afcondon/purescript-psd3-selection/issues"
+  },
+  "homepage": "https://github.com/afcondon/purescript-psd3-selection#readme",
+  "dependencies": {
+    "d3": "^7.9.0",
+    "d3-scale": "^4.0.2",
+    "d3-selection": "^3.0.0"
+  },
+  "devDependencies": {
+    "@antora/cli": "^3.1.14",
+    "@antora/site-generator": "^3.1.14"
+  }
+}

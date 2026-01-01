@@ -1,0 +1,136 @@
+= Web App Architecture with PSD3
+:description: Recommended architecture for web applications with data visualization
+:keywords: architecture, Halogen, webapp, structure
+
+Building a web application with a data visualization component requires thinking about how user interactions flow between your UI framework and your visualizations. This guide covers the recommended architecture.
+
+== The Core Pattern
+
+[source]
+----
+┌─────────────────────────────────────────────────────────┐
+│                    Halogen Component                     │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │    State    │◄───│   Query/    │◄───│   Action    │  │
+│  │             │    │   Action    │    │   Handler   │  │
+│  └──────┬──────┘    └─────────────┘    └──────▲──────┘  │
+│         │                                      │         │
+│         ▼                                      │         │
+│  ┌─────────────┐                        ┌──────┴──────┐  │
+│  │   Render    │                        │  Callbacks  │  │
+│  │   (HTML)    │                        │  from PSD3  │  │
+│  └──────┬──────┘                        └──────▲──────┘  │
+└─────────┼──────────────────────────────────────┼─────────┘
+          │                                      │
+          ▼                                      │
+┌─────────────────────────────────────────────────────────┐
+│                    PSD3 Visualization                    │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │  AST Tree   │───►│ D3 Renderer │───►│    DOM      │  │
+│  └─────────────┘    └─────────────┘    └──────┬──────┘  │
+│                                               │         │
+│                     Behaviors ◄───────────────┘         │
+│                     (drag, click, zoom)                 │
+└─────────────────────────────────────────────────────────┘
+----
+
+== Key Concepts
+
+*Halogen owns the state*:: Your Halogen component holds the application state. The visualization is a view of that state.
+
+*PSD3 renders declaratively*:: You build an AST from your state, PSD3 renders it. When state changes, you re-render.
+
+*Events flow back via callbacks*:: Clicks, drags, and hovers in the visualization trigger callbacks that become Halogen actions.
+
+== Basic Structure
+
+[source,purescript]
+----
+module MyApp.Visualization where
+
+import Halogen as H
+import Halogen.HTML as HH
+import PSD3 as P
+
+type State =
+  { data :: Array DataPoint
+  , selectedId :: Maybe String
+  }
+
+data Action
+  = Initialize
+  | DataPointClicked String
+  | DataPointDragged String { x :: Number, y :: Number }
+
+component :: forall q i o m. MonadEffect m => H.Component q i o m
+component = H.mkComponent
+  { initialState: \_ -> { data: [], selectedId: Nothing }
+  , render
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      , initialize = Just Initialize
+      }
+  }
+
+render :: State -> H.ComponentHTML Action () m
+render state =
+  HH.div
+    [ HP.ref (H.RefLabel "viz-container") ]
+    []  -- PSD3 will render into this div
+
+handleAction :: forall o m. MonadEffect m => Action -> H.HalogenM State Action () o m Unit
+handleAction = case _ of
+  Initialize -> do
+    -- Get the container element and render initial visualization
+    mContainer <- H.getRef (H.RefLabel "viz-container")
+    for_ mContainer \container -> do
+      state <- H.get
+      liftEffect $ renderVisualization container state handleVizEvent
+
+  DataPointClicked id -> do
+    H.modify_ _ { selectedId = Just id }
+    -- Re-render visualization with new selection
+    reRender
+
+  DataPointDragged id pos -> do
+    H.modify_ \s -> s { data = updatePosition id pos s.data }
+    reRender
+----
+
+== The Callback Bridge
+
+The key to integrating PSD3 with Halogen is the callback bridge:
+
+[source,purescript]
+----
+-- In your visualization module
+renderVisualization
+  :: Element
+  -> State
+  -> (VizEvent -> Effect Unit)  -- Callback to Halogen
+  -> Effect Unit
+renderVisualization container state onEvent = void $ runD3 do
+  svg <- select container
+  let ast = buildVisualization state onEvent
+  renderTree svg ast
+
+buildVisualization :: State -> (VizEvent -> Effect Unit) -> P.AST DataPoint
+buildVisualization state onEvent =
+  P.elem SVG [ width (num 800.0), height (num 600.0) ]
+    `P.withChild`
+      P.joinData "points" "circle" state.data \d ->
+        P.elem Circle
+          [ cx (from _.x)
+          , cy (from _.y)
+          , r (num 5.0)
+          ]
+          `P.withBehaviors`
+            [ onClick \datum -> onEvent (PointClicked datum.id)
+            , onDrag \datum pos -> onEvent (PointDragged datum.id pos)
+            ]
+----
+
+== Next Steps
+
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Detailed event handling
+* xref:how-to/simple-webpage.adoc[PSD3 without Halogen] - Simpler setups

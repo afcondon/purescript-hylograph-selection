@@ -1,0 +1,221 @@
+= Reimagining the Spreadsheet with Functional Programming
+:description: Exploring spreadsheets through comonads, recursion schemes, and lenses
+:keywords: comonad, recursion schemes, lenses, spreadsheet, functional programming
+
+_A design exploration for psd3-sheetless_
+
+== The Insight
+
+Traditional spreadsheets are secretly functional programs in disguise - they just don't know it. Every formula is a pure function, the dependency graph is a dataflow network, and "fill down" is really `extend` from comonad theory.
+
+What if we made this explicit? What if a spreadsheet was built from the ground up on:
+
+* *Comonads* for contextual computation
+* *Recursion schemes* for structured folds and unfolds
+* *Lenses* for composable, bidirectional data access
+* *Zippers* for navigation and focus
+
+== 1. The Spreadsheet as Comonad
+
+A spreadsheet is a classic example of the *Store comonad*:
+
+[source,purescript]
+----
+-- Store s a ≅ (s -> a, s)
+-- A function from position to value, plus a current focus
+
+class Comonad w where
+  extract :: w a -> a                    -- Get the focused value
+  extend :: (w a -> b) -> w a -> w b     -- Apply at every position
+  duplicate :: w a -> w (w a)            -- Every cell sees the whole sheet
+----
+
+The key insight: *a formula is a function from "the spreadsheet focused at my position" to a value*.
+
+[source,purescript]
+----
+-- Traditional formula
+=A1 + B1
+
+-- What it really means
+\sheet -> extract (moveLeft sheet) + extract (moveLeft (moveLeft sheet))
+
+-- Or more elegantly
+\sheet -> sumOf (neighbors sheet)
+----
+
+The `extend` operation says: "apply this formula at every cell, each seeing its own local context." This is exactly what "fill down" does!
+
+[source,purescript]
+----
+-- Fill a formula down a column
+extend (\s -> extract (above s) * 1.1) sheet
+-- Every cell becomes 1.1x the cell above it
+----
+
+=== Why This Matters
+
+* *Formulas become first-class functions* you can compose, test, and visualize
+* *Context is explicit* - a formula can access neighbors, regions, the whole sheet
+* *"Fill down" has a theory* - it's comonadic extend
+
+== 2. Recursion Schemes: Folds Made Visible
+
+Instead of hiding aggregation behind opaque functions like `SUM`, make the fold structure explicit and visualizable.
+
+=== The Zoo of Schemes
+
+[cols="1,2,3"]
+|===
+| Scheme | Type | Spreadsheet Use
+
+| *cata* (fold)
+| `F a → a`
+| SUM, COUNT, MAX - consume structure to value
+
+| *ana* (unfold)
+| `a → F a`
+| Generate sequences, date ranges, growth series
+
+| *hylo*
+| `a → b`
+| Generate then reduce (common pattern)
+
+| *para*
+| `F (μF, a) → a`
+| Fold that sees original - compare to previous
+
+| *histo*
+| `F (Cofree F a) → a`
+| Fold with full history - moving averages!
+
+| *zygo*
+| Two folds
+| Compute mean (need both sum and count)
+|===
+
+=== Example: Histomorphism for Moving Average
+
+A histomorphism is a fold where each step can see *all previous results*, not just the immediate one. Perfect for moving averages:
+
+[source,purescript]
+----
+-- Moving average needs history of last N values
+movingAvg :: Int -> Histo [] Number -> Number
+movingAvg n history =
+  let recent = take n (toList history)
+  in sum recent / length recent
+
+-- Apply to a column
+=histo (movingAvg 3) (A1:A100)
+----
+
+The recursion scheme makes the pattern explicit and visualizable.
+
+== 3. Lenses: Composable Data Access
+
+Traditional cell references are ad-hoc string parsing (`"A1"`, `"Sheet2!B3:C10"`). Lenses give us composable, type-safe, *bidirectional* access.
+
+[source,purescript]
+----
+-- Lenses compose with (.)
+revenue :: Lens' Company Number
+q1 :: Lens' YearData QuarterData
+amount :: Lens' QuarterData Number
+
+-- Deep access
+view (revenue . q1 . amount) companyData
+
+-- The magic: bidirectional!
+set (revenue . q1 . amount) 50000 companyData
+-- Updates flow back through the lens path
+----
+
+=== Bidirectional Spreadsheets
+
+The profound implication: if your "view" is computed through lenses, *editing the view updates the source*.
+
+[source]
+----
+Source Data          Lens Path              View
+┌─────────┐                               ┌─────────┐
+│ sales:  │    (companies.each.revenue)   │ [500,   │
+│  [...]  │ ──────────────────────────────│  300,   │
+│         │           ◄────────────────── │  700]   │
+└─────────┘         (edits flow back!)    └─────────┘
+----
+
+Change a number in the view, it propagates back to the source.
+
+== 4. Zippers: Focus and Navigation
+
+A *zipper* is a data structure with a "focus" point and efficient local navigation. Selection in a spreadsheet is naturally a zipper.
+
+[source,purescript]
+----
+type SheetZipper a =
+  { focus :: a
+  , left :: List a          -- cells to the left
+  , right :: List a         -- cells to the right
+  , above :: List (List a)  -- rows above
+  , below :: List (List a)  -- rows below
+  }
+
+-- Navigation is O(1)
+moveRight :: SheetZipper a -> Maybe (SheetZipper a)
+moveDown :: SheetZipper a -> Maybe (SheetZipper a)
+----
+
+=== Connection to Comonad
+
+A zipper is a comonad! The `duplicate` operation gives you "a zipper of zippers" - every position contains the whole structure focused at that position.
+
+[source,purescript]
+----
+duplicate :: SheetZipper a -> SheetZipper (SheetZipper a)
+-- Every cell now contains "the spreadsheet focused at that cell"
+-- This is exactly what formulas need!
+----
+
+== 5. The Architecture
+
+[source]
+----
+┌─────────────────────────────────────────────────────────────────┐
+│                         DATA SOURCES                            │
+│  ┌─────────┐    ┌─────────────┐    ┌─────────────┐             │
+│  │ Table   │    │ Unfold      │    │ External    │             │
+│  │ (data)  │    │ (generator) │    │ (API/file)  │             │
+│  └────┬────┘    └──────┬──────┘    └──────┬──────┘             │
+│       └────────────────┼───────────────────┘                    │
+│                        ▼                                        │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    EXPRESSION FOREST                     │   │
+│  │   ┌─────────┐     ┌─────────┐     ┌─────────┐          │   │
+│  │   │ map f   │────▶│ filter p│────▶│ fold +  │          │   │
+│  │   └─────────┘     └─────────┘     └─────────┘          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                        ▼                                        │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                      VIEWS                               │   │
+│  │   ┌─────────┐     ┌─────────┐     ┌─────────┐          │   │
+│  │   │ Table   │     │ Chart   │     │ Tree    │          │   │
+│  │   │ (grid)  │     │ (D3)    │     │ (AST)   │          │   │
+│  │   └─────────┘     └─────────┘     └─────────┘          │   │
+│  │        ▲ Bidirectional via lenses ▲                     │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+----
+
+== References
+
+* "Comonads for User Interfaces" - Arthur Xavier
+* "Recursion Schemes" - Patrick Thomson's blog series
+* "Lenses, Folds, and Traversals" - Edward Kmett
+* "The Zipper" - Gérard Huet's original paper
+* "Functional Pearl: The Essence of the Iterator Pattern" - Gibbons & Oliveira
+
+== See Also
+
+* xref:understanding/unified-dsl.adoc[Unified Data DSL] - How computation and visualization unite
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture] - The encoding pattern
