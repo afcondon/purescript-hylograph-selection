@@ -14,6 +14,7 @@ import Test.Expr.SankeyExample as SankeyExample
 import Test.Expr.TreeExample as TreeExample
 import Test.Expr.UpdatePatternExample as UpdatePatternExample
 import Test.Scale.ScaleSpec as ScaleSpec
+import Test.Unified.JoinCombinatorsSpec as JoinCombinatorsSpec
 
 main :: Effect Unit
 main = do
@@ -42,5 +43,7 @@ main = do
   TreeExample.runExample
 
   UpdatePatternExample.runExample
+
+  JoinCombinatorsSpec.runTests
 
   log "\n=== All tests passed! ==="

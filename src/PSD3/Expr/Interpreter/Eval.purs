@@ -10,9 +10,12 @@ module PSD3.Expr.Interpreter.Eval
   , unsafeGetField
   ) where
 
-import Prelude hiding (add, sub, mul, div, negate, not)
+import Prelude hiding (add, sub, mul, div, negate, not, map)
 import Prelude as P
 
+import Data.Array as Array
+import Data.Foldable (foldl)
+import Data.Maybe (Maybe)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Prim.Row as Row
 import Type.Proxy (Proxy)
@@ -24,6 +27,7 @@ import PSD3.Expr.Units (class UnitExpr, class UnitArith)
 import PSD3.Expr.Datum (class DatumExpr)
 import PSD3.Expr.Path (class PathExpr)
 import PSD3.Expr.Path.Generators as Gen
+import PSD3.Unified.DataDSL (class DataDSL, class TrigDSL, DataSource(..))
 
 -- =============================================================================
 -- Simple Eval (no datum access)
@@ -217,3 +221,116 @@ instance datumExprEvalD :: DatumExpr (EvalD (Record datumRow)) datumRow where
 
 -- | Unsafe field access (we've verified types at compile time)
 foreign import unsafeGetField :: forall r a. String -> Record r -> a
+
+-- =============================================================================
+-- DataDSL Instances (Unified DSL)
+-- =============================================================================
+
+-- | DataDSL instance for simple Eval (no datum access)
+instance dataDSLEval :: DataDSL Eval where
+  num n = Eval n
+  str s = Eval s
+  bool b = Eval b
+  arr a = Eval a
+
+  source (InlineSource data_) = Eval data_
+  source (RangeSource _ _) = Eval []  -- No cell access in simple Eval
+  source (TableSource _) = Eval []
+  source (QuerySource _) = Eval []
+  source (DerivedSource _) = Eval []
+
+  mapA f (Eval xs) = Eval (P.map f xs)
+  foldA f init (Eval xs) = Eval (foldl f init xs)
+  filterA pred (Eval xs) = Eval (Array.filter pred xs)
+  flatMapA f (Eval xs) = Eval (Array.concatMap f xs)
+  zipWithA f (Eval xs) (Eval ys) = Eval (Array.zipWith f xs ys)
+  headA (Eval xs) = Eval (Array.head xs)
+
+  add (Eval a) (Eval b) = Eval (a + b)
+  sub (Eval a) (Eval b) = Eval (a - b)
+  mul (Eval a) (Eval b) = Eval (a * b)
+  div (Eval a) (Eval b) = Eval (a / b)
+  negate (Eval a) = Eval (P.negate a)
+
+  concat (Eval a) (Eval b) = Eval (a <> b)
+
+  lt (Eval a) (Eval b) = Eval (a < b)
+  lte (Eval a) (Eval b) = Eval (a <= b)
+  gt (Eval a) (Eval b) = Eval (a > b)
+  gte (Eval a) (Eval b) = Eval (a >= b)
+  eqNum (Eval a) (Eval b) = Eval (a == b)
+
+  strEq (Eval a) (Eval b) = Eval (a == b)
+  strNeq (Eval a) (Eval b) = Eval (a /= b)
+
+  and (Eval a) (Eval b) = Eval (a && b)
+  or (Eval a) (Eval b) = Eval (a || b)
+  not (Eval a) = Eval (P.not a)
+
+  ifThenElse (Eval cond) (Eval t) (Eval f) = Eval (if cond then t else f)
+
+-- | TrigDSL instance for simple Eval
+instance trigDSLEval :: TrigDSL Eval where
+  sin (Eval a) = Eval (Math.sin a)
+  cos (Eval a) = Eval (Math.cos a)
+  tan (Eval a) = Eval (Math.tan a)
+  asin (Eval a) = Eval (Math.asin a)
+  acos (Eval a) = Eval (Math.acos a)
+  atan (Eval a) = Eval (Math.atan a)
+  atan2 (Eval y) (Eval x) = Eval (Math.atan2 y x)
+  pi = Eval Math.pi
+
+-- | DataDSL instance for EvalD (with datum and index access)
+instance dataDSLEvalD :: DataDSL (EvalD datum) where
+  num n = EvalD \_ _ -> n
+  str s = EvalD \_ _ -> s
+  bool b = EvalD \_ _ -> b
+  arr a = EvalD \_ _ -> a
+
+  source (InlineSource data_) = EvalD \_ _ -> data_
+  source (RangeSource _ _) = EvalD \_ _ -> []  -- Would need cell context
+  source (TableSource _) = EvalD \_ _ -> []
+  source (QuerySource _) = EvalD \_ _ -> []
+  source (DerivedSource _) = EvalD \_ _ -> []
+
+  mapA f (EvalD xs) = EvalD \d i -> P.map f (xs d i)
+  foldA f init (EvalD xs) = EvalD \d i -> foldl f init (xs d i)
+  filterA pred (EvalD xs) = EvalD \d i -> Array.filter pred (xs d i)
+  flatMapA f (EvalD xs) = EvalD \d i -> Array.concatMap f (xs d i)
+  zipWithA f (EvalD xs) (EvalD ys) = EvalD \d i -> Array.zipWith f (xs d i) (ys d i)
+  headA (EvalD xs) = EvalD \d i -> Array.head (xs d i)
+
+  add (EvalD a) (EvalD b) = EvalD \d i -> a d i + b d i
+  sub (EvalD a) (EvalD b) = EvalD \d i -> a d i - b d i
+  mul (EvalD a) (EvalD b) = EvalD \d i -> a d i * b d i
+  div (EvalD a) (EvalD b) = EvalD \d i -> a d i / b d i
+  negate (EvalD a) = EvalD \d i -> P.negate (a d i)
+
+  concat (EvalD a) (EvalD b) = EvalD \d i -> a d i <> b d i
+
+  lt (EvalD a) (EvalD b) = EvalD \d i -> a d i < b d i
+  lte (EvalD a) (EvalD b) = EvalD \d i -> a d i <= b d i
+  gt (EvalD a) (EvalD b) = EvalD \d i -> a d i > b d i
+  gte (EvalD a) (EvalD b) = EvalD \d i -> a d i >= b d i
+  eqNum (EvalD a) (EvalD b) = EvalD \d i -> a d i == b d i
+
+  strEq (EvalD a) (EvalD b) = EvalD \d i -> a d i == b d i
+  strNeq (EvalD a) (EvalD b) = EvalD \d i -> a d i /= b d i
+
+  and (EvalD a) (EvalD b) = EvalD \d i -> a d i && b d i
+  or (EvalD a) (EvalD b) = EvalD \d i -> a d i || b d i
+  not (EvalD a) = EvalD \d i -> P.not (a d i)
+
+  ifThenElse (EvalD cond) (EvalD t) (EvalD f) =
+    EvalD \d i -> if cond d i then t d i else f d i
+
+-- | TrigDSL instance for EvalD (with datum and index access)
+instance trigDSLEvalD :: TrigDSL (EvalD datum) where
+  sin (EvalD a) = EvalD \d i -> Math.sin (a d i)
+  cos (EvalD a) = EvalD \d i -> Math.cos (a d i)
+  tan (EvalD a) = EvalD \d i -> Math.tan (a d i)
+  asin (EvalD a) = EvalD \d i -> Math.asin (a d i)
+  acos (EvalD a) = EvalD \d i -> Math.acos (a d i)
+  atan (EvalD a) = EvalD \d i -> Math.atan (a d i)
+  atan2 (EvalD y) (EvalD x) = EvalD \d i -> Math.atan2 (y d i) (x d i)
+  pi = EvalD \_ _ -> Math.pi
