@@ -98,7 +98,7 @@ module PSD3.Expr.Friendly
     -- * SVG Attribute Sugar (size)
   , width, height, r
     -- * SVG Attribute Sugar (style)
-  , fill, stroke, strokeWidth, opacity
+  , fill, stroke, strokeWidth, opacity, class_
     -- * SVG Attribute Sugar (text)
   , textAnchor, dominantBaseline, fontSize, fontFamily, textContent
     -- * SVG Attribute Sugar (path & transform)
@@ -770,6 +770,14 @@ strokeWidth = attr "stroke-width"
 
 opacity :: forall datum a. ToAttributeValue a => EvalD datum a -> Attribute datum
 opacity = attr "opacity"
+
+-- | CSS class attribute (underscore suffix since `class` is a reserved word)
+-- |
+-- | ```purescript
+-- | class_ $ text "my-element highlighted"
+-- | ```
+class_ :: forall datum a. ToAttributeValue a => EvalD datum a -> Attribute datum
+class_ = attr "class"
 
 -- Text attributes
 textAnchor :: forall datum a. ToAttributeValue a => EvalD datum a -> Attribute datum
