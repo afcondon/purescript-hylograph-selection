@@ -5,6 +5,7 @@
 * xref:getting-started/webapp-architecture.adoc[Web App Architecture]
 
 .How-To Guides
+* xref:how-to/showcase-shell.adoc[Creating a Showcase App Layout]
 * xref:how-to/simple-webpage.adoc[PSD3 in a Simple Web Page]
 * xref:how-to/halogen-events.adoc[Halogen Events from PSD3]
 * xref:how-to/react-integration.adoc[PSD3 in a React App]
