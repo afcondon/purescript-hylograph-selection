@@ -45,6 +45,8 @@ module PSD3.TreeDSL.ShapeTree
 
 import Prelude
 
+import Data.Array as Array
+import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import PSD3.AST (Tree)
 import PSD3.AST as AST
@@ -342,8 +344,8 @@ maybeDataAttr name toVal getMaybe =
         Nothing -> StringValue ""  -- Empty string = no attribute (D3 behavior)
   ]
 
--- | Render a table as SVG (simplified - placeholder rect)
--- | Full implementation would use foreignObject or render as SVG text/rect grid
+-- | Render a table as SVG rects and text elements.
+-- | Creates a grid of cells with text content.
 renderTable
   :: forall d
    . { rows :: d -> Array (Array String)
@@ -354,12 +356,57 @@ renderTable
      }
   -> d
   -> AST.Tree d
-renderTable spec _d =
-  -- Simplified: just render a rect placeholder
-  elem Rect
-    [ dataAttr "width" (const $ NumberValue 100.0)
-    , dataAttr "height" (const $ NumberValue 60.0)
-    , dataAttr "fill" (StringValue <<< spec.headerFill)
-    , dataAttr "stroke" (const $ StringValue "#111")
-    , dataAttr "stroke-width" (const $ NumberValue 1.0)
-    ]
+renderTable spec d =
+  let
+    rows = spec.rows d
+    cellWidth = 50.0
+    cellHeight = 20.0
+
+    -- Build all row groups
+    rowGroups = Array.mapWithIndex (renderRow cellWidth cellHeight) rows
+
+    -- Render a single row at vertical offset
+    renderRow :: Number -> Number -> Int -> Array String -> AST.Tree d
+    renderRow cw ch rowIdx cells =
+      let
+        yOffset = Int.toNumber rowIdx * ch
+        isHeader = rowIdx == 0
+        fill = if isHeader then spec.headerFill d else spec.cellFill d
+        cellGroups = Array.mapWithIndex (renderCell cw ch yOffset fill) cells
+      in
+        elem Group
+          [ dataAttr "class" (const $ StringValue $ "table-row row-" <> show rowIdx) ]
+          `withChildren` cellGroups
+
+    -- Render a single cell
+    renderCell :: Number -> Number -> Number -> String -> Int -> String -> AST.Tree d
+    renderCell cw ch yOff fill colIdx cellText =
+      let
+        xOffset = Int.toNumber colIdx * cw
+      in
+        elem Group
+          [ dataAttr "transform" (const $ StringValue $ "translate(" <> show xOffset <> "," <> show yOff <> ")") ]
+          `withChildren`
+            [ -- Cell background
+              elem Rect
+                [ dataAttr "width" (const $ NumberValue cw)
+                , dataAttr "height" (const $ NumberValue ch)
+                , dataAttr "fill" (const $ StringValue fill)
+                , dataAttr "stroke" (const $ StringValue "#111")
+                , dataAttr "stroke-width" (const $ NumberValue 0.5)
+                ]
+            -- Cell text
+            , elem Text
+                [ dataAttr "x" (const $ NumberValue (cw / 2.0))
+                , dataAttr "y" (const $ NumberValue (ch / 2.0 + 4.0))  -- +4 for baseline
+                , dataAttr "text-anchor" (const $ StringValue "middle")
+                , dataAttr "font-size" (const $ StringValue "10px")
+                , dataAttr "font-family" (const $ StringValue "Helvetica, sans-serif")
+                , dataAttr "fill" (const $ StringValue (spec.textColor d))
+                , dataAttr "textContent" (const $ StringValue cellText)
+                ]
+            ]
+  in
+    elem Group
+      [ dataAttr "class" (const $ StringValue "table-shape") ]
+      `withChildren` rowGroups
