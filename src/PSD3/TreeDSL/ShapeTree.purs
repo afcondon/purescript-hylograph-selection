@@ -298,7 +298,10 @@ rectAttrs
      }
   -> Array (Attribute d)
 rectAttrs spec =
-  [ dataAttr "width" (NumberValue <<< spec.width)
+  [ -- Center the rect on its position (SVG rect draws from top-left)
+    dataAttr "x" (\d -> NumberValue $ -(spec.width d) / 2.0)
+  , dataAttr "y" (\d -> NumberValue $ -(spec.height d) / 2.0)
+  , dataAttr "width" (NumberValue <<< spec.width)
   , dataAttr "height" (NumberValue <<< spec.height)
   , dataAttr "fill" (StringValue <<< spec.fill)
   ]
@@ -362,6 +365,14 @@ renderTable spec d =
     cellWidth = 50.0
     cellHeight = 20.0
 
+    -- Compute total dimensions for centering
+    numRows = Array.length rows
+    numCols = case Array.head rows of
+      Just firstRow -> Array.length firstRow
+      Nothing -> 1
+    totalWidth = Int.toNumber numCols * cellWidth
+    totalHeight = Int.toNumber numRows * cellHeight
+
     -- Build all row groups
     rowGroups = Array.mapWithIndex (renderRow cellWidth cellHeight) rows
 
@@ -407,6 +418,10 @@ renderTable spec d =
                 ]
             ]
   in
+    -- Outer group with centering transform
     elem Group
-      [ dataAttr "class" (const $ StringValue "table-shape") ]
+      [ dataAttr "class" (const $ StringValue "table-shape")
+      , dataAttr "transform" (const $ StringValue $
+          "translate(" <> show (-(totalWidth / 2.0)) <> "," <> show (-(totalHeight / 2.0)) <> ")")
+      ]
       `withChildren` rowGroups
