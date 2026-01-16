@@ -81,6 +81,8 @@ module PSD3.AST
     -- * Operators
   , (>:)
   , (+:)
+    -- * TreeDSL instance (re-exported)
+  , module TreeDSL
   ) where
 
 import Prelude
@@ -91,6 +93,8 @@ import PSD3.Internal.Behavior.Types (Behavior)
 import PSD3.Internal.Selection.Types (ElementType(..)) as ElementTypes
 import PSD3.Internal.Selection.Types (ElementType)
 import PSD3.Internal.Transition.Types (TransitionConfig)
+import PSD3.TreeDSL (class TreeDSL) as TreeDSL
+import PSD3.TreeDSL (class TreeDSL)
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | AST - Abstract Syntax Tree for visualization specifications
@@ -572,3 +576,93 @@ beside left right = [left, right]
 -- | Usage: siblings [child1, child2, child3]
 siblings :: forall datum. Array (Tree datum) -> Array (Tree datum)
 siblings = identity
+
+-- =============================================================================
+-- TreeDSL Instance
+-- =============================================================================
+
+-- | TreeDSL instance for Tree.
+-- |
+-- | This makes the Tree ADT usable with the finally-tagless TreeDSL interface.
+-- | User code can be written against `TreeDSL tree =>` and work with any
+-- | interpreter, including this one that builds a concrete Tree.
+instance TreeDSL Tree where
+
+  named elemType name attrs =
+    Node { name: Just name, elemType, attrs, behaviors: [], children: [] }
+
+  elem elemType attrs =
+    Node { name: Nothing, elemType, attrs, behaviors: [], children: [] }
+
+  withChild parent child = case parent of
+    Node node -> Node node { children = node.children <> [child] }
+    Join j -> Join j
+    NestedJoin nj -> NestedJoin nj
+    UpdateJoin uj -> UpdateJoin uj
+    UpdateNestedJoin unj -> UpdateNestedJoin unj
+    ConditionalRender cr -> ConditionalRender cr
+    LocalCoordSpace lcs -> LocalCoordSpace lcs
+
+  withChildren parent newChildren = case parent of
+    Node node -> Node node { children = node.children <> newChildren }
+    Join j -> Join j
+    NestedJoin nj -> NestedJoin nj
+    UpdateJoin uj -> UpdateJoin uj
+    UpdateNestedJoin unj -> UpdateNestedJoin unj
+    ConditionalRender cr -> ConditionalRender cr
+    LocalCoordSpace lcs -> LocalCoordSpace lcs
+
+  withBehaviors tree newBehaviors = case tree of
+    Node node -> Node node { behaviors = node.behaviors <> newBehaviors }
+    Join j -> Join j
+    NestedJoin nj -> NestedJoin nj
+    UpdateJoin uj -> UpdateJoin uj
+    UpdateNestedJoin unj -> UpdateNestedJoin unj
+    ConditionalRender cr -> ConditionalRender cr
+    LocalCoordSpace lcs -> LocalCoordSpace lcs
+
+  joinData name key data' template =
+    Join { name, key, joinData: data', template }
+
+  nestedJoin name key data' decomposeFn templateFn =
+    NestedJoin
+      { name
+      , key
+      , joinData: data'
+      , decompose: unsafeCoerce decomposeFn
+      , template: unsafeCoerce templateFn
+      }
+
+  updateJoin name key data' template behaviors =
+    UpdateJoin
+      { name
+      , key
+      , joinData: data'
+      , template
+      , keyFn: behaviors.keyFn
+      , behaviors:
+          { enter: behaviors.enter
+          , update: behaviors.update
+          , exit: behaviors.exit
+          }
+      }
+
+  updateNestedJoin name key data' decomposeFn templateFn behaviors =
+    UpdateNestedJoin
+      { name
+      , key
+      , joinData: data'
+      , decompose: unsafeCoerce decomposeFn
+      , template: unsafeCoerce templateFn
+      , behaviors: unsafeCoerce behaviors
+      }
+
+  conditionalRender cases =
+    ConditionalRender { cases }
+
+  localCoordSpace config child =
+    LocalCoordSpace
+      { scaleX: config.scaleX
+      , scaleY: config.scaleY
+      , child
+      }
