@@ -93,20 +93,10 @@ module PSD3.Internal.FFI
   , applyFixForceInSimulationX_
   , applyFixForceInSimulationY_
   , setAsNullForceInSimulation_
-  -- Chord FFI
-  , ChordLayout_
-  , ChordGenerator_
-  , RibbonGenerator_
+  -- Arc generator FFI (from d3-shape, for pie/donut charts)
   , ArcGenerator_
-  , chordLayout_
-  , chordLayoutWithPadAngle_
-  , chordGroups_
-  , chordArray_
-  , ribbonGenerator_
   , arcGenerator_
-  , ribbonPath_
   , arcPath_
-  , setRibbonRadius_
   , setArcInnerRadius_
   , setArcOuterRadius_
   ) where
@@ -292,21 +282,12 @@ foreign import applyFixForceInSimulationY_  :: D3Simulation_ -> String -> (Datum
 foreign import setAsNullForceInSimulation_  :: D3Simulation_ -> String -> D3Simulation_
 
 -- | *********************************************************************************************************************
--- | ***************************   FFI signatures for D3js Chord module          *********************************************
+-- | ***************************   FFI signatures for D3js Arc Generator (d3-shape)      *********************************
 -- | *********************************************************************************************************************
-foreign import data ChordLayout_ :: Type
-foreign import data ChordGenerator_ :: Type
-foreign import data RibbonGenerator_ :: Type
+-- | Used for pie charts, donut charts, and other arc-based visualizations
 foreign import data ArcGenerator_ :: Type
 
-foreign import chordLayout_            :: Array (Array Number) -> ChordLayout_
-foreign import chordLayoutWithPadAngle_ :: Array (Array Number) -> Number -> ChordLayout_
-foreign import chordGroups_            :: ChordLayout_ -> Array Datum_
-foreign import chordArray_             :: ChordLayout_ -> Array Datum_
-foreign import ribbonGenerator_        :: Unit -> RibbonGenerator_
 foreign import arcGenerator_           :: Unit -> ArcGenerator_
-foreign import ribbonPath_             :: RibbonGenerator_ -> Datum_ -> String
 foreign import arcPath_                :: ArcGenerator_ -> Datum_ -> String
-foreign import setRibbonRadius_        :: RibbonGenerator_ -> Number -> RibbonGenerator_
 foreign import setArcInnerRadius_      :: ArcGenerator_ -> Number -> ArcGenerator_
 foreign import setArcOuterRadius_      :: ArcGenerator_ -> Number -> ArcGenerator_

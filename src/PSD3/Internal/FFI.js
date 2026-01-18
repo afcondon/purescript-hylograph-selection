@@ -1,4 +1,5 @@
-// D3 dependencies: d3-selection, d3-drag, d3-force, d3-hierarchy, d3-shape, d3-chord, d3-zoom, d3-ease, d3-scale-chromatic, d3-scale
+// D3 dependencies: d3-selection, d3-drag, d3-force, d3-hierarchy, d3-shape, d3-zoom, d3-ease, d3-scale-chromatic, d3-scale
+// NOTE: d3-chord has been removed - use DataViz.Layout.Chord from psd3-layout instead
 import { select, selectAll } from "d3-selection";
 import { drag } from "d3-drag";
 import {
@@ -11,7 +12,6 @@ import {
 import {
   linkHorizontal, linkVertical, linkRadial, arc
 } from "d3-shape";
-import { chord, ribbon } from "d3-chord";
 import { zoom } from "d3-zoom";
 import { easeCubicOut, easeLinear, easeQuadInOut, easeBounceOut } from "d3-ease";
 import { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridis } from "d3-scale-chromatic";
@@ -1207,22 +1207,9 @@ export function setInSimNodeFlag_(node) { node.inSim = true; return node }
 export function unsetInSimNodeFlag_(node) { node.inSim = false; return node }
 export function unpinNode_(node) { node.fx = null; node.fy = null; return node }
 // *****************************************************************************************************************
-// ************************** functions from d3js Chord module         *****************************************
+// ************************** Arc generator from d3-shape (used for pie/donut charts) ******************************
 // *****************************************************************************************************************
-export function chordLayout_(matrix) {
-  return chord()(matrix);
-}
-export function chordLayoutWithPadAngle_(matrix) {
-  return padAngle => chord().padAngle(padAngle)(matrix);
-}
-export function chordGroups_(chordLayout) { return chordLayout.groups }
-export function chordArray_(chordLayout) {
-  return Array.from(chordLayout);
-}
-export function ribbonGenerator_() { return ribbon() }
 export function arcGenerator_() { return arc() }
-export function ribbonPath_(generator) { return chord => generator(chord) }
 export function arcPath_(generator) { return group => generator(group) }
-export function setRibbonRadius_(generator) { return radius => { generator.radius(radius); return generator } }
 export function setArcInnerRadius_(generator) { return radius => { generator.innerRadius(radius); return generator } }
 export function setArcOuterRadius_(generator) { return radius => { generator.outerRadius(radius); return generator } }
