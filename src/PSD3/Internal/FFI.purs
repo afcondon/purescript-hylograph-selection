@@ -11,16 +11,6 @@ module PSD3.Internal.FFI
   , simdrag_
   , simdragHorizontal_
   , disableDrag_
-  , highlightConnectedNodes_
-  , clearHighlights_
-  , unpinAllNodes_
-  , updateBubbleRadii_
-  , updateNodeExpansion_
-  , unsafeSetField_
-  , expandNodeById_
-  , addModuleArrowMarker_
-  , drawInterModuleDeclarationLinks_
-  , filterToConnectedNodes_
   , selectionOn_
   -- Simulation FFI
   , linksForceName_
@@ -108,7 +98,6 @@ import PSD3.Data.Node
 
 import PSD3.Internal.Types (D3Selection_, D3Simulation_, Datum_, Index_, PointXY)
 import Data.Nullable (Nullable)
-import Effect (Effect)
 import Prelude (Unit)
 
 -- | *********************************************************************************************************************
@@ -132,18 +121,6 @@ foreign import simulationDrag_ :: forall d. String -> D3Selection_ d -> D3Simula
 foreign import simdrag_  :: D3DragFunction_
 foreign import simdragHorizontal_ :: D3DragFunction_
 foreign import disableDrag_ :: forall d. D3Selection_ d -> D3Selection_ d
-
-foreign import highlightConnectedNodes_ :: forall d. D3Selection_ d -> Array String -> Unit
-foreign import clearHighlights_ :: forall d. D3Selection_ d -> Unit
-foreign import unpinAllNodes_ :: D3Simulation_ -> Unit
-foreign import updateBubbleRadii_ :: D3Simulation_ -> (Boolean -> Int -> Number) -> Unit
-foreign import updateNodeExpansion_ :: forall declsData callsData. D3Simulation_ -> (Boolean -> Int -> Number) -> declsData -> callsData -> Datum_ -> Unit
-foreign import unsafeSetField_ :: forall a. String -> a -> Datum_ -> Effect Unit
-
-foreign import expandNodeById_ :: forall declsData callsData. D3Simulation_ -> (Boolean -> Int -> Number) -> declsData -> callsData -> String -> Boolean -> Effect Unit
-foreign import addModuleArrowMarker_ :: forall d. D3Selection_ d -> Effect Unit
-foreign import drawInterModuleDeclarationLinks_ :: forall declsData callsData d. D3Selection_ d -> (Boolean -> Int -> Number) -> declsData -> callsData -> Effect Unit
-foreign import filterToConnectedNodes_ :: forall d key. D3Simulation_ -> (SimulationNode d -> key) -> Array String -> Unit
 
 foreign import selectionOn_         :: forall selection callback. selection -> String -> callback -> selection  
 
