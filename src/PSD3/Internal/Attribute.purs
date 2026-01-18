@@ -19,10 +19,102 @@ module PSD3.Internal.Attribute
   , AttributeName(..)
   , AttributeValue(..)
   , AttrSource(..)
+    -- * Animated attribute support
+  , AnimatedValue(..)
+  , AnimationConfig
+  , EasingType(..)
+  , Milliseconds
+  , defaultAnimationConfig
   ) where
 
 import Prelude
 import Data.Functor.Contravariant (class Contravariant)
+import Data.Maybe (Maybe(..))
+
+-- =============================================================================
+-- Animation Types
+-- =============================================================================
+
+-- | Time in milliseconds for animation configuration
+type Milliseconds = Number
+
+-- | Enumeration of easing types for animations
+-- |
+-- | Note: This mirrors PSD3.Transition.Easing.EasingType but is defined here
+-- | to avoid circular dependencies. The Manager module will convert between them.
+data EasingType
+  = Linear
+  | QuadIn | QuadOut | QuadInOut
+  | CubicIn | CubicOut | CubicInOut
+  | SinIn | SinOut | SinInOut
+  | ExpIn | ExpOut | ExpInOut
+  | CircleIn | CircleOut | CircleInOut
+  | BackIn | BackOut | BackInOut
+  | ElasticIn | ElasticOut | ElasticInOut
+  | BounceIn | BounceOut | BounceInOut
+
+derive instance Eq EasingType
+derive instance Ord EasingType
+
+instance Show EasingType where
+  show Linear = "Linear"
+  show QuadIn = "QuadIn"
+  show QuadOut = "QuadOut"
+  show QuadInOut = "QuadInOut"
+  show CubicIn = "CubicIn"
+  show CubicOut = "CubicOut"
+  show CubicInOut = "CubicInOut"
+  show SinIn = "SinIn"
+  show SinOut = "SinOut"
+  show SinInOut = "SinInOut"
+  show ExpIn = "ExpIn"
+  show ExpOut = "ExpOut"
+  show ExpInOut = "ExpInOut"
+  show CircleIn = "CircleIn"
+  show CircleOut = "CircleOut"
+  show CircleInOut = "CircleInOut"
+  show BackIn = "BackIn"
+  show BackOut = "BackOut"
+  show BackInOut = "BackInOut"
+  show ElasticIn = "ElasticIn"
+  show ElasticOut = "ElasticOut"
+  show ElasticInOut = "ElasticInOut"
+  show BounceIn = "BounceIn"
+  show BounceOut = "BounceOut"
+  show BounceInOut = "BounceInOut"
+
+-- | Animated value specification
+-- |
+-- | Describes where the animation value comes from:
+-- | - StaticAnimValue: Constant number
+-- | - DataAnimValue: Computed from datum
+-- | - IndexedAnimValue: Computed from datum and element index
+data AnimatedValue datum
+  = StaticAnimValue Number
+  | DataAnimValue (datum -> Number)
+  | IndexedAnimValue (datum -> Int -> Number)
+
+instance Show (AnimatedValue datum) where
+  show (StaticAnimValue n) = "(StaticAnimValue " <> show n <> ")"
+  show (DataAnimValue _) = "(DataAnimValue <fn>)"
+  show (IndexedAnimValue _) = "(IndexedAnimValue <fn>)"
+
+-- | Configuration for a single animated attribute
+-- |
+-- | Specifies timing, easing, and delay for the animation.
+type AnimationConfig =
+  { duration :: Milliseconds
+  , easing :: EasingType
+  , delay :: Milliseconds
+  }
+
+-- | Default animation configuration: 300ms, QuadOut, no delay
+defaultAnimationConfig :: AnimationConfig
+defaultAnimationConfig =
+  { duration: 300.0
+  , easing: QuadOut
+  , delay: 0.0
+  }
 
 -- | Source metadata for attributes
 -- |
@@ -66,12 +158,19 @@ data Attribute datum
   = StaticAttr AttributeName AttributeValue
   | DataAttr AttributeName AttrSource (datum -> AttributeValue)
   | IndexedAttr AttributeName AttrSource (datum -> Int -> AttributeValue)
+  | AnimatedAttr
+      { name :: AttributeName
+      , fromValue :: Maybe (AnimatedValue datum)  -- Nothing = read from DOM
+      , toValue :: AnimatedValue datum
+      , config :: AnimationConfig
+      }
 
 -- We can't derive Show for function types, but we can show the structure
 instance Show (Attribute datum) where
   show (StaticAttr name val) = "(StaticAttr " <> show name <> " " <> show val <> ")"
   show (DataAttr name src _) = "(DataAttr " <> show name <> " " <> show src <> " <fn>)"
   show (IndexedAttr name src _) = "(IndexedAttr " <> show name <> " " <> show src <> " <fn>)"
+  show (AnimatedAttr rec) = "(AnimatedAttr " <> show rec.name <> " from=" <> show rec.fromValue <> " to=" <> show rec.toValue <> ")"
 
 -- | Contravariant instance for Attribute
 -- |
@@ -96,6 +195,18 @@ instance Contravariant Attribute where
   cmap _ (StaticAttr name val) = StaticAttr name val -- Static doesn't depend on datum
   cmap f (DataAttr name src g) = DataAttr name src (g <<< f) -- Compose: first project, then extract value
   cmap f (IndexedAttr name src g) = IndexedAttr name src (\b i -> g (f b) i) -- Project datum before indexing
+  cmap f (AnimatedAttr rec) = AnimatedAttr
+    { name: rec.name
+    , fromValue: cmapAnimatedValue f <$> rec.fromValue
+    , toValue: cmapAnimatedValue f rec.toValue
+    , config: rec.config
+    }
+
+-- | Helper for contravariant mapping of AnimatedValue
+cmapAnimatedValue :: forall a b. (b -> a) -> AnimatedValue a -> AnimatedValue b
+cmapAnimatedValue _ (StaticAnimValue n) = StaticAnimValue n
+cmapAnimatedValue f (DataAnimValue g) = DataAnimValue (g <<< f)
+cmapAnimatedValue f (IndexedAnimValue g) = IndexedAnimValue (\b i -> g (f b) i)
 
 -- | Attribute names (SVG/HTML properties)
 -- |

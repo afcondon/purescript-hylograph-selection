@@ -19,7 +19,7 @@ import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
-import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
+import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..))
 import PSD3.Internal.Capabilities.Selection (class SelectionM)
 import PSD3.Internal.Capabilities.Transition (class TransitionM)
 import PSD3.Internal.Selection.Operations as Ops
@@ -187,6 +187,11 @@ instance TransitionM D3v2Selection_ D3v2M where
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
 
+        AnimatedAttr rec -> do
+          let (AttributeName name) = rec.name
+          let toValue = evalAnimValue rec.toValue datum logicalIndex
+          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
   withTransitionExit config (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
     let { elements, data: datumArray } = unsafePartial case selection of
@@ -215,6 +220,11 @@ instance TransitionM D3v2Selection_ D3v2M where
 
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
+
+        AnimatedAttr rec -> do
+          let (AttributeName name) = rec.name
+          let toValue = evalAnimValue rec.toValue datum index
+          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
@@ -256,6 +266,11 @@ instance TransitionM D3v2Selection_ D3v2M where
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
 
+        AnimatedAttr rec -> do
+          let (AttributeName name) = rec.name
+          let toValue = evalAnimValue rec.toValue datum logicalIndex
+          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
   withTransitionExitStaggered config delayFn (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
     let { elements, data: datumArray } = unsafePartial case selection of
@@ -288,8 +303,19 @@ instance TransitionM D3v2Selection_ D3v2M where
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
+        AnimatedAttr rec -> do
+          let (AttributeName name) = rec.name
+          let toValue = evalAnimValue rec.toValue datum index
+          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
+
+-- Helper function to evaluate AnimatedValue
+evalAnimValue :: forall datum. AnimatedValue datum -> datum -> Int -> Number
+evalAnimValue (StaticAnimValue n) _ _ = n
+evalAnimValue (DataAnimValue f) d _ = f d
+evalAnimValue (IndexedAnimValue f) d i = f d i
 
 -- Helper function to convert AttributeValue to String
 attributeValueToString :: AttributeValue -> String

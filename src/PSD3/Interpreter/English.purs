@@ -104,6 +104,9 @@ describeAttribute (DataAttr name src _) =
 describeAttribute (IndexedAttr name src _) =
   "Set " <> showAttrName name <> " " <> describeSource src
 
+describeAttribute (AnimatedAttr rec) =
+  "Animate " <> showAttrName rec.name <> " over " <> show rec.config.duration <> "ms"
+
 -- | Describe attribute source in English
 describeSource :: AttrSource -> String
 describeSource = case _ of

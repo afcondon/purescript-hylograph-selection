@@ -131,6 +131,8 @@ module PSD3.Expr.Friendly
   , toAttrValue
     -- * Re-exports for advanced use
   , module ReExports
+    -- * Animation DSL re-exports
+  , module Animation
   ) where
 
 import Prelude hiding (add, sub, mul, div, negate, not)
@@ -152,6 +154,26 @@ import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue
 import PSD3.Expr.Expr (class NumExpr, class StringExpr, class BoolExpr) as ReExports
 import PSD3.Expr.Datum (class DatumExpr) as ReExports
 import PSD3.Expr.Interpreter.Eval (EvalD) as ReExports
+
+-- Re-export animation DSL
+import PSD3.Expr.Animation
+  ( AnimatedBuilder
+  , animatedTo
+  , animatedToIndexed
+  , animatedFrom
+  , animatedFromStatic
+  , animatedFromIndexed
+  , withDuration
+  , withEasing
+  , withDelay
+  , withStagger
+  , animated
+  , animatedAttr
+  , fadeIn
+  , fadeOut
+  , growFrom
+  , shrinkTo
+  ) as Animation
 
 -- =============================================================================
 -- ToAttributeValue - Unified attribute value conversion

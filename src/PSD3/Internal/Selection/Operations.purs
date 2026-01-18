@@ -20,6 +20,10 @@ module PSD3.Internal.Selection.Operations
   , renderTree
   , reselect
   , elementTypeToString
+    -- * Pure transition support
+  , applyTransitionToSingleElementPure
+  , partitionAnimatedAttrs
+  , evalAnimatedValue
   ) where
 
 import Prelude hiding (append)
@@ -41,7 +45,8 @@ import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
 import Effect.Uncurried (mkEffectFn2)
-import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
+import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), AnimationConfig, EasingType(..))
+import PSD3.Internal.Transition.Manager as Manager
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
 import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
 import PSD3.Internal.Selection.Join as Join
@@ -1065,6 +1070,15 @@ applyAttributes element datum index attrs =
         if name == "textContent" then setTextContent_ val element
         else Element.setAttribute name val element
 
+    -- For AnimatedAttr in non-transition context, just set the target value immediately
+    AnimatedAttr rec ->
+      let
+        (AttributeName name) = rec.name
+        val = show (evalAnimatedValue rec.toValue datum index)
+      in
+        if name == "textContent" then setTextContent_ val element
+        else Element.setAttribute name val element
+
 attributeValueToString :: AttributeValue -> String
 attributeValueToString (StringValue s) = s
 attributeValueToString (NumberValue n) = show n
@@ -1157,6 +1171,12 @@ applyTransitionToElements config elementDatumPairs attrs = do
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
+      -- AnimatedAttr falls back to D3 for now
+      AnimatedAttr rec -> do
+        let (AttributeName name) = rec.name
+        let toValue = evalAnimatedValue rec.toValue datum index
+        TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
 -- | Apply a transition to a single element with an explicit index
 -- | Used when elements need per-element attrs but shared stagger timing
 applyTransitionToSingleElement
@@ -1188,6 +1208,75 @@ applyTransitionToSingleElement config index element datum attrs = do
 
     IndexedAttr (AttributeName name) _src f ->
       TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
+
+    -- AnimatedAttr falls back to D3 for now (will be replaced by pure transitions)
+    AnimatedAttr rec -> do
+      let (AttributeName name) = rec.name
+      let toValue = evalAnimatedValue rec.toValue datum index
+      TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
+-- | Apply a transition to a single element using pure PureScript transitions
+-- |
+-- | This is the pure alternative to `applyTransitionToSingleElement` that uses
+-- | the ElementTransitionManager instead of D3 transitions.
+-- |
+-- | For `AnimatedAttr` attributes, the animation is registered with the manager.
+-- | For other attribute types, values are set immediately (no animation).
+applyTransitionToSingleElementPure
+  :: forall datum
+   . Manager.ElementTransitionManager
+  -> TransitionConfig
+  -> Int -- Explicit index for stagger calculation
+  -> Element
+  -> datum
+  -> Array (Attribute datum)
+  -> Effect Unit
+  -> Effect Unit
+applyTransitionToSingleElementPure manager config index element datum attrs onAllComplete = do
+  let Milliseconds duration = config.duration
+  let baseDelay = maybe 0.0 unwrap config.delay
+  let stagger = fromMaybe 0.0 config.staggerDelay
+  let effectiveDelay = baseDelay + (toNumber index * stagger)
+
+  -- Partition attributes into animated vs non-animated
+  let { animated: animatedAttrs, nonAnimated: nonAnimatedAttrs } = partitionAnimatedAttrs attrs
+
+  -- Apply non-animated attributes immediately
+  nonAnimatedAttrs # traverse_ \attr -> case attr of
+    StaticAttr (AttributeName name) value ->
+      Element.setAttribute name (attributeValueToString value) element
+    DataAttr (AttributeName name) _src f ->
+      Element.setAttribute name (attributeValueToString (f datum)) element
+    IndexedAttr (AttributeName name) _src f ->
+      Element.setAttribute name (attributeValueToString (f datum index)) element
+    AnimatedAttr _ -> pure unit -- Handled separately
+
+  -- Register animated attributes with the manager
+  animatedAttrs # traverse_ \attr -> case attr of
+    AnimatedAttr rec -> do
+      let (AttributeName name) = rec.name
+      -- Merge config: per-attribute config takes precedence, but stagger delay comes from TransitionConfig
+      let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
+      _ <- Manager.registerAnimatedAttr manager element datum index name rec.fromValue rec.toValue animConfig onAllComplete
+      pure unit
+    _ -> pure unit -- Non-animated, already handled
+
+-- | Partition attributes into animated and non-animated
+partitionAnimatedAttrs :: forall datum. Array (Attribute datum) -> { animated :: Array (Attribute datum), nonAnimated :: Array (Attribute datum) }
+partitionAnimatedAttrs attrs =
+  let
+    isAnimated (AnimatedAttr _) = true
+    isAnimated _ = false
+    animated = Array.filter isAnimated attrs
+    nonAnimated = Array.filter (not <<< isAnimated) attrs
+  in
+    { animated, nonAnimated }
+
+-- | Evaluate an AnimatedValue to get the actual number
+evalAnimatedValue :: forall datum. AnimatedValue datum -> datum -> Int -> Number
+evalAnimatedValue (StaticAnimValue n) _ _ = n
+evalAnimatedValue (DataAnimValue f) d _ = f d
+evalAnimatedValue (IndexedAnimValue f) d i = f d i
 
 -- | Apply a transition with removal to an array of elements
 -- | Used for exit phase - elements animate out then are removed from DOM
@@ -1224,6 +1313,12 @@ applyExitTransitionToElements config elementDatumPairs attrs = do
 
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
+
+      -- AnimatedAttr falls back to D3 for now
+      AnimatedAttr rec -> do
+        let (AttributeName name) = rec.name
+        let toValue = evalAnimatedValue rec.toValue datum index
+        TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
     -- Schedule removal after transition completes
     TransitionFFI.transitionRemove_ transition

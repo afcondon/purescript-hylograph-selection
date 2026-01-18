@@ -209,6 +209,10 @@ attrToCode maybeSample attr = case attr of
       Nothing ->
         attrFnName name <> " $ " <> attrSourceToCode src
 
+  AnimatedAttr rec ->
+    let (AttributeName name) = rec.name
+    in attrFnName name <> " $ animated $ animatedTo \"" <> name <> "\" (...) # withDuration " <> show rec.config.duration
+
 -- | Convert static value to Friendly DSL code
 staticValueToCode :: AttributeValue -> String
 staticValueToCode = case _ of

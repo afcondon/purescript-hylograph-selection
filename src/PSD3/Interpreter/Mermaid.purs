@@ -95,6 +95,7 @@ formatAttribute = case _ of
   StaticAttr (AttributeName name) _ -> name
   DataAttr (AttributeName name) src _ -> formatAttrSource name src
   IndexedAttr (AttributeName name) src _ -> formatAttrSource name src
+  AnimatedAttr rec -> let (AttributeName name) = rec.name in name <> "(anim)"
 
 -- | Format attribute source for Mermaid display
 formatAttrSource :: String -> AttrSource -> String
