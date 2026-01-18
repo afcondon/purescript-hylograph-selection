@@ -2,8 +2,6 @@ workspace:
   packageSet:
     registry: 67.0.1
   extraPackages:
-    psd3-tree:
-      path: ../purescript-psd3-tree
     psd3-graph:
       path: ../purescript-psd3-graph
 
@@ -41,7 +39,7 @@ package:
     - prelude
     - profunctor
     - psd3-graph
-    - psd3-tree
+    - tree-rose
     - strings
     - transformers
     - tuples
@@ -51,6 +49,7 @@ package:
     - web-dom
     - web-events
     - web-html
+    - web-pointerevents
     - web-uievents
   test:
     main: Test.Main

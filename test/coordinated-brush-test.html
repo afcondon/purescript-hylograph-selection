@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Coordinated Brush Test</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #4a9eff; margin-bottom: 10px; }
+    .container {
+      display: flex;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    .panel {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .panel h2 {
+      margin: 0 0 15px 0;
+      color: #888;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    svg {
+      background: #0f0f1a;
+      border-radius: 4px;
+    }
+
+    /* Coordinated interaction CSS classes */
+    .point {
+      transition: opacity 0.15s ease, r 0.15s ease;
+    }
+    .point.coord-primary {
+      opacity: 1 !important;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+    .point.coord-selected {
+      opacity: 1 !important;
+    }
+    .point.coord-dimmed {
+      opacity: 0.15 !important;
+    }
+
+    /* Brush rectangle */
+    .brush-rect {
+      fill: rgba(74, 158, 255, 0.2);
+      stroke: #4a9eff;
+      stroke-width: 1;
+      pointer-events: none;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+      height: 40px;
+    }
+    .info {
+      margin-top: 30px;
+      padding: 15px;
+      background: #0f3460;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    code {
+      background: #1a1a2e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Fira Code', monospace;
+    }
+    .legend {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Coordinated Brush Test</h1>
+  <p>Test the new PSD3.Interaction.Coordinated framework with native pointer events brush</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background: #4a9eff"></div> Category A</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #10b981"></div> Category B</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #f59e0b"></div> Category C</div>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+      <h2>View 1: X vs Y (brush here)</h2>
+      <svg id="view1" width="400" height="300"></svg>
+      <div class="status" id="status1">Drag to brush-select points...</div>
+    </div>
+
+    <div class="panel">
+      <h2>View 2: X vs Z (responds to brush)</h2>
+      <svg id="view2" width="400" height="300"></svg>
+      <div class="status" id="status2">Points highlight when brushed in View 1</div>
+    </div>
+  </div>
+
+  <div class="info">
+    <strong>What's being tested:</strong><br>
+    <code>registerCoordinated</code> - Elements register with identify/respond functions<br>
+    <code>emitTrigger(BrushTrigger box)</code> - Brush selection dispatched to all registered elements<br>
+    <code>InteractionState</code> - Elements respond with Selected/Dimmed/Neutral<br>
+    <code>CSS classes</code> - <code>.coord-selected</code>, <code>.coord-dimmed</code> applied automatically<br>
+    <strong>Native brush</strong> - No d3-brush, pure pointer events + SVG rect
+  </div>
+
+  <script type="module">
+    // =============================================================================
+    // Test Data - Same data shown in two different projections
+    // =============================================================================
+
+    const categories = ['A', 'B', 'C'];
+    const colors = { A: '#4a9eff', B: '#10b981', C: '#f59e0b' };
+
+    // Generate random test data
+    function generateData(n) {
+      const data = [];
+      for (let i = 0; i < n; i++) {
+        const category = categories[Math.floor(Math.random() * 3)];
+        data.push({
+          id: `point-${i}`,
+          x: 50 + Math.random() * 300,
+          y: 50 + Math.random() * 200,
+          z: 50 + Math.random() * 200,
+          category
+        });
+      }
+      return data;
+    }
+
+    const data = generateData(100);
+
+    // =============================================================================
+    // Coordinated Interaction Framework (inline for test - matches PSD3.Interaction.Coordinated.js)
+    // =============================================================================
+
+    const registry = new Map();
+
+    const CSS_CLASSES = {
+      primary: 'coord-primary',
+      related: 'coord-related',
+      selected: 'coord-selected',
+      dimmed: 'coord-dimmed'
+    };
+
+    const STATE = {
+      PRIMARY: 0,
+      RELATED: 1,
+      SELECTED: 2,
+      DIMMED: 3,
+      NEUTRAL: 4
+    };
+
+    function getGroup(groupName) {
+      const key = groupName || '_global';
+      if (!registry.has(key)) {
+        registry.set(key, []);
+      }
+      return registry.get(key);
+    }
+
+    function clearAllClasses(element) {
+      Object.values(CSS_CLASSES).forEach(cls => {
+        element.classList.remove(cls);
+      });
+    }
+
+    function applyState(element, state) {
+      clearAllClasses(element);
+      switch (state) {
+        case STATE.PRIMARY:
+          element.classList.add(CSS_CLASSES.primary);
+          break;
+        case STATE.RELATED:
+          element.classList.add(CSS_CLASSES.related);
+          break;
+        case STATE.SELECTED:
+          element.classList.add(CSS_CLASSES.selected);
+          break;
+        case STATE.DIMMED:
+          element.classList.add(CSS_CLASSES.dimmed);
+          break;
+      }
+    }
+
+    function dispatchTrigger(groupName, trigger) {
+      const group = getGroup(groupName);
+      group.forEach(entry => {
+        const { element, respondFn } = entry;
+        const datum = element.__data__;
+        if (!datum) return;
+        const state = respondFn(trigger, datum);
+        applyState(element, state);
+      });
+    }
+
+    // Trigger constructors
+    function hoverTrigger(id) {
+      return { type: 'hover', id };
+    }
+
+    function brushTrigger(box) {
+      return { type: 'brush', box };
+    }
+
+    function clearTrigger() {
+      return { type: 'clear' };
+    }
+
+    // Register an element for coordinated interactions
+    function registerCoordinated(element, config) {
+      const group = getGroup(config.group);
+      const entry = {
+        element,
+        identifyFn: config.identify,
+        respondFn: config.respond
+      };
+      group.push(entry);
+
+      // Set up hover listeners
+      element.addEventListener('mouseenter', () => {
+        const datum = element.__data__;
+        if (!datum) return;
+        const id = config.identify(datum);
+        dispatchTrigger(config.group, hoverTrigger(id));
+      });
+
+      element.addEventListener('mouseleave', () => {
+        // Only clear if no brush is active
+        if (!currentBrush) {
+          dispatchTrigger(config.group, clearTrigger());
+        }
+      });
+
+      return () => {
+        const idx = group.indexOf(entry);
+        if (idx !== -1) group.splice(idx, 1);
+        clearAllClasses(element);
+      };
+    }
+
+    // Emit trigger to group
+    function emitTrigger(groupName, trigger) {
+      dispatchTrigger(groupName, trigger);
+    }
+
+    // =============================================================================
+    // Native Pointer Events Brush (inline for test - demonstrates the pattern)
+    // =============================================================================
+
+    let currentBrush = null;
+
+    function attachNativeBrush(svg, extent, onBrush, onEnd) {
+      let brushRect = null;
+      let startPoint = null;
+      let isDragging = false;
+
+      // Create brush rectangle (hidden initially)
+      brushRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      brushRect.setAttribute('class', 'brush-rect');
+      brushRect.setAttribute('display', 'none');
+      svg.appendChild(brushRect);
+
+      // Convert client coords to SVG coords
+      function toSvgCoords(event) {
+        const pt = svg.createSVGPoint();
+        pt.x = event.clientX;
+        pt.y = event.clientY;
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          return pt.matrixTransform(ctm.inverse());
+        }
+        return pt;
+      }
+
+      // Clamp to extent
+      function clamp(val, min, max) {
+        return Math.max(min, Math.min(max, val));
+      }
+
+      svg.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+
+        isDragging = true;
+        svg.setPointerCapture(event.pointerId);
+        event.preventDefault();
+
+        startPoint = toSvgCoords(event);
+        startPoint.x = clamp(startPoint.x, extent.x0, extent.x1);
+        startPoint.y = clamp(startPoint.y, extent.y0, extent.y1);
+
+        brushRect.setAttribute('x', startPoint.x);
+        brushRect.setAttribute('y', startPoint.y);
+        brushRect.setAttribute('width', 0);
+        brushRect.setAttribute('height', 0);
+        brushRect.setAttribute('display', 'block');
+      });
+
+      svg.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+
+        const currentPoint = toSvgCoords(event);
+        currentPoint.x = clamp(currentPoint.x, extent.x0, extent.x1);
+        currentPoint.y = clamp(currentPoint.y, extent.y0, extent.y1);
+
+        const x0 = Math.min(startPoint.x, currentPoint.x);
+        const y0 = Math.min(startPoint.y, currentPoint.y);
+        const x1 = Math.max(startPoint.x, currentPoint.x);
+        const y1 = Math.max(startPoint.y, currentPoint.y);
+
+        brushRect.setAttribute('x', x0);
+        brushRect.setAttribute('y', y0);
+        brushRect.setAttribute('width', x1 - x0);
+        brushRect.setAttribute('height', y1 - y0);
+
+        currentBrush = { x0, y0, x1, y1 };
+        onBrush(currentBrush);
+      });
+
+      svg.addEventListener('pointerup', (event) => {
+        if (!isDragging) return;
+
+        isDragging = false;
+        svg.releasePointerCapture(event.pointerId);
+
+        // If brush is too small, treat as click to clear
+        const width = parseFloat(brushRect.getAttribute('width'));
+        const height = parseFloat(brushRect.getAttribute('height'));
+
+        if (width < 5 && height < 5) {
+          brushRect.setAttribute('display', 'none');
+          currentBrush = null;
+          onEnd(null);
+        } else {
+          onEnd(currentBrush);
+        }
+      });
+
+      // Return handle for programmatic control
+      return {
+        clear: () => {
+          brushRect.setAttribute('display', 'none');
+          currentBrush = null;
+        }
+      };
+    }
+
+    // =============================================================================
+    // Create Visualizations
+    // =============================================================================
+
+    const svg1 = document.getElementById('view1');
+    const svg2 = document.getElementById('view2');
+    const status1 = document.getElementById('status1');
+    const status2 = document.getElementById('status2');
+
+    const GROUP_NAME = 'linked-views';
+
+    // Respond function: how each element responds to triggers
+    function respondToTrigger(trigger, datum) {
+      switch (trigger.type) {
+        case 'hover':
+          return datum.id === trigger.id ? STATE.PRIMARY : STATE.DIMMED;
+
+        case 'brush':
+          // Check if point is inside brush box (using view1 coordinates: x, y)
+          const { box } = trigger;
+          if (datum.x >= box.x0 && datum.x <= box.x1 &&
+              datum.y >= box.y0 && datum.y <= box.y1) {
+            return STATE.SELECTED;
+          }
+          return STATE.DIMMED;
+
+        case 'clear':
+          return STATE.NEUTRAL;
+
+        default:
+          return STATE.NEUTRAL;
+      }
+    }
+
+    // Create points for View 1 (X vs Y)
+    data.forEach(d => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', d.x);
+      circle.setAttribute('cy', d.y);
+      circle.setAttribute('r', 5);
+      circle.setAttribute('fill', colors[d.category]);
+      circle.setAttribute('class', 'point');
+      circle.__data__ = d;
+
+      registerCoordinated(circle, {
+        identify: datum => datum.id,
+        respond: respondToTrigger,
+        group: GROUP_NAME
+      });
+
+      svg1.appendChild(circle);
+    });
+
+    // Create points for View 2 (X vs Z)
+    data.forEach(d => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', d.x);
+      circle.setAttribute('cy', d.z);  // Use Z instead of Y
+      circle.setAttribute('r', 5);
+      circle.setAttribute('fill', colors[d.category]);
+      circle.setAttribute('class', 'point');
+      circle.__data__ = d;
+
+      registerCoordinated(circle, {
+        identify: datum => datum.id,
+        respond: respondToTrigger,
+        group: GROUP_NAME
+      });
+
+      svg2.appendChild(circle);
+    });
+
+    // Attach native brush to View 1
+    const brushHandle = attachNativeBrush(
+      svg1,
+      { x0: 0, y0: 0, x1: 400, y1: 300 },
+      // onBrush
+      (box) => {
+        // Count selected points
+        const selectedCount = data.filter(d =>
+          d.x >= box.x0 && d.x <= box.x1 &&
+          d.y >= box.y0 && d.y <= box.y1
+        ).length;
+
+        status1.textContent = `Brushing: ${selectedCount} points selected`;
+        status2.textContent = `${selectedCount} points highlighted (same data, different projection)`;
+
+        // Emit brush trigger to coordinated group
+        emitTrigger(GROUP_NAME, brushTrigger(box));
+      },
+      // onEnd
+      (box) => {
+        if (box) {
+          const selectedCount = data.filter(d =>
+            d.x >= box.x0 && d.x <= box.x1 &&
+            d.y >= box.y0 && d.y <= box.y1
+          ).length;
+          status1.textContent = `Selection: ${selectedCount} points`;
+          status2.textContent = `${selectedCount} points remain highlighted`;
+        } else {
+          status1.textContent = 'Drag to brush-select points...';
+          status2.textContent = 'Points highlight when brushed in View 1';
+          emitTrigger(GROUP_NAME, clearTrigger());
+        }
+      }
+    );
+
+    console.log('Coordinated brush test initialized.');
+    console.log('- Drag in View 1 to brush-select points');
+    console.log('- Points in both views will highlight/dim based on brush selection');
+    console.log('- Click (small drag) to clear selection');
+  </script>
+</body>
+</html>

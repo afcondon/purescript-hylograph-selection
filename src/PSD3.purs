@@ -117,10 +117,17 @@ import PSD3.Interpreter.D3 (D3v2M, D3v2Selection_, runD3v2M, reselectD3v2) as X
 import PSD3.Internal.Selection.Types (SEmpty, SBoundOwns, SBoundInherits, SPending, SExiting, Selection(..)) as X
 import PSD3.Internal.Behavior.Types (Behavior(..), defaultDrag, ScaleExtent(..), HighlightClass(..), TooltipTrigger(..), TooltipConfig, CoordinatedHighlightConfig, onCoordinatedHighlight) as X
 
+-- Native Pointer Events (D3-free drag/interactions)
+import PSD3.Interaction.Pointer (attachPointerDrag, attachSimulationDrag, attachSimulationDragNested, pointerPosition, PointerDragConfig, Point) as X
+
+-- Unified Coordinated Interactions (hover, brush, selection)
+-- Note: InteractionState constructors are qualified to avoid conflict with HighlightClass
+import PSD3.Interaction.Coordinated (InteractionTrigger(..), InteractionState, BoundingBox, CoordinatedConfig, CoordinatedHandle, registerCoordinated, emitTrigger, clearInteractions, simpleHover, withBrush, withSelection, mkHoverTrigger, mkBrushTrigger, mkClearTrigger, pointInBox, boxesOverlap, isHighlighted, isSelected) as X
+
 -- Shared data types
 import PSD3.Data.Node (SimulationNode) as X
 import PSD3.Internal.Types (D3Simulation_, Datum_, Index_, Selector) as X
-import PSD3.Data.Tree (TreeLayout(..)) as X
+import Data.Graph.Layout (TreeLayout(..)) as X
 -- TODO: DAGTree module not yet implemented
 -- import PSD3.Data.DAGTree (DAGTree, DAGLink, PositionedDAGTree, PositionedNode, dagTree, addLink, addLinks, layoutDAGTree, getNodePosition, getExtraLinkPositions) as X
 
