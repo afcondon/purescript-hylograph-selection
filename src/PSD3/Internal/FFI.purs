@@ -1,35 +1,11 @@
 module PSD3.Internal.FFI
-  ( -- Selection FFI
-    d3SelectAllInDOM_
-  , d3SelectFirstInDOM_
-  , d3SelectionSelectAll_
-  , d3SelectionSelect_
-  , d3SelectionIsEmpty_
-  , d3GetSelectionData_
-  , d3EnterAndAppend_
-  , d3Append_
-  , d3MergeSelectionWith_
-  , d3GetEnterSelection_
-  , d3GetExitSelection_
-  , d3RemoveSelection_
-  , d3FilterSelection_
-  , d3OrderSelection_
-  , d3RaiseSelection_
-  , d3LowerSelection_
-  , d3SortSelection_
-  , getIndexFromDatum_
-  , d3Data_
+  ( -- Selection FFI (legacy - most selection ops now use web-dom)
+    getIndexFromDatum_
   , ComputeKeyFunction_
   , keyIsID_
   , keyIsSourceTarget_
   , swizzledLinkKey_
-  , d3DataWithKeyFunction_
-  , d3DataWithFunction_
   , D3Attr_
-  , d3SetAttr_
-  , d3SetText_
-  , d3SetProperty_
-  , d3SetHTML_
   , D3DragFunction_
   , simulationDrag_
   , simdrag_
@@ -140,7 +116,7 @@ module PSD3.Internal.FFI
 
 import PSD3.Data.Node
 
-import PSD3.Internal.Types (D3Selection_, D3Simulation_, Datum_, Index_, PointXY, Selector)
+import PSD3.Internal.Types (D3Selection_, D3Simulation_, Datum_, Index_, PointXY)
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Prelude (Unit)
@@ -148,54 +124,18 @@ import Prelude (Unit)
 -- | *********************************************************************************************************************
 -- | ***************************   FFI signatures for Selection                ********************************************
 -- | *********************************************************************************************************************
-
-foreign import d3SelectAllInDOM_     :: forall d. Selector (D3Selection_ d) -> D3Selection_ d
-foreign import d3SelectFirstInDOM_   :: forall d. Selector (D3Selection_ d) -> D3Selection_ d
-foreign import d3SelectionSelectAll_ :: forall d. Selector (D3Selection_ d) -> D3Selection_ d -> D3Selection_ d
-foreign import d3SelectionSelect_    :: forall d. Selector (D3Selection_ d) -> D3Selection_ d -> D3Selection_ d
-foreign import d3SelectionIsEmpty_   :: forall d. D3Selection_ d -> Boolean
-foreign import d3GetSelectionData_   :: forall d. D3Selection_ d -> Array Datum_
-foreign import d3EnterAndAppend_     :: forall d. String -> D3Selection_ d -> D3Selection_ d
-foreign import d3Append_             :: forall d. String -> D3Selection_ d -> D3Selection_ d
-foreign import d3MergeSelectionWith_ :: forall d. D3Selection_ d -> D3Selection_ d -> D3Selection_ d
-
--- these next two are for getting Enter and Exit selections during an update
-foreign import d3GetEnterSelection_ :: forall d. D3Selection_ d -> D3Selection_ d
-foreign import d3GetExitSelection_  :: forall d. D3Selection_ d -> D3Selection_ d
-
--- Removes the selected elements from the document. Returns this selection (the
--- removed elements) which are now detached from the DOM. There is not currently a
--- dedicated API to add removed elements back to the document; however, you can
--- pass a function to selection.append or selection.insert to re-add elements.
-foreign import d3RemoveSelection_    :: forall d. D3Selection_ d -> D3Selection_ d
-
-foreign import d3FilterSelection_    :: forall d. D3Selection_ d -> Selector (D3Selection_ d) -> D3Selection_ d
-foreign import d3OrderSelection_     :: forall d. D3Selection_ d -> D3Selection_ d
-foreign import d3RaiseSelection_     :: forall d. D3Selection_ d -> D3Selection_ d
-foreign import d3LowerSelection_     :: forall d. D3Selection_ d -> D3Selection_ d
-foreign import d3SortSelection_      :: forall d. D3Selection_ d -> (d -> d -> Int) -> D3Selection_ d
+-- | NOTE: Most D3 selection operations have been replaced with PureScript web-dom libraries.
+-- | The remaining exports here are for simulation key functions and drag behaviors.
 
 foreign import getIndexFromDatum_    :: Datum_ -> Int
 
-foreign import d3Data_               :: forall d. Array d -> D3Selection_ d -> D3Selection_ d
 type ComputeKeyFunction_ d key = d -> key
 foreign import keyIsID_           :: forall d. ComputeKeyFunction_ d Index_
 foreign import keyIsSourceTarget_ :: forall d. ComputeKeyFunction_ d Index_ -- used for links in simulation
 foreign import swizzledLinkKey_   :: forall d. ComputeKeyFunction_ d String -- key function for swizzled links (extracts source/target IDs)
--- REVIEW the returned D3Selection_ here is the full enter, update, exit type of selection
--- which we haven't really modelled in PureScript (opaque type) but maybe it will turn out that we
--- needed to all along
--- Key function can return any type (String, Int, etc), gets coerced to Index_ for D3
-foreign import d3DataWithKeyFunction_ :: forall d1 d2 key. Array d2 -> ComputeKeyFunction_ d2 key -> D3Selection_ d1 -> D3Selection_ d2
-foreign import d3DataWithFunction_ :: forall d. (Datum_ -> Array Datum_) -> ComputeKeyFunction_ Datum_ Index_ -> D3Selection_ d -> D3Selection_ d
 
--- we'll coerce everything to this type if we can validate attr lambdas against provided data
--- ... and we'll also just coerce all our setters to one thing for the FFI since JS don't care
-foreign import data D3Attr_ :: Type 
-foreign import d3SetAttr_       :: forall d. String -> D3Attr_ -> D3Selection_ d -> D3Selection_ d
-foreign import d3SetText_       :: forall d. D3Attr_ -> D3Selection_ d -> D3Selection_ d
-foreign import d3SetProperty_   :: forall d. D3Attr_ -> D3Selection_ d -> D3Selection_ d
-foreign import d3SetHTML_       :: forall d. D3Attr_ -> D3Selection_ d -> D3Selection_ d
+-- D3Attr_ is used by force configuration functions
+foreign import data D3Attr_ :: Type
 
 foreign import data D3DragFunction_ :: Type
 foreign import simulationDrag_ :: forall d. String -> D3Selection_ d -> D3Simulation_ -> D3DragFunction_ -> D3Selection_ d

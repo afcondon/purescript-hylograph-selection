@@ -6,7 +6,7 @@ import {
   forceManyBody, forceRadial, forceX, forceY
 } from "d3-force";
 import {
-  hierarchy, cluster, tree, pack, treemap, partition
+  hierarchy, pack
 } from "d3-hierarchy";
 import {
   linkHorizontal, linkVertical, linkRadial, arc
@@ -26,31 +26,11 @@ export { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridi
 export { scaleLinear, scaleOrdinal };
 
 const debug = false
-export const emptyD3Data_ = null
-export function d3Append_(element) { return selection => { return selection.append(element) } }
-export function d3Data_(data) { return selection => { return selection.data(data) } }
-export function d3DataWithKeyFunction_(data) { return keyFn => selection => { return selection.data(data, keyFn) } }
-export function d3DataWithFunction_(extractFn) { return keyFn => selection => { return selection.data(extractFn, keyFn) } }
-export function d3EnterAndAppend_(element) { return selection => { return selection.enter().append(element) } }
-export function d3GetExitSelection_(selection) { return selection.exit() }
-export function d3GetEnterSelection_(selection) { return selection.enter() }
-export function d3GetSelectionData_(selection) { return selection.data() }
-export function d3FilterSelection_(selection) { return selector => selection.filter(selector) }
-export function d3LowerSelection_(selection) { return selection.lower() }
-export function d3MergeSelectionWith_(enter) { return update => { return enter.merge(update); } }
-export function d3OrderSelection_(selection) { return selection.order() }
-export function d3RaiseSelection_(selection) { return selection.raise() }
-export function d3RemoveSelection_(selection) { return selection.remove() }
-export function d3SelectAllInDOM_(selector) { return selectAll(selector) }
-export function d3SelectFirstInDOM_(selector) { return select(selector) }
-export function d3SelectionIsEmpty_(selection) { return selection.empty() }
-export function d3SelectionSelect_(selector) { return selection => { return selection.select(selector) } }
-export function d3SelectionSelectAll_(selector) { return selection => { return selection.selectAll(selector) } }
-export function d3SetAttr_(name) { return value => selection => { return selection.attr(name, value) } }
-export function d3SetHTML_(value) { return selection => { return selection.html(value) } }
-export function d3SetProperty_(value) { return selection => { return selection.property(value) } }
-export function d3SetText_(value) { return selection => { return selection.text(value) } }
-export function d3SortSelection_(selection) { return compare => selection.sort(compare) }
+
+// NOTE: Most d3-selection wrapper functions have been removed.
+// Selection operations now use PureScript web-dom libraries directly.
+// The remaining exports are for simulation drag behaviors.
+
 export function simulationDrag_(label) { return selection => simulation => dragFn => selection.call(dragFn(label, simulation)) }
 export function disableDrag_(selection) { return selection.on('.drag', null) }
 export function getIndexFromDatum_(datum) { return (typeof datum.index == `undefined`) ? "?" : datum.index }
