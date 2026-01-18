@@ -1171,11 +1171,9 @@ applyTransitionToElements config elementDatumPairs attrs = do
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-      -- AnimatedAttr falls back to D3 for now
-      AnimatedAttr rec -> do
-        let (AttributeName name) = rec.name
-        let toValue = evalAnimatedValue rec.toValue datum index
-        TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+      -- AnimatedAttr should use the pure transition path, not D3
+      AnimatedAttr _ ->
+        unsafeCrashWith "AnimatedAttr in D3 transition path - use applyTransitionToSingleElementPure instead"
 
 -- | Apply a transition to a single element with an explicit index
 -- | Used when elements need per-element attrs but shared stagger timing
@@ -1209,11 +1207,9 @@ applyTransitionToSingleElement config index element datum attrs = do
     IndexedAttr (AttributeName name) _src f ->
       TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-    -- AnimatedAttr falls back to D3 for now (will be replaced by pure transitions)
-    AnimatedAttr rec -> do
-      let (AttributeName name) = rec.name
-      let toValue = evalAnimatedValue rec.toValue datum index
-      TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+    -- AnimatedAttr should use the pure transition path, not D3
+    AnimatedAttr _ ->
+      unsafeCrashWith "AnimatedAttr in D3 transition path - use applyTransitionToSingleElementPure instead"
 
 -- | Apply a transition to a single element using pure PureScript transitions
 -- |
@@ -1314,11 +1310,9 @@ applyExitTransitionToElements config elementDatumPairs attrs = do
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-      -- AnimatedAttr falls back to D3 for now
-      AnimatedAttr rec -> do
-        let (AttributeName name) = rec.name
-        let toValue = evalAnimatedValue rec.toValue datum index
-        TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+      -- AnimatedAttr should use the pure transition path, not D3
+      AnimatedAttr _ ->
+        unsafeCrashWith "AnimatedAttr in D3 exit transition path - use pure transition path instead"
 
     -- Schedule removal after transition completes
     TransitionFFI.transitionRemove_ transition
