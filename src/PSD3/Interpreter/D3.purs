@@ -19,13 +19,18 @@ import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
-import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..))
+import Data.Number as Number
+import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), EasingType(..))
 import PSD3.Internal.Capabilities.Selection (class SelectionM)
 import PSD3.Internal.Capabilities.Transition (class TransitionM)
 import PSD3.Internal.Selection.Operations as Ops
+import PSD3.Internal.Selection.Operations (getTransitionContext)
 import PSD3.Internal.Selection.Query as Query
 import PSD3.Internal.Selection.Types (Selection(..), SelectionImpl(..), SBoundOwns, SEmpty, JoinResult(..))
 import PSD3.Internal.Transition.FFI as TransitionFFI
+import PSD3.Internal.Transition.Manager as Manager
+import PSD3.Internal.Transition.Types as TransitionTypes
+import PSD3.Transition.Coordinator as Coordinator
 import Web.DOM.Element (Element)
 
 -- | Selection type for D3v2 interpreter
@@ -158,39 +163,104 @@ instance TransitionM D3v2Selection_ D3v2M where
     let { elements, data: datumArray, indices } = unsafePartial case selection of
           Selection (BoundSelection r) -> r
 
-    -- Get transition configuration
-    let Milliseconds duration = config.duration
+    -- Check for pure transition context
+    maybeCtx <- getTransitionContext
 
-    -- Apply transition to each element with its corresponding datum and index
-    let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-    paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-      -- Use logical index from indices array if present, otherwise use array index
-      let logicalIndex = case indices of
-            Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-            Nothing -> arrayIndex
+    case maybeCtx of
+      -- Pure transition path using Manager
+      Just ctx -> do
+        let Milliseconds duration = config.duration
+        let Milliseconds delay = case config.delay of
+              Just d -> d
+              Nothing -> Milliseconds 0.0
+        let easing = case config.easing of
+              Just e -> transitionEasingToAnimEasing e
+              Nothing -> Linear
 
-      -- Create a D3 transition for this element
-      transition <- TransitionFFI.createTransition_
-        duration
-        (TransitionFFI.maybeMillisecondsToNullable config.delay)
-        (TransitionFFI.maybeEasingToNullable config.easing)
-        element
+        -- Apply transition to each element
+        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+          let logicalIndex = case indices of
+                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+                Nothing -> arrayIndex
 
-      -- Apply each attribute to the transition
-      attrs # traverse_ \attr -> case attr of
-        StaticAttr (AttributeName name) value ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
+          -- Register each attribute as a transition
+          attrs # traverse_ \attr -> case attr of
+            StaticAttr (AttributeName name) value -> do
+              let targetValue = attributeValueToNumber value
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing  -- Read from DOM
+                (StaticAnimValue targetValue)
+                { duration, easing, delay }
+                (pure unit)
+              pure unit
 
-        DataAttr (AttributeName name) _src f ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
+            DataAttr (AttributeName name) _src f -> do
+              let targetValue = attributeValueToNumber (f datum)
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing
+                (StaticAnimValue targetValue)
+                { duration, easing, delay }
+                (pure unit)
+              pure unit
 
-        IndexedAttr (AttributeName name) _src f ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
+            IndexedAttr (AttributeName name) _src f -> do
+              let targetValue = attributeValueToNumber (f datum logicalIndex)
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing
+                (StaticAnimValue targetValue)
+                { duration, easing, delay }
+                (pure unit)
+              pure unit
 
-        AnimatedAttr rec -> do
-          let (AttributeName name) = rec.name
-          let toValue = evalAnimValue rec.toValue datum logicalIndex
-          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+            AnimatedAttr rec -> do
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex
+                (let (AttributeName n) = rec.name in n)
+                rec.fromValue
+                rec.toValue
+                rec.config
+                (pure unit)
+              pure unit
+
+        -- Ensure coordinator is running
+        _ <- Coordinator.register ctx.coordinator
+          { tick: Manager.toCoordinatorConsumer ctx.manager
+          , onComplete: pure unit
+          }
+        Coordinator.start ctx.coordinator
+
+      -- D3 transition path (legacy)
+      Nothing -> do
+        let Milliseconds duration = config.duration
+
+        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+          let logicalIndex = case indices of
+                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+                Nothing -> arrayIndex
+
+          -- Create a D3 transition for this element
+          transition <- TransitionFFI.createTransition_
+            duration
+            (TransitionFFI.maybeMillisecondsToNullable config.delay)
+            (TransitionFFI.maybeEasingToNullable config.easing)
+            element
+
+          -- Apply each attribute to the transition
+          attrs # traverse_ \attr -> case attr of
+            StaticAttr (AttributeName name) value ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
+
+            DataAttr (AttributeName name) _src f ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
+
+            IndexedAttr (AttributeName name) _src f ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
+
+            AnimatedAttr rec -> do
+              let (AttributeName name) = rec.name
+              let toValue = evalAnimValue rec.toValue datum logicalIndex
+              TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
   withTransitionExit config (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
@@ -234,42 +304,105 @@ instance TransitionM D3v2Selection_ D3v2M where
     let { elements, data: datumArray, indices } = unsafePartial case selection of
           Selection (BoundSelection r) -> r
 
-    -- Get transition configuration
-    let Milliseconds duration = config.duration
+    -- Check for pure transition context
+    maybeCtx <- getTransitionContext
 
-    -- Apply transition to each element with its corresponding datum and index
-    let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-    paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-      -- Use logical index from indices array if present, otherwise use array index
-      let logicalIndex = case indices of
-            Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-            Nothing -> arrayIndex
+    case maybeCtx of
+      -- Pure transition path using Manager
+      Just ctx -> do
+        let Milliseconds duration = config.duration
+        let easing = case config.easing of
+              Just e -> transitionEasingToAnimEasing e
+              Nothing -> Linear
 
-      -- Compute the delay for this element using the delay function
-      let Milliseconds elementDelay = delayFn datum logicalIndex
+        -- Apply transition to each element
+        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+          let logicalIndex = case indices of
+                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+                Nothing -> arrayIndex
 
-      -- Create a D3 transition for this element with computed delay
-      transition <- TransitionFFI.createTransition_
-        duration
-        (toNullable (Just elementDelay))
-        (TransitionFFI.maybeEasingToNullable config.easing)
-        element
+          -- Compute the delay for this element using the delay function
+          let Milliseconds elementDelay = delayFn datum logicalIndex
 
-      -- Apply each attribute to the transition
-      attrs # traverse_ \attr -> case attr of
-        StaticAttr (AttributeName name) value ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
+          -- Register each attribute as a transition with per-element delay
+          attrs # traverse_ \attr -> case attr of
+            StaticAttr (AttributeName name) value -> do
+              let targetValue = attributeValueToNumber value
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing
+                (StaticAnimValue targetValue)
+                { duration, easing, delay: elementDelay }
+                (pure unit)
+              pure unit
 
-        DataAttr (AttributeName name) _src f ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
+            DataAttr (AttributeName name) _src f -> do
+              let targetValue = attributeValueToNumber (f datum)
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing
+                (StaticAnimValue targetValue)
+                { duration, easing, delay: elementDelay }
+                (pure unit)
+              pure unit
 
-        IndexedAttr (AttributeName name) _src f ->
-          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
+            IndexedAttr (AttributeName name) _src f -> do
+              let targetValue = attributeValueToNumber (f datum logicalIndex)
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
+                Nothing
+                (StaticAnimValue targetValue)
+                { duration, easing, delay: elementDelay }
+                (pure unit)
+              pure unit
 
-        AnimatedAttr rec -> do
-          let (AttributeName name) = rec.name
-          let toValue = evalAnimValue rec.toValue datum logicalIndex
-          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+            AnimatedAttr rec -> do
+              -- Override delay with per-element stagger
+              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex
+                (let (AttributeName n) = rec.name in n)
+                rec.fromValue
+                rec.toValue
+                (rec.config { delay = elementDelay })
+                (pure unit)
+              pure unit
+
+        -- Ensure coordinator is running
+        _ <- Coordinator.register ctx.coordinator
+          { tick: Manager.toCoordinatorConsumer ctx.manager
+          , onComplete: pure unit
+          }
+        Coordinator.start ctx.coordinator
+
+      -- D3 transition path (legacy)
+      Nothing -> do
+        let Milliseconds duration = config.duration
+
+        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+          let logicalIndex = case indices of
+                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+                Nothing -> arrayIndex
+
+          let Milliseconds elementDelay = delayFn datum logicalIndex
+
+          transition <- TransitionFFI.createTransition_
+            duration
+            (toNullable (Just elementDelay))
+            (TransitionFFI.maybeEasingToNullable config.easing)
+            element
+
+          attrs # traverse_ \attr -> case attr of
+            StaticAttr (AttributeName name) value ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
+
+            DataAttr (AttributeName name) _src f ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
+
+            IndexedAttr (AttributeName name) _src f ->
+              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
+
+            AnimatedAttr rec -> do
+              let (AttributeName name) = rec.name
+              let toValue = evalAnimValue rec.toValue datum logicalIndex
+              TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
   withTransitionExitStaggered config delayFn (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
@@ -322,6 +455,40 @@ attributeValueToString :: AttributeValue -> String
 attributeValueToString (StringValue s) = s
 attributeValueToString (NumberValue n) = show n
 attributeValueToString (BooleanValue b) = show b
+
+-- | Convert an AttributeValue to a Number (for pure transitions)
+-- | Strings are parsed as numbers, booleans become 0.0/1.0
+attributeValueToNumber :: AttributeValue -> Number
+attributeValueToNumber (NumberValue n) = n
+attributeValueToNumber (StringValue s) = parseNumber s
+attributeValueToNumber (BooleanValue true) = 1.0
+attributeValueToNumber (BooleanValue false) = 0.0
+
+-- | Parse a string to a number, returning 0.0 on failure
+parseNumber :: String -> Number
+parseNumber s = case Number.fromString s of
+  Just n -> n
+  Nothing -> 0.0
+
+-- | Convert from Transition.Types Easing to Attribute EasingType
+transitionEasingToAnimEasing :: TransitionTypes.Easing -> EasingType
+transitionEasingToAnimEasing TransitionTypes.Linear = Linear
+transitionEasingToAnimEasing TransitionTypes.QuadIn = QuadIn
+transitionEasingToAnimEasing TransitionTypes.QuadOut = QuadOut
+transitionEasingToAnimEasing TransitionTypes.QuadInOut = QuadInOut
+transitionEasingToAnimEasing TransitionTypes.CubicIn = CubicIn
+transitionEasingToAnimEasing TransitionTypes.CubicOut = CubicOut
+transitionEasingToAnimEasing TransitionTypes.CubicInOut = CubicInOut
+transitionEasingToAnimEasing TransitionTypes.SinIn = SinIn
+transitionEasingToAnimEasing TransitionTypes.SinOut = SinOut
+transitionEasingToAnimEasing TransitionTypes.SinInOut = SinInOut
+transitionEasingToAnimEasing TransitionTypes.ExpIn = ExpIn
+transitionEasingToAnimEasing TransitionTypes.ExpOut = ExpOut
+transitionEasingToAnimEasing TransitionTypes.ExpInOut = ExpInOut
+transitionEasingToAnimEasing TransitionTypes.ElasticOut = ElasticOut
+transitionEasingToAnimEasing TransitionTypes.BounceOut = BounceOut
+-- Fallback for other easing types (Quad, Cubic, Sin, Exp, Circle, Elastic, Bounce without In/Out suffix)
+transitionEasingToAnimEasing _ = Linear
 
 -- | Helper function for reselecting from D3v2 renderTree results
 -- |

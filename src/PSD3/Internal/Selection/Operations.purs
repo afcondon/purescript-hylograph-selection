@@ -22,6 +22,9 @@ module PSD3.Internal.Selection.Operations
   , elementTypeToString
     -- * Pure transition support
   , TransitionContext
+  , createTransitionContext
+  , getTransitionContext
+  , withPureTransitions
   , applyTransitionToSingleElementPure
   , partitionAnimatedAttrs
   , evalAnimatedValue
@@ -1330,6 +1333,58 @@ currentTransitionContext = unsafePerformEffect $ Ref.new Nothing
 -- | Returns Nothing if not inside a `renderTreeWithAnimations` call.
 getTransitionContext :: Effect (Maybe TransitionContext)
 getTransitionContext = Ref.read currentTransitionContext
+
+-- | Create a new transition context
+-- |
+-- | Creates a Manager and Coordinator that can be used for pure PureScript transitions.
+-- | The Coordinator handles the RAF loop, and the Manager tracks per-element transitions.
+createTransitionContext :: Effect TransitionContext
+createTransitionContext = do
+  manager <- Manager.create
+  coordinator <- Coordinator.create
+  pure { manager, coordinator }
+
+-- | Run an Effect with pure transitions enabled
+-- |
+-- | This sets up a TransitionContext before running the action, allowing
+-- | `withTransition`, `withTransitionStaggered`, and similar functions to use
+-- | pure PureScript transitions instead of D3 transitions.
+-- |
+-- | Example:
+-- | ```purescript
+-- | withPureTransitions do
+-- |   -- All withTransition calls here use pure PS transitions
+-- |   animateFade selection 0.5
+-- |   animateMove selection 200.0
+-- | ```
+-- |
+-- | Note: The context is cleared after the action completes. If transitions are
+-- | still running, the coordinator continues until they complete.
+withPureTransitions :: forall a. Effect a -> Effect a
+withPureTransitions action = do
+  -- Create or reuse existing context
+  existingCtx <- Ref.read currentTransitionContext
+  ctx <- case existingCtx of
+    Just c -> pure c
+    Nothing -> createTransitionContext
+
+  -- Set context
+  Ref.write (Just ctx) currentTransitionContext
+
+  -- Run action
+  result <- action
+
+  -- Start coordinator if needed (ensures RAF loop runs for any registered transitions)
+  _ <- Coordinator.register ctx.coordinator
+    { tick: Manager.toCoordinatorConsumer ctx.manager
+    , onComplete: pure unit
+    }
+  Coordinator.start ctx.coordinator
+
+  -- Clear context (coordinator keeps running until transitions complete)
+  Ref.write Nothing currentTransitionContext
+
+  pure result
 
 -- | Apply a transition to a single element, auto-selecting D3 or pure path
 -- |

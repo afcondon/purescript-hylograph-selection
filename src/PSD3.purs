@@ -108,7 +108,10 @@ import PSD3.Render (runD3, D3M, D3Selection) as X
 
 -- Selection & Transition Capabilities
 import PSD3.Internal.Capabilities.Selection (class SelectionM, select, selectElement, appendChildInheriting, appendData, renderTree, renderData, setAttrs, on, clear) as X
-import PSD3.Internal.Capabilities.Transition (class TransitionM, withTransition, withTransitionExit) as X
+import PSD3.Internal.Capabilities.Transition (class TransitionM, withTransition, withTransitionExit, withTransitionStaggered, staggerByIndex) as X
+
+-- Pure PureScript Transitions (D3-free animation)
+import PSD3.Internal.Selection.Operations (TransitionContext, createTransitionContext, withPureTransitions, renderTreeWithAnimations) as X
 
 -- Legacy type names (keep for backwards compatibility, prefer D3M/D3Selection)
 import PSD3.Interpreter.D3 (D3v2M, D3v2Selection_, runD3v2M, reselectD3v2) as X
