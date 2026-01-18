@@ -21,9 +21,12 @@ module PSD3.Internal.Selection.Operations
   , reselect
   , elementTypeToString
     -- * Pure transition support
+  , TransitionContext
   , applyTransitionToSingleElementPure
   , partitionAnimatedAttrs
   , evalAnimatedValue
+  , hasAnimatedAttr
+  , renderTreeWithAnimations
   ) where
 
 import Prelude hiding (append)
@@ -43,10 +46,14 @@ import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..), fst, snd)
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Ref (Ref)
+import Effect.Ref as Ref
+import Effect.Unsafe (unsafePerformEffect)
 import Effect.Class.Console (log)
 import Effect.Uncurried (mkEffectFn2)
 import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), AnimationConfig, EasingType(..))
 import PSD3.Internal.Transition.Manager as Manager
+import PSD3.Transition.Coordinator as Coordinator
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
 import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
 import PSD3.Internal.Selection.Join as Join
@@ -1274,7 +1281,180 @@ evalAnimatedValue (StaticAnimValue n) _ _ = n
 evalAnimatedValue (DataAnimValue f) d _ = f d
 evalAnimatedValue (IndexedAnimValue f) d i = f d i
 
--- | Apply a transition with removal to an array of elements
+-- | Check if any attribute in the array is an AnimatedAttr
+hasAnimatedAttr :: forall datum. Array (Attribute datum) -> Boolean
+hasAnimatedAttr = Array.any isAnimated
+  where
+    isAnimated (AnimatedAttr _) = true
+    isAnimated _ = false
+
+-- =============================================================================
+-- TransitionContext for Pure PureScript Animations
+-- =============================================================================
+
+-- | Context required for pure PureScript animations with AnimatedAttr
+-- |
+-- | Contains the transition manager and coordinator needed to drive animations
+-- | without D3's transition system.
+-- |
+-- | Usage:
+-- | ```purescript
+-- | -- Create context once per animation session
+-- | manager <- Manager.create
+-- | coordinator <- Coordinator.create
+-- | let ctx = { manager, coordinator }
+-- |
+-- | -- Use with renderTreeWithAnimations
+-- | renderTreeWithAnimations ctx parentSel tree
+-- |
+-- | -- Start the animation loop
+-- | Coordinator.start coordinator
+-- | ```
+type TransitionContext =
+  { manager :: Manager.ElementTransitionManager
+  , coordinator :: Coordinator.Coordinator
+  }
+
+-- | Module-level ref for active transition context
+-- |
+-- | This is set by `renderTreeWithAnimations` before rendering and cleared after.
+-- | Used by UpdateJoin handlers to access the context for AnimatedAttr transitions.
+-- |
+-- | NOTE: This is a safe use of unsafePerformEffect because we're just creating
+-- | a mutable ref that's used to thread context through the rendering process.
+currentTransitionContext :: Ref (Maybe TransitionContext)
+currentTransitionContext = unsafePerformEffect $ Ref.new Nothing
+
+-- | Get the current transition context (if any)
+-- |
+-- | Returns Nothing if not inside a `renderTreeWithAnimations` call.
+getTransitionContext :: Effect (Maybe TransitionContext)
+getTransitionContext = Ref.read currentTransitionContext
+
+-- | Apply a transition to a single element, auto-selecting D3 or pure path
+-- |
+-- | - If attrs contain AnimatedAttr AND context is available: use pure path
+-- | - If attrs contain AnimatedAttr AND no context: crash with helpful message
+-- | - If no AnimatedAttr: use D3 path
+applyTransitionAuto
+  :: forall datum
+   . TransitionConfig
+  -> Int -- Explicit index for stagger calculation
+  -> Element
+  -> datum
+  -> Array (Attribute datum)
+  -> Effect Unit
+applyTransitionAuto config index element datum attrs = do
+  maybeCtx <- getTransitionContext
+  case maybeCtx of
+    Just ctx | hasAnimatedAttr attrs -> do
+      -- Use pure transition path
+      applyTransitionToSingleElementPure ctx.manager config index element datum attrs (pure unit)
+      -- Register manager as consumer if not already
+      _ <- Coordinator.register ctx.coordinator
+        { tick: Manager.toCoordinatorConsumer ctx.manager
+        , onComplete: pure unit
+        }
+      -- Ensure coordinator is running
+      Coordinator.start ctx.coordinator
+    Nothing | hasAnimatedAttr attrs ->
+      -- AnimatedAttr requires context - crash with helpful message
+      unsafeCrashWith "AnimatedAttr used without TransitionContext. Use renderTreeWithAnimations instead of renderTree."
+    _ ->
+      -- No AnimatedAttr, use D3 path
+      applyTransitionToSingleElement config index element datum attrs
+
+-- | Apply an exit transition, auto-selecting D3 or pure path
+-- |
+-- | - If attrs contain AnimatedAttr AND context is available: use pure path
+-- | - If attrs contain AnimatedAttr AND no context: crash with helpful message
+-- | - If no AnimatedAttr: use D3 path
+applyExitTransitionAuto
+  :: forall datum
+   . TransitionConfig
+  -> Array (Tuple Element datum)
+  -> Array (Attribute datum)
+  -> Effect Unit
+applyExitTransitionAuto config elementDatumPairs attrs = do
+  maybeCtx <- getTransitionContext
+  case maybeCtx of
+    Just ctx | hasAnimatedAttr attrs -> do
+      -- Use pure transition path for exit
+      applyExitTransitionPure ctx.manager config elementDatumPairs attrs
+      -- Register manager as consumer if not already
+      _ <- Coordinator.register ctx.coordinator
+        { tick: Manager.toCoordinatorConsumer ctx.manager
+        , onComplete: pure unit
+        }
+      -- Ensure coordinator is running
+      Coordinator.start ctx.coordinator
+    Nothing | hasAnimatedAttr attrs ->
+      -- AnimatedAttr requires context - crash with helpful message
+      unsafeCrashWith "AnimatedAttr in exit transition requires TransitionContext. Use renderTreeWithAnimations instead of renderTree."
+    _ ->
+      -- No AnimatedAttr, use D3 path
+      applyExitTransitionToElements config elementDatumPairs attrs
+
+-- | Apply exit transition using pure PureScript transitions
+-- |
+-- | Animates elements to exit attributes, then removes them from DOM after completion.
+applyExitTransitionPure
+  :: forall datum
+   . Manager.ElementTransitionManager
+  -> TransitionConfig
+  -> Array (Tuple Element datum)
+  -> Array (Attribute datum)
+  -> Effect Unit
+applyExitTransitionPure manager config elementDatumPairs attrs = do
+  let Milliseconds duration = config.duration
+  let baseDelay = maybe 0.0 unwrap config.delay
+  let stagger = fromMaybe 0.0 config.staggerDelay
+
+  elementDatumPairs # traverseWithIndex_ \index (Tuple element datum) -> do
+    let effectiveDelay = baseDelay + (toNumber index * stagger)
+
+    -- Partition attributes
+    let { animated: animatedAttrs, nonAnimated: nonAnimatedAttrs } = partitionAnimatedAttrs attrs
+
+    -- Apply non-animated attributes immediately
+    nonAnimatedAttrs # traverse_ \attr -> case attr of
+      StaticAttr (AttributeName name) value ->
+        Element.setAttribute name (attributeValueToString value) element
+      DataAttr (AttributeName name) _src f ->
+        Element.setAttribute name (attributeValueToString (f datum)) element
+      IndexedAttr (AttributeName name) _src f ->
+        Element.setAttribute name (attributeValueToString (f datum index)) element
+      AnimatedAttr _ -> pure unit
+
+    -- Track how many animated attrs for this element (to know when all complete)
+    let animatedCount = Array.length animatedAttrs
+    completedRef <- Ref.new 0
+
+    -- Helper to remove element from DOM
+    let removeElement = do
+          maybeParent <- Node.parentNode (Element.toNode element)
+          case maybeParent of
+            Just parent -> void $ Node.removeChild (Element.toNode element) parent
+            Nothing -> pure unit
+
+    -- Register animated attributes with removal callback
+    let onAttrComplete = do
+          completed <- Ref.modify (_ + 1) completedRef
+          when (completed >= animatedCount) removeElement
+
+    -- If no animated attrs, remove immediately
+    when (animatedCount == 0) removeElement
+
+    -- Register animated attributes
+    animatedAttrs # traverse_ \attr -> case attr of
+      AnimatedAttr rec -> do
+        let (AttributeName name) = rec.name
+        let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
+        _ <- Manager.registerAnimatedAttr manager element datum index name rec.fromValue rec.toValue animConfig onAttrComplete
+        pure unit
+      _ -> pure unit
+
+-- | Apply a transition with removal to an array of elements (D3 path)
 -- | Used for exit phase - elements animate out then are removed from DOM
 -- |
 -- | Supports staggered delays: if config.staggerDelay is set, each element's
@@ -1603,7 +1783,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
       case exitBehavior.transition of
         Just transConfig -> do
           let pairs = getExitingElementDatumPairs exitSel
-          liftEffect $ applyExitTransitionToElements transConfig pairs exitBehavior.attrs
+          liftEffect $ applyExitTransitionAuto transConfig pairs exitBehavior.attrs
         Nothing -> do
           -- No transition - apply attrs immediately, then remove
           _ <- setAttrsExit exitBehavior.attrs exitSel
@@ -1651,7 +1831,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
               finalAttrs = case joinSpec.template datum of
                 Node nodeSpec -> nodeSpec.attrs
                 _ -> [] -- Non-Node templates don't have attrs
-            applyTransitionToSingleElement transConfig index element datum finalAttrs
+            applyTransitionAuto transConfig index element datum finalAttrs
         Nothing -> pure unit
 
       pure rendered
@@ -1675,7 +1855,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
           let pairs = getBoundElementDatumPairs updateSel
           -- Use traverseWithIndex_ to get proper stagger index
           liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-            applyTransitionToSingleElement transConfig index element datum updateBehavior.attrs
+            applyTransitionAuto transConfig index element datum updateBehavior.attrs
           -- Just return the existing elements - don't re-render and overwrite
           pure $ getElementsFromBoundSelection updateSel
         Nothing -> do
@@ -1780,7 +1960,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
       case (unsafeCoerce exitBehavior).transition of
         Just transConfig -> do
           let pairs = getExitingElementDatumPairs exitSel
-          liftEffect $ applyExitTransitionToElements transConfig pairs (unsafeCoerce exitBehavior.attrs)
+          liftEffect $ applyExitTransitionAuto transConfig pairs (unsafeCoerce exitBehavior.attrs)
         Nothing -> do
           -- No transition - apply attrs immediately, then remove
           _ <- setAttrsExit (unsafeCoerce exitBehavior.attrs) exitSel
@@ -1831,7 +2011,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
               finalAttrs = case (unsafeCoerce joinSpec.template) datum of
                 Node nodeSpec -> nodeSpec.attrs
                 _ -> []
-            applyTransitionToSingleElement transConfig index element datum finalAttrs
+            applyTransitionAuto transConfig index element datum finalAttrs
         Nothing -> pure unit
 
       pure rendered
@@ -1848,7 +2028,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
           -- because that would immediately set attrs, overwriting the transition's start values.
           let pairs = getBoundElementDatumPairs updateSel
           liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-            applyTransitionToSingleElement transConfig index element datum (unsafeCoerce updateBehavior.attrs)
+            applyTransitionAuto transConfig index element datum (unsafeCoerce updateBehavior.attrs)
           -- Just return the existing elements - don't re-render and overwrite
           pure $ getElementsFromBoundSelection updateSel
         Nothing -> do
@@ -2203,6 +2383,48 @@ renderTree parent tree = do
   -- Returns (element created, map of named selections in subtree)
   Tuple _ selectionsMap <- renderNodeHelper parent tree
   pure selectionsMap
+
+-- | Render a declarative tree structure with pure PureScript animation support
+-- |
+-- | This is the animation-aware version of `renderTree`. Use this when your tree
+-- | contains `AnimatedAttr` attributes that need the pure PureScript transition system.
+-- |
+-- | The provided TransitionContext is used to:
+-- | - Register animated transitions with the ElementTransitionManager
+-- | - Drive animations via the Coordinator's RAF loop
+-- |
+-- | Usage:
+-- | ```purescript
+-- | -- Create context once
+-- | manager <- Manager.create
+-- | coordinator <- Coordinator.create
+-- | let ctx = { manager, coordinator }
+-- |
+-- | -- Render with animations
+-- | selections <- renderTreeWithAnimations ctx parentSel myTree
+-- |
+-- | -- Animations are automatically started when AnimatedAttr is encountered
+-- | -- The coordinator handles the RAF loop
+-- | ```
+-- |
+-- | Note: If you use `renderTree` (without context) and your tree contains
+-- | `AnimatedAttr`, the rendering will crash with a helpful error message
+-- | telling you to use `renderTreeWithAnimations` instead.
+renderTreeWithAnimations
+  :: forall parent parentDatum datum
+   . Ord datum
+  => TransitionContext
+  -> Selection SEmpty parent parentDatum
+  -> Tree datum
+  -> Effect (Map String (Selection SBoundOwns Element datum))
+renderTreeWithAnimations ctx parent tree = do
+  -- Set context for the duration of rendering
+  Ref.write (Just ctx) currentTransitionContext
+  -- Render the tree (AnimatedAttr will use pure path via applyTransitionAuto)
+  result <- renderTree parent tree
+  -- Clear context after rendering
+  Ref.write Nothing currentTransitionContext
+  pure result
 
 -- | Extract a named selection from a renderTree result and convert to SEmpty
 -- |
