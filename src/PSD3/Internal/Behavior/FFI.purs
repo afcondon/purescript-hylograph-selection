@@ -31,6 +31,9 @@ module PSD3.Internal.Behavior.FFI
   -- Tier 2: Coordinated highlighting
   , attachCoordinatedHighlight_
   , clearAllHighlights_
+  -- Scroll utilities
+  , scrollToElementById_
+  , scrollToElement
   ) where
 
 import Prelude
@@ -356,3 +359,35 @@ foreign import attachCoordinatedHighlight_
 -- | Also hides all tooltips.
 foreign import clearAllHighlights_
   :: Effect Unit
+
+-- =============================================================================
+-- Scroll Utilities
+-- =============================================================================
+
+-- | Scroll to an element by ID with configurable behavior
+-- |
+-- | Parameters:
+-- | - elementId: The ID of the element to scroll to
+-- | - behavior: "smooth", "instant", or "auto"
+-- | - block: Vertical alignment - "start", "center", "end", or "nearest"
+-- |
+-- | Example:
+-- | ```purescript
+-- | scrollToElementById_ "my-element" "smooth" "center"
+-- | ```
+foreign import scrollToElementById_
+  :: String  -- Element ID
+  -> String  -- Behavior: "smooth" | "instant" | "auto"
+  -> String  -- Block: "start" | "center" | "end" | "nearest"
+  -> Effect Unit
+
+-- | Scroll to an element by ID with smooth animation, centered in view
+-- |
+-- | Convenience wrapper around scrollToElementById_ with sensible defaults.
+-- |
+-- | Example:
+-- | ```purescript
+-- | scrollToElement "panel-moduleA"
+-- | ```
+scrollToElement :: String -> Effect Unit
+scrollToElement elementId = scrollToElementById_ elementId "smooth" "center"

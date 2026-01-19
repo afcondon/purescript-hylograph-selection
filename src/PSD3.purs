@@ -121,7 +121,10 @@ import PSD3.Internal.Selection.Types (SEmpty, SBoundOwns, SBoundInherits, SPendi
 import PSD3.Internal.Behavior.Types (Behavior(..), defaultDrag, ScaleExtent(..), HighlightClass(..), TooltipTrigger(..), TooltipConfig, CoordinatedHighlightConfig, onCoordinatedHighlight) as X
 
 -- Native Pointer Events (D3-free drag/interactions)
-import PSD3.Interaction.Pointer (attachPointerDrag, attachSimulationDrag, attachSimulationDragNested, pointerPosition, PointerDragConfig, Point) as X
+import PSD3.Interaction.Pointer (attachPointerDrag, attachSimulationDrag, attachSimulationDragNested, pointerPosition, PointerDragConfig) as X
+
+-- Native Zoom (D3-free zoom/pan)
+import PSD3.Interaction.Zoom (ZoomTransform, ZoomConfig, ZoomHandle, attachNativeZoom, attachZoomNative, attachZoomWithTransform, attachZoomWithCallback, identity) as X
 
 -- Unified Coordinated Interactions (hover, brush, selection)
 -- Note: InteractionState constructors are qualified to avoid conflict with HighlightClass
@@ -136,3 +139,7 @@ import Data.Graph.Layout (TreeLayout(..)) as X
 
 -- Scales
 import PSD3.Scale (Scale, ContinuousScale, BandScale, OrdinalScale, Continuous, Ordinal, Band, linear, log, pow, sqrt, symlog, ordinal, band, point, domain, range, clamp, nice, padding, applyScale, ticks, invert, schemeCategory10, schemeCategory10At, schemePaired, schemePairedAt, interpolateViridis, interpolatePlasma, interpolateInferno, interpolateRdYlGn, interpolateTurbo) as X
+
+-- Shape Generators (D3-free pie/donut charts)
+import PSD3.Shape.Arc (ArcConfig, ArcDatum, arcPath, arcPathWithCenter, degreesToRadians, tau) as X
+import PSD3.Shape.Pie (PieSlice, PieConfig, pie, pieWithConfig, defaultPieConfig) as X

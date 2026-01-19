@@ -1059,3 +1059,23 @@ export function clearAllHighlights_() {
   // Clear registry - elements will re-register on next render
   highlightRegistry.clear();
 }
+
+// =============================================================================
+// Scroll Utilities
+// =============================================================================
+
+/**
+ * Scroll to an element by ID with configurable behavior
+ * @param {string} elementId - The ID of the element to scroll to
+ * @param {string} behavior - Scroll behavior: "smooth", "instant", or "auto"
+ * @param {string} block - Vertical alignment: "start", "center", "end", or "nearest"
+ * @returns {Effect Unit}
+ */
+export function scrollToElementById_(elementId) {
+  return behavior => block => () => {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.scrollIntoView({ behavior, block });
+    }
+  };
+}

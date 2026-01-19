@@ -59,6 +59,7 @@ import PSD3.Internal.Transition.Manager as Manager
 import PSD3.Transition.Coordinator as Coordinator
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
 import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
+import PSD3.Interaction.Zoom as NativeZoom
 import PSD3.Internal.Selection.Join as Join
 import PSD3.Internal.Selection.Types (ElementType(..), JoinResult(..), RenderContext(..), SBoundInherits, SBoundOwns, SEmpty, SExiting, SPending, Selection(..), SelectionImpl(..), elementContext)
 import PSD3.Internal.Transition.FFI as TransitionFFI
@@ -941,7 +942,8 @@ tooltipTriggerToInt WhenRelated = 2
 -- | Used by both `on` (for Selection-based API) and `renderTree` (for TreeAPI).
 applyBehaviorToElement :: forall datum. Behavior datum -> Element -> Effect Unit
 applyBehaviorToElement (Zoom (ZoomConfig { scaleExtent: ScaleExtent scaleMin scaleMax, targetSelector })) element =
-  void $ BehaviorFFI.attachZoom_ element scaleMin scaleMax targetSelector
+  -- Use native zoom (no D3 dependency) instead of D3-based attachZoom_
+  void $ NativeZoom.attachZoomNative element scaleMin scaleMax targetSelector
 applyBehaviorToElement (Drag SimpleDrag) element =
   void $ BehaviorFFI.attachSimpleDrag_ element unit
 applyBehaviorToElement (Drag (SimulationDrag simId)) element =
