@@ -1,6 +1,13 @@
 // FFI for D3 zoom and drag behaviors
-// D3 dependencies: d3-selection, d3-zoom, d3-drag
+// D3 dependencies: d3-selection, d3-zoom (d3-drag REMOVED - using native Pointer Events)
 import { select, selectAll, pointer } from "d3-selection";
+import {
+  registerSimulationForPointer_,
+  unregisterSimulationForPointer_,
+  attachSimpleDrag_ as nativeSimpleDrag,
+  attachSimulationDragById_ as nativeSimulationDragById,
+  attachSimulationDragNestedById_ as nativeSimulationDragNestedById
+} from "../PSD3.Interaction.Pointer/foreign.js";
 
 /**
  * Update an element's attribute by selector
@@ -14,15 +21,14 @@ export function updateAttr_(selector) {
   };
 }
 import { zoom, zoomIdentity, zoomTransform } from "d3-zoom";
-import { drag } from "d3-drag";
+// NOTE: d3-drag import REMOVED - using native Pointer Events via PSD3.Interaction.Pointer
 
 // =============================================================================
 // Simulation Registry
 // =============================================================================
-// Global registry for named simulations, enabling declarative SimulationDrag
-// Each entry maps simulationId -> { reheat: Effect Unit }
-
-const simulationRegistry = new Map();
+// Delegates to Pointer.js for the actual registry - this ensures
+// BehaviorFFI.registerSimulation_ and Pointer.attachSimulationDragById
+// share the same registry.
 
 /**
  * Register a simulation by ID
@@ -31,7 +37,8 @@ const simulationRegistry = new Map();
  */
 export function registerSimulation_(simId) {
   return reheatFn => () => {
-    simulationRegistry.set(simId, { reheat: reheatFn });
+    // Delegate to Pointer module's registry
+    registerSimulationForPointer_(simId)(reheatFn)();
     console.log(`[SimRegistry] Registered simulation: ${simId}`);
   };
 }
@@ -42,123 +49,35 @@ export function registerSimulation_(simId) {
  */
 export function unregisterSimulation_(simId) {
   return () => {
-    simulationRegistry.delete(simId);
+    // Delegate to Pointer module's registry
+    unregisterSimulationForPointer_(simId)();
     console.log(`[SimRegistry] Unregistered simulation: ${simId}`);
   };
 }
 
 /**
- * Check if a simulation is registered
- * @param {string} simId - The simulation ID to check
- * @returns {boolean}
- */
-export function isSimulationRegistered_(simId) {
-  return () => simulationRegistry.has(simId);
-}
-
-// Internal helper to get simulation's reheat function
-function getSimulationReheat(simId) {
-  const sim = simulationRegistry.get(simId);
-  return sim ? sim.reheat : null;
-}
-
-/**
  * Attach simulation-aware drag behavior using the registry
- * Looks up the simulation by ID and calls its reheat function on drag start
+ * DELEGATES to native Pointer Events implementation
  * @param {Element} element - The DOM element to attach drag to
  * @param {string} simId - The registered simulation ID
  * @returns {Element} The element (for chaining)
  */
 export function attachSimulationDragById_(element) {
   return simId => () => {
-    const selection = select(element);
-
-    function dragstarted(event) {
-      // Look up and call the registered reheat function
-      const reheat = getSimulationReheat(simId);
-      if (reheat) {
-        reheat();  // Call PureScript Effect Unit
-      } else {
-        console.warn(`[SimulationDrag] No simulation registered with ID: ${simId}`);
-      }
-      // Set fixed position
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event) {
-      // Release fixed position
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-
-    const dragBehavior = drag()
-      .on('start', dragstarted)
-      .on('drag', dragged)
-      .on('end', dragended);
-
-    selection
-      .call(dragBehavior)
-      .style('cursor', 'grab');
-
-    return element;
+    return nativeSimulationDragById(element)(simId)();
   };
 }
 
 /**
  * Attach simulation-aware drag for nested datum structure
- * Like attachSimulationDragById_ but accesses .node field for fx/fy
- * Used when datum is a wrapper containing the actual simulation node
+ * DELEGATES to native Pointer Events implementation
  * @param {Element} element - The DOM element to attach drag to
  * @param {string} simId - The registered simulation ID
  * @returns {Element} The element (for chaining)
  */
 export function attachSimulationDragNestedById_(element) {
   return simId => () => {
-    const selection = select(element);
-
-    function dragstarted(event) {
-      // Look up and call the registered reheat function
-      const reheat = getSimulationReheat(simId);
-      if (reheat) {
-        reheat();  // Call PureScript Effect Unit
-      } else {
-        console.warn(`[SimulationDragNested] No simulation registered with ID: ${simId}`);
-      }
-      // Set fixed position on the nested node
-      const node = event.subject.node;
-      node.fx = node.x;
-      node.fy = node.y;
-    }
-
-    function dragged(event) {
-      const node = event.subject.node;
-      node.fx = event.x;
-      node.fy = event.y;
-    }
-
-    function dragended(event) {
-      // Release fixed position
-      const node = event.subject.node;
-      node.fx = null;
-      node.fy = null;
-    }
-
-    const dragBehavior = drag()
-      .on('start', dragstarted)
-      .on('drag', dragged)
-      .on('end', dragended);
-
-    selection
-      .call(dragBehavior)
-      .style('cursor', 'grab');
-
-    return element;
+    return nativeSimulationDragNestedById(element)(simId)();
   };
 }
 
@@ -281,83 +200,35 @@ export function attachZoomWithCallback_(element) {
 
 /**
  * Attach simple drag behavior to an element
+ * DELEGATES to native Pointer Events implementation
  * @param {Element} element - The DOM element to attach drag to
  * @returns {Element} The element (for chaining)
  */
 export function attachSimpleDrag_(element) {
   return () => () => {
-    // Create D3 selection from element
-    const selection = select(element);
-
-    let transform = { x: 0, y: 0 };
-
-    function dragstarted(event) {
-      select(this).raise();
-    }
-
-    function dragged(event) {
-      transform.x += event.dx;
-      transform.y += event.dy;
-      select(this).attr('transform', `translate(${transform.x},${transform.y})`);
-    }
-
-    const dragBehavior = drag()
-      .on('start', dragstarted)
-      .on('drag', dragged);
-
-    selection.call(dragBehavior);
-
-    return element;
+    return nativeSimpleDrag(element)()();
   };
 }
 
 /**
- * Attach simulation-aware drag behavior to an element
+ * DEPRECATED: Attach simulation-aware drag behavior to an element
+ *
+ * This function is deprecated. Use registerSimulation_ + attachSimulationDragById_ instead,
+ * or use PSD3.Interaction.Pointer.attachSimulationDrag with a reheat function.
+ *
  * @param {Element} element - The DOM element to attach drag to
- * @param {d3.Simulation|null} simulation - The D3 force simulation
- * @param {string} label - Event namespace label
- * @returns {Element} The element (for chaining)
+ * @param {d3.Simulation|null} simulation - The D3 force simulation (IGNORED)
+ * @param {string} label - Event namespace label (IGNORED)
+ * @throws {Error} This function is deprecated
  */
 export function attachSimulationDrag_(element) {
   return simulation => label => () => {
-    // Create D3 selection from element
-    const selection = select(element);
-
-    function dragstarted(event) {
-      if (simulation) {
-        // Always restart if simulation has stopped (alpha = 0)
-        // Only reheat if this is the first concurrent drag (!event.active)
-        if (!event.active || simulation.alpha() < 0.001) {
-          simulation.alphaTarget(0.3).restart();
-        }
-      }
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event) {
-      if (simulation && !event.active) {
-        simulation.alphaTarget(0);
-      }
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-
-    const dragBehavior = drag()
-      .on('start.' + label, dragstarted)
-      .on('drag.' + label, dragged)
-      .on('end.' + label, dragended);
-
-    selection
-      .call(dragBehavior)
-      .style('cursor', 'pointer');  // Set cursor to pointer for draggable elements
-
-    return element;
+    console.error(
+      '[DEPRECATED] attachSimulationDrag_ is deprecated. ' +
+      'Use registerSimulation_ + Drag (SimulationDrag simId), ' +
+      'or PSD3.Interaction.Pointer.attachSimulationDrag with a reheat function.'
+    );
+    throw new Error('attachSimulationDrag_ is deprecated - use registry-based drag instead');
   };
 }
 

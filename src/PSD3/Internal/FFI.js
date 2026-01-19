@@ -1,25 +1,23 @@
-// D3 dependencies: d3-selection, d3-drag, d3-force, d3-shape, d3-zoom, d3-ease, d3-scale-chromatic, d3-scale
+// D3 dependencies: d3-selection, d3-force, d3-shape (arc only), d3-zoom, d3-scale-chromatic, d3-scale
+// NOTE: d3-drag REMOVED - use PSD3.Interaction.Pointer for native drag
 // NOTE: d3-chord removed - use DataViz.Layout.Chord from psd3-layout
 // NOTE: d3-hierarchy removed - use DataViz.Layout.Hierarchy.Pack from psd3-layout
+// NOTE: d3-ease removed - unused (PureScript Transition.Engine handles easing)
+// NOTE: d3-shape links (linkHorizontal/Vertical/Radial) removed - Path DSL handles links
 import { select, selectAll } from "d3-selection";
-import { drag } from "d3-drag";
 import {
   forceSimulation, forceCenter, forceCollide, forceLink,
   forceManyBody, forceRadial, forceX, forceY
 } from "d3-force";
-import {
-  linkHorizontal, linkVertical, linkRadial, arc
-} from "d3-shape";
+import { arc } from "d3-shape";
 import { zoom } from "d3-zoom";
-import { easeCubicOut, easeLinear, easeQuadInOut, easeBounceOut } from "d3-ease";
 import { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridis } from "d3-scale-chromatic";
 import { scaleLinear, scaleOrdinal } from "d3-scale";
 
 // =============================================================================
 // Direct D3 Re-exports (for demo components to use without direct D3 imports)
 // =============================================================================
-export { select, selectAll, drag, zoom };
-export { easeCubicOut, easeLinear, easeQuadInOut, easeBounceOut };
+export { select, selectAll, zoom };
 export { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridis };
 export { scaleLinear, scaleOrdinal };
 
@@ -27,10 +25,8 @@ const debug = false
 
 // NOTE: Most d3-selection wrapper functions have been removed.
 // Selection operations now use PureScript web-dom libraries directly.
-// The remaining exports are for simulation drag behaviors.
+// Drag behaviors now use native Pointer Events via PSD3.Interaction.Pointer.
 
-export function simulationDrag_(label) { return selection => simulation => dragFn => selection.call(dragFn(label, simulation)) }
-export function disableDrag_(selection) { return selection.on('.drag', null) }
 export function getIndexFromDatum_(datum) { return (typeof datum.index == `undefined`) ? "?" : datum.index }
 export function selectionOn_(selection) { return event => callback => { return selection.on(event, callback) } }
 export function d3AddTransition_(selection) {
@@ -50,54 +46,6 @@ export function d3AddTransition_(selection) {
     }
     return handle
   }
-}
-// *****************************************************************************************************************
-// *****  there will either need to be quite a range of these functions or a way of writing them in Purs     *******
-// *****  this is really down in the weeds of D3 without supporting abstractions in the PS library           *******
-// *****  CONCRETE EXAMPLE: this defaults to updating fx but in Spago example position is on parent, using   *******
-// *****  transforms to move both circle and label together (only way to position a <group> in SVG)
-// *****************************************************************************************************************
-export function simdrag_(label, simulation) {
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-  }
-  function dragged(event) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-  }
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
-  }
-  return drag()
-    .on('start.' + label, dragstarted)
-    .on('drag.' + label, dragged)
-    .on('end.' + label, dragended);
-}
-
-// Drag that only allows horizontal movement (preserves fy)
-export function simdragHorizontal_(label, simulation) {
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    // Don't touch fy - keep it pinned
-  }
-  function dragged(event) {
-    event.subject.fx = event.x;
-    // Don't touch fy - keep it pinned
-  }
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    // Don't touch fy - keep it pinned
-  }
-  return drag()
-    .on('start.' + label, dragstarted)
-    .on('drag.' + label, dragged)
-    .on('end.' + label, dragended);
 }
 export const linksForceName_ = "links"
 export const dummyForceHandle_ = null

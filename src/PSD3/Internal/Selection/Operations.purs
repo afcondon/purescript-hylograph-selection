@@ -60,6 +60,7 @@ import PSD3.Transition.Coordinator as Coordinator
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
 import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
 import PSD3.Interaction.Zoom as NativeZoom
+import PSD3.Interaction.Pointer as NativePointer
 import PSD3.Internal.Selection.Join as Join
 import PSD3.Internal.Selection.Types (ElementType(..), JoinResult(..), RenderContext(..), SBoundInherits, SBoundOwns, SEmpty, SExiting, SPending, Selection(..), SelectionImpl(..), elementContext)
 import PSD3.Internal.Transition.FFI as TransitionFFI
@@ -945,13 +946,14 @@ applyBehaviorToElement (Zoom (ZoomConfig { scaleExtent: ScaleExtent scaleMin sca
   -- Use native zoom (no D3 dependency) instead of D3-based attachZoom_
   void $ NativeZoom.attachZoomNative element scaleMin scaleMax targetSelector
 applyBehaviorToElement (Drag SimpleDrag) element =
-  void $ BehaviorFFI.attachSimpleDrag_ element unit
+  -- Use native Pointer Events (no D3 dependency)
+  void $ NativePointer.attachSimpleDrag element unit
 applyBehaviorToElement (Drag (SimulationDrag simId)) element =
-  -- Look up simulation by ID in the global registry
-  void $ BehaviorFFI.attachSimulationDragById_ element simId
+  -- Use native Pointer Events - look up simulation by ID in registry
+  void $ NativePointer.attachSimulationDragById element simId
 applyBehaviorToElement (Drag (SimulationDragNested simId)) element =
-  -- For nested datum structure (datum.node is the simulation node)
-  void $ BehaviorFFI.attachSimulationDragNestedById_ element simId
+  -- Use native Pointer Events - for nested datum structure (datum.node is the simulation node)
+  void $ NativePointer.attachSimulationDragNestedById element simId
 applyBehaviorToElement (Click handler) element =
   void $ BehaviorFFI.attachClick_ element handler
 applyBehaviorToElement (ClickWithDatum handler) element =

@@ -27,6 +27,13 @@ module PSD3.Interaction.Pointer
   , attachSimulationDrag
   , attachSimulationDragNested
   , PointerDragConfig
+    -- * Simple Drag
+  , attachSimpleDrag
+    -- * Registry-based Drag (for TreeAPI behaviors)
+  , registerSimulationForPointer
+  , unregisterSimulationForPointer
+  , attachSimulationDragById
+  , attachSimulationDragNestedById
     -- * Utilities
   , pointerPosition
   , Point
@@ -157,3 +164,81 @@ foreign import pointerPosition_
   :: PointerEvent
   -> Element
   -> Effect Point
+
+-- =============================================================================
+-- Simple Drag
+-- =============================================================================
+
+-- | Attach simple drag behavior using Pointer Events
+-- |
+-- | Moves element via SVG transform attribute.
+-- | No simulation awareness - just basic drag.
+attachSimpleDrag
+  :: Element
+  -> Unit
+  -> Effect Element
+attachSimpleDrag = attachSimpleDrag_
+
+foreign import attachSimpleDrag_
+  :: Element
+  -> Unit
+  -> Effect Element
+
+-- =============================================================================
+-- Registry-based Drag (for TreeAPI behaviors)
+-- =============================================================================
+
+-- | Register a simulation with the Pointer module's registry
+-- |
+-- | This enables `attachSimulationDragById` to look up simulations by ID.
+-- | Called automatically when using TreeAPI with SimulationDrag behavior.
+registerSimulationForPointer
+  :: String        -- ^ Simulation ID
+  -> Effect Unit   -- ^ Reheat function
+  -> Effect Unit
+registerSimulationForPointer = registerSimulationForPointer_
+
+-- | Unregister a simulation from the Pointer module's registry
+unregisterSimulationForPointer
+  :: String  -- ^ Simulation ID
+  -> Effect Unit
+unregisterSimulationForPointer = unregisterSimulationForPointer_
+
+-- | Attach simulation drag by looking up simulation ID in registry
+-- |
+-- | Used by TreeAPI's `SimulationDrag simId` behavior.
+-- | Element's `__data__` must be the simulation node directly.
+attachSimulationDragById
+  :: Element
+  -> String  -- ^ Simulation ID
+  -> Effect Element
+attachSimulationDragById = attachSimulationDragById_
+
+-- | Attach simulation drag for nested datum by looking up simulation ID
+-- |
+-- | Used by TreeAPI's `SimulationDragNested simId` behavior.
+-- | Element's `__data__` must have a `.node` field with the simulation node.
+attachSimulationDragNestedById
+  :: Element
+  -> String  -- ^ Simulation ID
+  -> Effect Element
+attachSimulationDragNestedById = attachSimulationDragNestedById_
+
+foreign import registerSimulationForPointer_
+  :: String
+  -> Effect Unit
+  -> Effect Unit
+
+foreign import unregisterSimulationForPointer_
+  :: String
+  -> Effect Unit
+
+foreign import attachSimulationDragById_
+  :: Element
+  -> String
+  -> Effect Element
+
+foreign import attachSimulationDragNestedById_
+  :: Element
+  -> String
+  -> Effect Element

@@ -325,3 +325,307 @@ export function pointerPosition_(event) {
     };
   };
 }
+
+// =============================================================================
+// Simple Drag (no simulation)
+// =============================================================================
+
+/**
+ * Attach simple drag behavior using Pointer Events
+ * Moves element via transform attribute
+ *
+ * @param {Element} element - DOM element to make draggable
+ * @returns {Effect Unit}
+ */
+export function attachSimpleDrag_(element) {
+  return () => () => {
+    let isDragging = false;
+    let transform = { x: 0, y: 0 };
+
+    function handlePointerDown(event) {
+      if (event.button !== 0) return;
+
+      isDragging = true;
+      element.setPointerCapture(event.pointerId);
+      event.preventDefault();
+
+      // Raise element to front (SVG-specific)
+      if (element.parentNode) {
+        element.parentNode.appendChild(element);
+      }
+
+      element.style.cursor = 'grabbing';
+    }
+
+    function handlePointerMove(event) {
+      if (!isDragging) return;
+
+      // Get movement delta
+      const svg = element.ownerSVGElement;
+      if (svg) {
+        // Convert movement to SVG coordinates
+        const pt = svg.createSVGPoint();
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          // Get delta in screen coords
+          pt.x = event.movementX;
+          pt.y = event.movementY;
+          // Transform to SVG scale (ignoring translation)
+          const scale = ctm.a; // Assumes uniform scaling
+          transform.x += event.movementX / scale;
+          transform.y += event.movementY / scale;
+        } else {
+          transform.x += event.movementX;
+          transform.y += event.movementY;
+        }
+      } else {
+        transform.x += event.movementX;
+        transform.y += event.movementY;
+      }
+
+      element.setAttribute('transform', `translate(${transform.x},${transform.y})`);
+    }
+
+    function handlePointerUp(event) {
+      if (!isDragging) return;
+
+      isDragging = false;
+      element.releasePointerCapture(event.pointerId);
+      element.style.cursor = 'grab';
+    }
+
+    function handleDragStart(event) {
+      event.preventDefault();
+    }
+
+    element.addEventListener('pointerdown', handlePointerDown);
+    element.addEventListener('pointermove', handlePointerMove);
+    element.addEventListener('pointerup', handlePointerUp);
+    element.addEventListener('pointercancel', handlePointerUp);
+    element.addEventListener('dragstart', handleDragStart);
+
+    element.style.cursor = 'grab';
+    element.style.touchAction = 'none';
+
+    return element;
+  };
+}
+
+// =============================================================================
+// Simulation Registry (shared with Behavior/FFI.js during transition)
+// =============================================================================
+// Global registry for named simulations, enabling declarative SimulationDrag
+// Each entry maps simulationId -> { reheat: Effect Unit }
+
+const simulationRegistry = new Map();
+
+/**
+ * Register a simulation by ID (called from PureScript)
+ */
+export function registerSimulationForPointer_(simId) {
+  return reheatFn => () => {
+    simulationRegistry.set(simId, { reheat: reheatFn });
+  };
+}
+
+/**
+ * Unregister a simulation by ID
+ */
+export function unregisterSimulationForPointer_(simId) {
+  return () => {
+    simulationRegistry.delete(simId);
+  };
+}
+
+// Internal helper
+function getSimulationReheat(simId) {
+  const sim = simulationRegistry.get(simId);
+  return sim ? sim.reheat : null;
+}
+
+/**
+ * Attach simulation-aware drag by simulation ID using Pointer Events
+ * Looks up reheat function from registry
+ *
+ * @param {Element} element - DOM element (must have __data__ with simulation node)
+ * @param {string} simId - Registered simulation ID
+ * @returns {Element}
+ */
+export function attachSimulationDragById_(element) {
+  return simId => () => {
+    let isDragging = false;
+
+    function handlePointerDown(event) {
+      if (event.button !== 0) return;
+
+      isDragging = true;
+      element.setPointerCapture(event.pointerId);
+      event.preventDefault();
+
+      const node = element.__data__;
+      if (!node) {
+        console.warn('[PointerDrag] No datum on element');
+        return;
+      }
+
+      // Lookup and call reheat
+      const reheat = getSimulationReheat(simId);
+      if (reheat) {
+        reheat();
+      } else {
+        console.warn(`[PointerDrag] No simulation registered with ID: ${simId}`);
+      }
+
+      // Pin node at current position
+      node.fx = node.x;
+      node.fy = node.y;
+
+      element.style.cursor = 'grabbing';
+    }
+
+    function handlePointerMove(event) {
+      if (!isDragging) return;
+
+      const node = element.__data__;
+      if (!node) return;
+
+      // Update fixed position to follow pointer
+      const svg = element.ownerSVGElement;
+      if (svg) {
+        const pt = svg.createSVGPoint();
+        pt.x = event.clientX;
+        pt.y = event.clientY;
+
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const svgPt = pt.matrixTransform(ctm.inverse());
+          node.fx = svgPt.x;
+          node.fy = svgPt.y;
+        }
+      } else {
+        node.fx = event.clientX;
+        node.fy = event.clientY;
+      }
+    }
+
+    function handlePointerUp(event) {
+      if (!isDragging) return;
+
+      isDragging = false;
+      element.releasePointerCapture(event.pointerId);
+
+      const node = element.__data__;
+      if (node) {
+        node.fx = null;
+        node.fy = null;
+      }
+
+      element.style.cursor = 'grab';
+    }
+
+    function handleDragStart(event) {
+      event.preventDefault();
+    }
+
+    element.addEventListener('pointerdown', handlePointerDown);
+    element.addEventListener('pointermove', handlePointerMove);
+    element.addEventListener('pointerup', handlePointerUp);
+    element.addEventListener('pointercancel', handlePointerUp);
+    element.addEventListener('dragstart', handleDragStart);
+
+    element.style.cursor = 'grab';
+    element.style.touchAction = 'none';
+
+    return element;
+  };
+}
+
+/**
+ * Attach simulation-aware drag for nested datum structure by ID
+ * Like attachSimulationDragById_ but accesses datum.node for fx/fy
+ */
+export function attachSimulationDragNestedById_(element) {
+  return simId => () => {
+    let isDragging = false;
+
+    function handlePointerDown(event) {
+      if (event.button !== 0) return;
+
+      isDragging = true;
+      element.setPointerCapture(event.pointerId);
+      event.preventDefault();
+
+      const datum = element.__data__;
+      const node = datum?.node;
+      if (!node) {
+        console.warn('[PointerDragNested] No datum.node on element');
+        return;
+      }
+
+      const reheat = getSimulationReheat(simId);
+      if (reheat) {
+        reheat();
+      } else {
+        console.warn(`[PointerDragNested] No simulation registered with ID: ${simId}`);
+      }
+
+      node.fx = node.x;
+      node.fy = node.y;
+      element.style.cursor = 'grabbing';
+    }
+
+    function handlePointerMove(event) {
+      if (!isDragging) return;
+
+      const datum = element.__data__;
+      const node = datum?.node;
+      if (!node) return;
+
+      const svg = element.ownerSVGElement;
+      if (svg) {
+        const pt = svg.createSVGPoint();
+        pt.x = event.clientX;
+        pt.y = event.clientY;
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const svgPt = pt.matrixTransform(ctm.inverse());
+          node.fx = svgPt.x;
+          node.fy = svgPt.y;
+        }
+      } else {
+        node.fx = event.clientX;
+        node.fy = event.clientY;
+      }
+    }
+
+    function handlePointerUp(event) {
+      if (!isDragging) return;
+
+      isDragging = false;
+      element.releasePointerCapture(event.pointerId);
+
+      const datum = element.__data__;
+      const node = datum?.node;
+      if (node) {
+        node.fx = null;
+        node.fy = null;
+      }
+      element.style.cursor = 'grab';
+    }
+
+    function handleDragStart(event) {
+      event.preventDefault();
+    }
+
+    element.addEventListener('pointerdown', handlePointerDown);
+    element.addEventListener('pointermove', handlePointerMove);
+    element.addEventListener('pointerup', handlePointerUp);
+    element.addEventListener('pointercancel', handlePointerUp);
+    element.addEventListener('dragstart', handleDragStart);
+
+    element.style.cursor = 'grab';
+    element.style.touchAction = 'none';
+
+    return element;
+  };
+}

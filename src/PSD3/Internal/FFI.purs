@@ -6,12 +6,9 @@ module PSD3.Internal.FFI
   , keyIsSourceTarget_
   , swizzledLinkKey_
   , D3Attr_
-  , D3DragFunction_
-  , simulationDrag_
-  , simdrag_
-  , simdragHorizontal_
-  , disableDrag_
   , selectionOn_
+  -- NOTE: D3DragFunction_, simulationDrag_, simdrag_, simdragHorizontal_, disableDrag_
+  -- REMOVED - use PSD3.Interaction.Pointer for native Pointer Events drag
   -- Simulation FFI
   , linksForceName_
   , GraphModel_
@@ -116,11 +113,8 @@ foreign import swizzledLinkKey_   :: forall d. ComputeKeyFunction_ d String -- k
 -- D3Attr_ is used by force configuration functions
 foreign import data D3Attr_ :: Type
 
-foreign import data D3DragFunction_ :: Type
-foreign import simulationDrag_ :: forall d. String -> D3Selection_ d -> D3Simulation_ -> D3DragFunction_ -> D3Selection_ d
-foreign import simdrag_  :: D3DragFunction_
-foreign import simdragHorizontal_ :: D3DragFunction_
-foreign import disableDrag_ :: forall d. D3Selection_ d -> D3Selection_ d
+-- NOTE: D3DragFunction_ and drag functions REMOVED
+-- Use PSD3.Interaction.Pointer for native Pointer Events drag
 
 foreign import selectionOn_         :: forall selection callback. selection -> String -> callback -> selection  
 
