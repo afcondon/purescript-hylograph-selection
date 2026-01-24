@@ -4,6 +4,7 @@ module PSD3.Internal.Capabilities.Selection
   , selectElement
   , selectAll
   , selectAllWithData
+  , selectChildInheriting
   , openSelection
   , renderData
   , appendData
@@ -132,6 +133,25 @@ class Monad m <= SelectionM sel m | m -> sel where
     :: forall state parent parentDatum datum
      . String -- CSS selector
     -> sel state parent parentDatum
+    -> m (sel SBoundOwns Element datum)
+
+  -- | Select child elements, inheriting parent's data
+  -- |
+  -- | Like D3's `selection.select()`: for each parent element, selects the first
+  -- | child matching the selector and copies the parent's `__data__` to the child.
+  -- |
+  -- | Use when you have groups with bound data and want to update their children.
+  -- |
+  -- | Example:
+  -- | ```purescript
+  -- | groups <- selectAllWithData ".treemap-package" container
+  -- | circles <- selectChildInheriting "circle" groups
+  -- | setAttrs [ fill (colorByData _.topoLayer) ] circles
+  -- | ```
+  selectChildInheriting
+    :: forall parent datum
+     . String -- CSS selector for child elements
+    -> sel SBoundOwns parent datum
     -> m (sel SBoundOwns Element datum)
 
   -- | High-level data rendering (recommended for most use cases)

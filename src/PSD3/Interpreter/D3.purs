@@ -5,11 +5,12 @@ module PSD3.Interpreter.D3
   , reselectD3v2
   , queryAllD3v2
   , getElementsD3v2
+  , renderTreeKeyedD3v2
   ) where
 
 import Prelude
 
-import Partial.Unsafe (unsafePartial)
+import Partial.Unsafe (unsafePartial, unsafeCrashWith)
 import Data.Array as Array
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Map as Map
@@ -20,6 +21,7 @@ import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
 import Data.Number as Number
+import PSD3.AST (Tree)
 import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), EasingType(..))
 import PSD3.Internal.Capabilities.Selection (class SelectionM)
 import PSD3.Internal.Capabilities.Transition (class TransitionM)
@@ -80,6 +82,10 @@ instance SelectionM D3v2Selection_ D3v2M where
 
   selectAllWithData selector (D3v2Selection_ sel) = D3v2M do
     result <- Ops.selectAllWithData selector sel
+    pure $ D3v2Selection_ result
+
+  selectChildInheriting selector (D3v2Selection_ sel) = D3v2M do
+    result <- Ops.selectChildInheriting selector sel
     pure $ D3v2Selection_ result
 
   renderData elemType foldableData selector (D3v2Selection_ emptySelection) enterAttrs updateAttrs exitAttrs = D3v2M do
@@ -222,6 +228,16 @@ instance TransitionM D3v2Selection_ D3v2M where
                 (pure unit)
               pure unit
 
+            AnimatedCompound rec -> do
+              _ <- Manager.registerAnimatedCompound ctx.manager element datum logicalIndex
+                (let (AttributeName n) = rec.name in n)
+                rec.fromValues
+                rec.toValues
+                rec.generator
+                rec.config
+                (pure unit)
+              pure unit
+
         -- Ensure coordinator is running
         _ <- Coordinator.register ctx.coordinator
           { tick: Manager.toCoordinatorConsumer ctx.manager
@@ -262,6 +278,9 @@ instance TransitionM D3v2Selection_ D3v2M where
               let toValue = evalAnimValue rec.toValue datum logicalIndex
               TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
+            AnimatedCompound _ ->
+              unsafeCrashWith "AnimatedCompound in D3 transition path - use pure transition path instead"
+
   withTransitionExit config (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
     let { elements, data: datumArray } = unsafePartial case selection of
@@ -295,6 +314,9 @@ instance TransitionM D3v2Selection_ D3v2M where
           let (AttributeName name) = rec.name
           let toValue = evalAnimValue rec.toValue datum index
           TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
+        AnimatedCompound _ ->
+          unsafeCrashWith "AnimatedCompound in D3 exit transition path - use pure transition path instead"
 
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
@@ -364,6 +386,17 @@ instance TransitionM D3v2Selection_ D3v2M where
                 (pure unit)
               pure unit
 
+            AnimatedCompound rec -> do
+              -- Override delay with per-element stagger
+              _ <- Manager.registerAnimatedCompound ctx.manager element datum logicalIndex
+                (let (AttributeName n) = rec.name in n)
+                rec.fromValues
+                rec.toValues
+                rec.generator
+                (rec.config { delay = elementDelay })
+                (pure unit)
+              pure unit
+
         -- Ensure coordinator is running
         _ <- Coordinator.register ctx.coordinator
           { tick: Manager.toCoordinatorConsumer ctx.manager
@@ -404,6 +437,9 @@ instance TransitionM D3v2Selection_ D3v2M where
               let toValue = evalAnimValue rec.toValue datum logicalIndex
               TransitionFFI.transitionSetAttribute_ name (show toValue) transition
 
+            AnimatedCompound _ ->
+              unsafeCrashWith "AnimatedCompound in D3 staggered transition path - use pure transition path instead"
+
   withTransitionExitStaggered config delayFn (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
     let { elements, data: datumArray } = unsafePartial case selection of
@@ -440,6 +476,9 @@ instance TransitionM D3v2Selection_ D3v2M where
           let (AttributeName name) = rec.name
           let toValue = evalAnimValue rec.toValue datum index
           TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+
+        AnimatedCompound _ ->
+          unsafeCrashWith "AnimatedCompound in D3 exit staggered transition path - use pure transition path instead"
 
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
@@ -529,3 +568,20 @@ queryAllD3v2 selector selectionsMap = do
 -- | such as drag handlers for force simulations.
 getElementsD3v2 :: forall state parent datum. D3v2Selection_ state parent datum -> Array Element
 getElementsD3v2 (D3v2Selection_ sel) = Query.toArray sel
+
+-- | Render a tree using keyed matching (no Ord constraint on datum)
+-- |
+-- | Unlike the type class method `renderTree` which requires `Ord datum`,
+-- | this uses key functions embedded in UpdateJoin/UpdateNestedJoin nodes.
+-- | Useful for SimulationNode which has extensible records that can't have Ord derived.
+-- |
+-- | Note: Will crash at runtime if given Join/NestedJoin (which require Ord for computeJoin).
+-- | Only use with UpdateJoin/UpdateNestedJoin trees that have keyFn specified.
+renderTreeKeyedD3v2
+  :: forall parent parentDatum datum
+   . D3v2Selection_ SEmpty parent parentDatum
+  -> Tree datum
+  -> D3v2M (Map.Map String (D3v2Selection_ SBoundOwns Element datum))
+renderTreeKeyedD3v2 (D3v2Selection_ parent) tree = D3v2M do
+  selectionsMap <- Ops.renderTreeKeyed parent tree
+  pure $ map D3v2Selection_ selectionsMap
