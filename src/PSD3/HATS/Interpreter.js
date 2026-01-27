@@ -54,9 +54,32 @@ export const getKey = el => () => {
   return el.getAttribute('data-hats-key') || '';
 };
 
+// Set fold name on element for scoping sibling Folds
+export const setFoldName = el => foldName => () => {
+  el.setAttribute('data-hats-fold', foldName);
+};
+
 // Get direct child elements (for GUP diffing)
 export const getChildElements = parent => () => {
   return Array.from(parent.children);
+};
+
+// Get direct child elements filtered by tag name (for scoped GUP)
+// tagName should be lowercase (e.g., "g", "circle", "path")
+export const getChildElementsByTagName = parent => tagName => () => {
+  const children = Array.from(parent.children);
+  // SVG elements have tagName in lowercase
+  return children.filter(el => el.tagName.toLowerCase() === tagName);
+};
+
+// Get direct child elements filtered by tag name AND fold name
+// This ensures sibling Folds with the same element type don't interfere
+export const getChildElementsForFold = parent => tagName => foldName => () => {
+  const children = Array.from(parent.children);
+  return children.filter(el =>
+    el.tagName.toLowerCase() === tagName &&
+    el.getAttribute('data-hats-fold') === foldName
+  );
 };
 
 // Remove element from DOM

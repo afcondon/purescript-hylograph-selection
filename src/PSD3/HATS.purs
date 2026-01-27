@@ -8,17 +8,10 @@
 -- | - **Enumeration**: How to traverse/extract elements from input (coalgebra)
 -- | - **Assembly**: How to structure the output DOM (algebra)
 -- |
--- | This is a hylomorphism with heterogeneous functors:
--- |
--- | ```
--- | Input ──(enumerate)──▶ [a] ──(template)──▶ [Tree] ──(assemble)──▶ DOM
--- | ```
--- |
--- | Key types:
--- | - `Tree a` - The visual specification (what to render)
--- | - `Enumeration a` - How to get elements from input
--- | - `Assembly` - How to structure output
--- | - `Fold` - The universal iteration primitive
+-- | This version uses existentially-scoped data binding:
+-- | - `Tree` has no type parameter - all trees compose freely with `<>`
+-- | - Each `Fold` brings its own datum type `a` into scope
+-- | - Attributes and behaviors inside templates capture datum via closures
 module PSD3.HATS
   ( Tree(..)
   , Enumeration(..)
@@ -26,6 +19,12 @@ module PSD3.HATS
   , TraversalOrder(..)
   , GUPSpec(..)
   , PhaseSpec(..)
+  , SomeFold
+  , FoldSpec
+  , mkSomeFold
+  , runSomeFold
+  , Attr(..)
+  , ThunkedBehavior(..)
   -- Smart constructors
   , elem
   , fold
@@ -36,43 +35,56 @@ module PSD3.HATS
   , forEachWithGUP
   , fromTree
   , preserveTree
+  -- Behavior combinators
+  , withBehaviors
+  -- Attr constructors (for use inside templates)
+  , staticStr
+  , staticNum
+  , thunkedStr
+  , thunkedNum
+  -- Behavior constructors (for use inside templates)
+  , onMouseEnter
+  , onMouseLeave
+  , onClick
+  , onDrag
+  , onZoom
+  -- Coordinated highlighting
+  , module ReExportHighlight
+  , onCoordinatedHighlight
   ) where
 
 import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
+import Effect (Effect)
 import PSD3.Internal.Selection.Types (ElementType(..))
-import PSD3.Internal.Attribute (Attribute)
-import PSD3.Internal.Behavior.Types (Behavior)
+import PSD3.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..)) as ReExportHighlight
+import PSD3.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..))
 import PSD3.Internal.Transition.Types (TransitionConfig)
 
 -- ============================================================================
--- Core AST
+-- Core AST (Unparameterized)
 -- ============================================================================
 
 -- | The HATS tree type - a specification for visual structure.
 -- |
+-- | **No type parameter** - trees compose freely with `<>` regardless of
+-- | what data they bind internally.
+-- |
 -- | Only three constructors:
 -- | - `Elem` - A DOM element with attributes, children, and behaviors
--- | - `Fold` - The universal iteration primitive (enumerate, transform, assemble)
+-- | - `MkFold` - An existentially-wrapped iteration (enumerate, transform, assemble)
 -- | - `Empty` - Nothing to render
-data Tree a
+data Tree
   = Elem
       { elemType :: ElementType
-      , attrs :: Array (Attribute a)
-      , children :: Array (Tree a)
-      , behaviors :: Array (Behavior a)
+      , attrs :: Array Attr
+      , children :: Array Tree
+      , behaviors :: Array ThunkedBehavior
       }
 
-  | Fold
-      { name :: String                    -- Selection name for retrieval
-      , enumerate :: Enumeration a        -- How to get elements from input
-      , assemble :: Assembly              -- How to structure output
-      , keyFn :: a -> String              -- Identity function for diffing
-      , template :: a -> Tree a           -- How to visualize one element
-      , gup :: Maybe (GUPSpec a)          -- Optional enter/update/exit
-      }
+  | MkFold SomeFold
 
   | Empty
 
@@ -83,45 +95,99 @@ data Tree a
 -- | chart = title <> xAxis <> yAxis <> plotArea <> legend
 -- | ```
 -- |
--- | Empty acts as identity, and bare Groups are flattened for associativity:
--- | `(a <> b) <> c = a <> (b <> c) = siblings [a, b, c]`
-instance Semigroup (Tree a) where
+-- | **Key feature**: linksLayer <> nodesLayer works even when they
+-- | bind different data types internally!
+instance Semigroup Tree where
   append Empty t = t
   append t Empty = t
   append t1 t2 = siblings [t1, t2]
 
 -- | Monoid instance with Empty as identity
--- |
--- | Enables `foldMap` for building visualizations:
--- | ```purescript
--- | dashboard = foldMap renderWidget widgets
--- | annotations = foldMap annotate (filter significant points)
--- | ```
-instance Monoid (Tree a) where
+instance Monoid Tree where
   mempty = Empty
+
+-- ============================================================================
+-- Existential Fold (CPS encoding)
+-- ============================================================================
+
+-- | Existentially-wrapped Fold specification.
+-- |
+-- | The datum type `a` is scoped to the Fold - it doesn't appear in
+-- | the outer `Tree` type. This allows heterogeneous composition.
+-- |
+-- | Uses CPS encoding since PureScript doesn't have native existentials:
+-- | `SomeFold` packs a `FoldSpec a` and can only be consumed by a
+-- | polymorphic continuation that works for any `a`.
+newtype SomeFold = SomeFold (forall r. (forall a. FoldSpec a -> r) -> r)
+
+-- | Create a SomeFold from a FoldSpec (existentially packs the type)
+mkSomeFold :: forall a. FoldSpec a -> SomeFold
+mkSomeFold spec = SomeFold (\k -> k spec)
+
+-- | Consume a SomeFold with a polymorphic handler
+runSomeFold :: forall r. SomeFold -> (forall a. FoldSpec a -> r) -> r
+runSomeFold (SomeFold f) k = f k
+
+-- | Fold specification with its datum type.
+-- |
+-- | The `template` function receives a datum and returns a `Tree`.
+-- | Inside the template, attributes and behaviors capture the datum
+-- | via closures - the datum is "baked in" at template evaluation time.
+type FoldSpec a =
+  { name :: String                    -- Selection name for retrieval
+  , elementType :: ElementType        -- Element type for GUP scoping
+  , enumerate :: Enumeration a        -- How to get elements from input
+  , assemble :: Assembly              -- How to structure output
+  , keyFn :: a -> String              -- Identity function for diffing
+  , template :: a -> Tree             -- How to visualize one element
+  , gup :: Maybe (GUPSpec a)          -- Optional enter/update/exit
+  }
+
+-- ============================================================================
+-- Attributes (Thunked)
+-- ============================================================================
+
+-- | Attribute type - either static or a thunk (closure).
+-- |
+-- | Thunked attributes capture their datum value at construction time.
+-- | The interpreter just invokes the thunk to get the value.
+data Attr
+  = StaticAttr String String          -- name, value
+  | ThunkedAttr String (Unit -> String)  -- name, thunk that produces value
+
+-- ============================================================================
+-- Behaviors (Thunked)
+-- ============================================================================
+
+-- | Behavior type with thunked handlers.
+-- |
+-- | Handlers are closures that capture datum values.
+-- | The interpreter invokes them without needing to know the datum type.
+data ThunkedBehavior
+  = ThunkedMouseEnter (Unit -> Effect Unit)
+  | ThunkedMouseLeave (Unit -> Effect Unit)
+  | ThunkedClick (Unit -> Effect Unit)
+  | ThunkedDrag DragConfig
+  | ThunkedZoom ZoomConfig
+  | ThunkedCoordinatedHighlight
+      { identify :: Unit -> String           -- Thunked: captures datum, returns identity
+      , classify :: String -> HighlightClass -- Curried: takes hoveredId, uses captured datum
+      , group :: Maybe String                -- Optional group name for scoping
+      }
 
 -- ============================================================================
 -- Enumeration (Coalgebra - how to unfold/traverse input)
 -- ============================================================================
 
 -- | How to extract elements from a data structure.
--- |
--- | This is the coalgebraic part of the hylomorphism - it "unfolds"
--- | the input structure into a sequence of elements to be transformed.
 data Enumeration a
-  -- | From a flat collection
   = FromArray (Array a)
-
-  -- | From a tree/recursive structure
   | FromTree
       { root :: a
-      , children :: a -> Array a          -- The coalgebra
+      , children :: a -> Array a
       , order :: TraversalOrder
-      , includeInternal :: Boolean        -- Include non-leaf nodes?
+      , includeInternal :: Boolean
       }
-
-  -- | With explicit context (depth, index, etc.)
-  -- | Useful when enumeration happens outside HATS
   | WithContext (Array { datum :: a, depth :: Int, index :: Int })
 
 -- | Traversal order for tree enumeration
@@ -134,25 +200,15 @@ data TraversalOrder
 -- ============================================================================
 
 -- | How to structure the output DOM.
--- |
--- | This is the algebraic part of the hylomorphism - it "folds"
--- | the transformed elements into the final DOM structure.
 data Assembly
-  -- | All elements as siblings at the same level (flat)
-  = Siblings
-
-  -- | Preserve input structure in output (nested)
-  -- | Only meaningful with FromTree enumeration
-  | Nested
+  = Siblings  -- All elements as siblings at the same level
+  | Nested    -- Preserve input structure in output
 
 -- ============================================================================
 -- GUP (General Update Pattern)
 -- ============================================================================
 
 -- | Specification for differential updates (enter/update/exit).
--- |
--- | This is orthogonal to enumeration and assembly - it describes
--- | how to handle changes when data updates.
 type GUPSpec a =
   { enter :: Maybe (PhaseSpec a)
   , update :: Maybe (PhaseSpec a)
@@ -161,7 +217,7 @@ type GUPSpec a =
 
 -- | Specification for one phase of GUP
 type PhaseSpec a =
-  { attrs :: Array (Attribute a)
+  { attrs :: Array Attr  -- Note: uses thunked Attr now
   , transition :: Maybe TransitionConfig
   }
 
@@ -171,11 +227,10 @@ type PhaseSpec a =
 
 -- | Create an element node
 elem
-  :: forall a
-   . ElementType
-  -> Array (Attribute a)
-  -> Array (Tree a)
-  -> Tree a
+  :: ElementType
+  -> Array Attr
+  -> Array Tree
+  -> Tree
 elem elemType attrs children = Elem
   { elemType
   , attrs
@@ -183,43 +238,16 @@ elem elemType attrs children = Elem
   , behaviors: []
   }
 
--- | Create a fold node
-fold
-  :: forall a
-   . { name :: String
-     , enumerate :: Enumeration a
-     , assemble :: Assembly
-     , keyFn :: a -> String
-     , template :: a -> Tree a
-     }
-  -> Tree a
-fold spec = Fold
-  { name: spec.name
-  , enumerate: spec.enumerate
-  , assemble: spec.assemble
-  , keyFn: spec.keyFn
-  , template: spec.template
-  , gup: Nothing
-  }
+-- | Create a fold node from a spec
+fold :: forall a. FoldSpec a -> Tree
+fold spec = MkFold (mkSomeFold spec)
 
 -- | Empty tree
-empty :: forall a. Tree a
+empty :: Tree
 empty = Empty
 
 -- | Combine multiple trees as siblings
--- |
--- | This is the core of the Monoid instance. It flattens "bare" Groups
--- | (those with no attributes or behaviors) to maintain associativity.
--- |
--- | ```purescript
--- | -- These are equivalent:
--- | siblings [a, b, c]
--- | a <> b <> c
--- |
--- | -- Conditional inclusion via Empty:
--- | siblings [plotArea, if showLegend then legend else empty, annotations]
--- | ```
-siblings :: forall a. Array (Tree a) -> Tree a
+siblings :: Array Tree -> Tree
 siblings trees =
   case flatten trees of
     [] -> Empty
@@ -231,15 +259,14 @@ siblings trees =
       , behaviors: []
       }
   where
-  -- Flatten bare Groups and remove Emptys for associativity
-  flatten :: Array (Tree a) -> Array (Tree a)
+  flatten :: Array Tree -> Array Tree
   flatten = Array.concatMap \t -> case t of
     Empty -> []
     Elem e
       | e.elemType == Group
       , Array.null e.attrs
       , Array.null e.behaviors
-      -> flatten e.children  -- Recursively flatten bare Groups
+      -> flatten e.children
     _ -> [t]
 
 -- ============================================================================
@@ -248,19 +275,28 @@ siblings trees =
 
 -- | Simple iteration over an array (most common case)
 -- |
+-- | The datum type `a` is inferred from `items` and available in
+-- | the template function. Use attr constructors that capture values:
+-- |
 -- | ```purescript
--- | forEach "circles" points _.id \pt ->
--- |   elem Circle [ cx pt.x, cy pt.y, r 5.0 ] []
+-- | forEach "circles" Circle points _.id \pt ->
+-- |   elem Circle
+-- |     [ thunkedNum "cx" pt.x
+-- |     , thunkedNum "cy" pt.y
+-- |     , staticNum "r" 5.0
+-- |     ] []
 -- | ```
 forEach
   :: forall a
    . String                    -- Name
+  -> ElementType               -- Element type for scoping
   -> Array a                   -- Data
   -> (a -> String)             -- Key function
-  -> (a -> Tree a)             -- Template
-  -> Tree a
-forEach name items keyFn template = Fold
+  -> (a -> Tree)               -- Template (datum captured in closures)
+  -> Tree
+forEach name elementType items keyFn template = MkFold $ mkSomeFold
   { name
+  , elementType
   , enumerate: FromArray items
   , assemble: Siblings
   , keyFn
@@ -272,13 +308,15 @@ forEach name items keyFn template = Fold
 forEachWithGUP
   :: forall a
    . String
+  -> ElementType
   -> Array a
   -> (a -> String)
-  -> (a -> Tree a)
+  -> (a -> Tree)
   -> GUPSpec a
-  -> Tree a
-forEachWithGUP name items keyFn template gupSpec = Fold
+  -> Tree
+forEachWithGUP name elementType items keyFn template gupSpec = MkFold $ mkSomeFold
   { name
+  , elementType
   , enumerate: FromArray items
   , assemble: Siblings
   , keyFn
@@ -286,28 +324,21 @@ forEachWithGUP name items keyFn template gupSpec = Fold
   , gup: Just gupSpec
   }
 
--- | Unfold a tree structure to flat output (Siblings assembly)
--- |
--- | This is the hylomorphic pattern: unfold with coalgebra, render flat.
--- | Use for force layouts of hierarchies, where tree structure informs
--- | the simulation but output is flat circles.
--- |
--- | ```purescript
--- | fromTree "nodes" rootNode _.children _.id DepthFirst true \node ->
--- |   elem Circle [ cx node.x, cy node.y, r (if isLeaf node then 10.0 else 5.0) ] []
--- | ```
+-- | Unfold a tree structure to flat output
 fromTree
   :: forall a
-   . String                    -- Name
-  -> a                         -- Root node
-  -> (a -> Array a)            -- Children coalgebra
-  -> (a -> String)             -- Key function
-  -> TraversalOrder            -- DFS or BFS
-  -> Boolean                   -- Include internal nodes?
-  -> (a -> Tree a)             -- Template
-  -> Tree a
-fromTree name root children keyFn order includeInternal template = Fold
+   . String
+  -> ElementType
+  -> a
+  -> (a -> Array a)
+  -> (a -> String)
+  -> TraversalOrder
+  -> Boolean
+  -> (a -> Tree)
+  -> Tree
+fromTree name elementType root children keyFn order includeInternal template = MkFold $ mkSomeFold
   { name
+  , elementType
   , enumerate: FromTree { root, children, order, includeInternal }
   , assemble: Siblings
   , keyFn
@@ -315,31 +346,129 @@ fromTree name root children keyFn order includeInternal template = Fold
   , gup: Nothing
   }
 
--- | Unfold a tree structure preserving hierarchy in output (Nested assembly)
--- |
--- | This preserves the tree structure in the DOM - each node's children
--- | become DOM children. Use for treemaps, sunbursts, indented trees.
--- |
--- | ```purescript
--- | preserveTree "cells" rootNode _.children _.id \node ->
--- |   elem Group []
--- |     [ elem Rect [ width node.w, height node.h ] []
--- |     , elem Text [ text node.name ] []
--- |     ]
--- | ```
+-- | Unfold a tree structure preserving hierarchy in output
 preserveTree
   :: forall a
-   . String                    -- Name
-  -> a                         -- Root node
-  -> (a -> Array a)            -- Children coalgebra
-  -> (a -> String)             -- Key function
-  -> (a -> Tree a)             -- Template
-  -> Tree a
-preserveTree name root children keyFn template = Fold
+   . String
+  -> ElementType
+  -> a
+  -> (a -> Array a)
+  -> (a -> String)
+  -> (a -> Tree)
+  -> Tree
+preserveTree name elementType root children keyFn template = MkFold $ mkSomeFold
   { name
+  , elementType
   , enumerate: FromTree { root, children, order: DepthFirst, includeInternal: true }
   , assemble: Nested
   , keyFn
   , template
   , gup: Nothing
+  }
+
+-- ============================================================================
+-- Behavior Combinators
+-- ============================================================================
+
+-- | Attach behaviors to an element
+withBehaviors :: Array ThunkedBehavior -> Tree -> Tree
+withBehaviors bs = case _ of
+  Elem spec -> Elem spec { behaviors = spec.behaviors <> bs }
+  MkFold someFold -> runSomeFold someFold \spec ->
+    MkFold $ mkSomeFold spec
+      { template = \datum -> withBehaviors bs (spec.template datum) }
+  Empty -> Empty
+
+-- ============================================================================
+-- Attr Constructors
+-- ============================================================================
+
+-- | Static string attribute (value known at build time)
+staticStr :: String -> String -> Attr
+staticStr name value = StaticAttr name value
+
+-- | Static numeric attribute
+staticNum :: String -> Number -> Attr
+staticNum name value = StaticAttr name (show value)
+
+-- | Thunked string attribute (captures a value)
+-- |
+-- | Use inside templates to capture datum-derived values:
+-- | ```purescript
+-- | \node -> elem Text [ thunkedStr "text-anchor" node.anchor ] []
+-- | ```
+thunkedStr :: String -> String -> Attr
+thunkedStr name value = ThunkedAttr name (\_ -> value)
+
+-- | Thunked numeric attribute (captures a value)
+-- |
+-- | Use inside templates to capture datum-derived values:
+-- | ```purescript
+-- | \node -> elem Circle [ thunkedNum "cx" node.x, thunkedNum "cy" node.y ] []
+-- | ```
+thunkedNum :: String -> Number -> Attr
+thunkedNum name value = ThunkedAttr name (\_ -> show value)
+
+-- ============================================================================
+-- Behavior Constructors
+-- ============================================================================
+
+-- | Mouse enter handler (captures handler in closure)
+-- |
+-- | ```purescript
+-- | \node -> withBehaviors [ onMouseEnter (callbacks.onHover node.path) ] $
+-- |          elem Circle [...] []
+-- | ```
+onMouseEnter :: Effect Unit -> ThunkedBehavior
+onMouseEnter handler = ThunkedMouseEnter (\_ -> handler)
+
+-- | Mouse leave handler
+onMouseLeave :: Effect Unit -> ThunkedBehavior
+onMouseLeave handler = ThunkedMouseLeave (\_ -> handler)
+
+-- | Click handler
+onClick :: Effect Unit -> ThunkedBehavior
+onClick handler = ThunkedClick (\_ -> handler)
+
+-- | Drag behavior
+onDrag :: DragConfig -> ThunkedBehavior
+onDrag = ThunkedDrag
+
+-- | Zoom behavior
+onZoom :: ZoomConfig -> ThunkedBehavior
+onZoom = ThunkedZoom
+
+-- | Coordinated highlighting behavior
+-- |
+-- | When this element is hovered, ALL elements with coordinated highlighting
+-- | in the same group receive CSS classes based on their relationship:
+-- | - `.highlight-primary` - the hovered element itself
+-- | - `.highlight-related` - elements related to hovered
+-- | - `.highlight-dimmed` - unrelated elements
+-- |
+-- | Use inside forEach templates to capture datum:
+-- | ```purescript
+-- | forEach "nodes" Circle nodes _.id \node ->
+-- |   withBehaviors
+-- |     [ onCoordinatedHighlight
+-- |         { identify: node.name
+-- |         , classify: \hoveredId ->
+-- |             if node.name == hoveredId then Primary
+-- |             else if hoveredId `elem` node.connections then Related
+-- |             else Dimmed
+-- |         , group: Nothing  -- global coordination
+-- |         }
+-- |     ] $
+-- |   elem Circle [...] []
+-- | ```
+onCoordinatedHighlight
+  :: { identify :: String
+     , classify :: String -> HighlightClass
+     , group :: Maybe String
+     }
+  -> ThunkedBehavior
+onCoordinatedHighlight config = ThunkedCoordinatedHighlight
+  { identify: \_ -> config.identify
+  , classify: config.classify
+  , group: config.group
   }

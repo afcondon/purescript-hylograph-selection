@@ -46,7 +46,7 @@ export function transitionSetAttribute_(name) {
       return function() {
         if (handle.committed) {
           // Already committed - apply directly (shouldn't happen in normal usage)
-          handle.element.setAttribute(name, value);
+          setElementProperty(handle.element, name, value);
           return;
         }
         handle.attrs.push({ name, value });
@@ -81,18 +81,46 @@ function commitTransition(handle) {
     return;
   }
 
+  // Separate animatable attributes from non-animatable properties
+  const animatableAttrs = [];
+  const propertyAttrs = [];  // textContent, etc. - set immediately, not animated
+
+  for (const { name, value } of attrs) {
+    if (isNonAnimatableProperty(name)) {
+      propertyAttrs.push({ name, value });
+    } else {
+      animatableAttrs.push({ name, value });
+    }
+  }
+
+  // Apply non-animatable properties immediately
+  for (const { name, value } of propertyAttrs) {
+    setElementProperty(element, name, value);
+  }
+
+  // If no animatable attrs, we're done
+  if (animatableAttrs.length === 0) {
+    if (removeOnEnd) {
+      setTimeout(() => element.remove(), delay + duration);
+    }
+    return;
+  }
+
   // Build keyframes: from current values to target values
   const fromFrame = {};
   const toFrame = {};
 
-  for (const { name, value } of attrs) {
+  for (const { name, value } of animatableAttrs) {
     // Get current value (what we animate FROM)
     const currentValue = element.getAttribute(name) ?? getDefaultAttrValue(name);
 
     // Map attribute names to CSS property names for Web Animations
     const cssName = attrToCssProp(name);
-    fromFrame[cssName] = currentValue;
-    toFrame[cssName] = value;
+
+    // Convert numeric strings to numbers for proper interpolation
+    // Web Animations API needs numbers for SVG geometry attributes (cx, cy, x, y, r, etc.)
+    fromFrame[cssName] = toAnimatableValue(currentValue);
+    toFrame[cssName] = toAnimatableValue(value);
   }
 
   // Create the animation
@@ -111,11 +139,14 @@ function commitTransition(handle) {
 
     // On finish: commit final attribute values and optionally remove
     animation.onfinish = () => {
-      // Commit final values as actual attributes (Web Animations fill:'forwards'
-      // only affects CSS, not SVG attributes)
-      for (const { name, value } of attrs) {
+      // Commit final values as actual attributes
+      for (const { name, value } of animatableAttrs) {
         element.setAttribute(name, value);
       }
+
+      // CRITICAL: Cancel the animation to remove its fill:'forwards' effect
+      // Otherwise the CSS animation effect overrides the DOM attributes visually
+      animation.cancel();
 
       if (removeOnEnd) {
         element.remove();
@@ -124,12 +155,51 @@ function commitTransition(handle) {
 
   } catch (e) {
     // Fallback: instant attribute set (some attrs can't be animated)
-    for (const { name, value } of attrs) {
+    for (const { name, value } of animatableAttrs) {
       element.setAttribute(name, value);
     }
     if (removeOnEnd) {
       setTimeout(() => element.remove(), delay + duration);
     }
+  }
+}
+
+// Check if a property can't be animated and must be set directly
+function isNonAnimatableProperty(name) {
+  return name === 'textContent' || name === 'innerHTML' || name === 'innerText';
+}
+
+// Convert string values to proper animatable values
+// Web Animations API needs numbers for SVG geometry attributes to interpolate correctly
+function toAnimatableValue(value) {
+  // If it's already a number, return as-is
+  if (typeof value === 'number') return value;
+
+  // Try to parse as a number
+  const num = parseFloat(value);
+  if (!isNaN(num) && isFinite(num)) {
+    // Check if the original string was just a number (no units)
+    const trimmed = String(value).trim();
+    if (trimmed === String(num) || trimmed === num.toFixed(0) || /^-?\d+\.?\d*$/.test(trimmed)) {
+      return num;
+    }
+  }
+
+  // Return as string for non-numeric values (colors, etc.)
+  return value;
+}
+
+// Set an element property (not attribute) - for textContent, etc.
+function setElementProperty(element, name, value) {
+  if (name === 'textContent') {
+    element.textContent = value;
+  } else if (name === 'innerHTML') {
+    element.innerHTML = value;
+  } else if (name === 'innerText') {
+    element.innerText = value;
+  } else {
+    // Fallback to attribute for unknown properties
+    element.setAttribute(name, value);
   }
 }
 
