@@ -1,0 +1,136 @@
+= Scrolling to Elements
+:description: Programmatically scroll to DOM elements by ID
+:keywords: scroll, navigation, scrollIntoView, smooth scroll
+
+When visualization elements correspond to UI components elsewhere on the page (like detail panels or cards), clicking a visualization element should scroll the corresponding UI into view.
+
+== Basic Usage
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.FFI (scrollToElement)
+
+-- Scroll smoothly to an element, centering it in the viewport
+liftEffect $ scrollToElement "panel-moduleA"
+----
+
+The `scrollToElement` function provides sensible defaults:
+
+* *Smooth* animated scroll
+* *Centered* vertically in the viewport
+
+== With Custom Options
+
+For more control, use `scrollToElementById_`:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.FFI (scrollToElementById_)
+
+-- Scroll instantly to top of viewport
+liftEffect $ scrollToElementById_ "my-element" "instant" "start"
+
+-- Scroll smoothly to nearest visible position
+liftEffect $ scrollToElementById_ "my-element" "smooth" "nearest"
+----
+
+=== Behavior Options
+
+[cols="1,3"]
+|===
+|Value |Description
+
+|`"smooth"`
+|Animated scroll transition
+
+|`"instant"`
+|Jump immediately (no animation)
+
+|`"auto"`
+|Browser-defined behavior (usually instant)
+|===
+
+=== Block Options (Vertical Alignment)
+
+[cols="1,3"]
+|===
+|Value |Description
+
+|`"start"`
+|Align element to top of viewport
+
+|`"center"`
+|Center element in viewport (recommended for most cases)
+
+|`"end"`
+|Align element to bottom of viewport
+
+|`"nearest"`
+|Scroll minimum distance to make element visible
+|===
+
+== Common Pattern: Click-to-Scroll
+
+Connect visualization clicks to scroll behavior in Halogen:
+
+[source,purescript]
+----
+import PSD3.Internal.Behavior.FFI (scrollToElement)
+import PSD3.Internal.Behavior.Types (onClickWithDatum)
+
+-- In your Tree API visualization
+T.elem Rect [...]
+  `T.withBehaviors`
+    [ onClickWithDatum \d -> do
+        -- Notify Halogen of selection
+        raiseAction (SelectNode d.id)
+    ]
+
+-- In your Halogen component
+handleAction :: Action -> H.HalogenM ...
+handleAction = case _ of
+  SelectNode nodeId -> do
+    -- Update state
+    H.modify_ _ { selectedNode = Just nodeId }
+    -- Scroll to corresponding UI element
+    liftEffect $ scrollToElement ("panel-" <> nodeId)
+----
+
+This pattern works well for:
+
+* Sankey diagrams with detail cards
+* Node-link diagrams with sidebar details
+* Treemaps with info panels
+* Any visualization with external linked content
+
+== Element ID Naming Convention
+
+For maintainability, use consistent ID naming:
+
+[source,purescript]
+----
+-- In visualization: element has data with id
+node.id = "auth-module"
+
+-- In UI: corresponding panel has prefixed id
+HH.div [ HP.id "panel-auth-module" ] [ ... ]
+
+-- Scroll function constructs the target
+scrollToElement ("panel-" <> node.id)
+----
+
+== Browser Support
+
+Uses the standard `scrollIntoView` API, supported in all modern browsers:
+
+* Chrome 61+
+* Firefox 36+
+* Safari 14+
+* Edge 79+
+
+For older browsers, behavior falls back gracefully (instant scroll or no-op).
+
+== Next Steps
+
+* xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] - Visual feedback across views
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - More interaction patterns

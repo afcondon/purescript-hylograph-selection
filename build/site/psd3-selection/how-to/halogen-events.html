@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Halogen Events from PSD3 Visualizations :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/halogen-events.html">
+    <meta name="description" content="How to trigger Halogen actions from clicks and drags in visualizations">
+    <meta name="keywords" content="Halogen, events, clicks, drags, callbacks">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="halogen-events.html">Halogen Events from PSD3</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/halogen-events.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Halogen Events from PSD3 Visualizations</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>When building a Halogen application with PSD3 visualizations, you need to bridge events from the D3 world back to Halogen&#8217;s action system. This guide shows you how.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_challenge"><a class="anchor" href="#_the_challenge"></a>The Challenge</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>PSD3 visualizations live in the DOM, managed by D3. Halogen manages your application state. When a user clicks or drags something in the visualization, you need to:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Capture the event in the D3 world</p>
+</li>
+<li>
+<p>Extract relevant data (which element, position, etc.)</p>
+</li>
+<li>
+<p>Trigger a Halogen action</p>
+</li>
+<li>
+<p>Update state and re-render</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_solution_callback_functions"><a class="anchor" href="#_solution_callback_functions"></a>Solution: Callback Functions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Pass a callback function from Halogen into your visualization code:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Define your visualization events
+data VizEvent
+  = NodeClicked NodeId
+  | NodeDragged NodeId Position
+  | BackgroundClicked
+  | ZoomChanged ZoomTransform
+
+-- In your Halogen component
+handleAction = case _ of
+  Initialize -&gt; do
+    mContainer &lt;- H.getRef vizRef
+    emitter &lt;- H.emitAction  -- Get the action emitter
+    for_ mContainer \el -&gt;
+      liftEffect $ renderViz el state (emitter &lt;&lt;&lt; VizEventReceived)
+
+  VizEventReceived event -&gt; case event of
+    NodeClicked id -&gt; H.modify_ _ { selected = Just id }
+    NodeDragged id pos -&gt; updateNodePosition id pos
+    -- etc.</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_click_events"><a class="anchor" href="#_click_events"></a>Click Events</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (onClick, onClickWithDatum)
+
+-- Simple click (no datum needed)
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ onClick \_ -&gt; onEvent BackgroundClicked ]
+
+-- Click with datum access
+P.joinData "nodes" "g" nodes \node -&gt;
+  P.elem Group [...]
+    `P.withBehaviors`
+      [ onClickWithDatum \d -&gt; onEvent (NodeClicked d.id) ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_drag_events"><a class="anchor" href="#_drag_events"></a>Drag Events</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (Behavior(..), DragBehavior(..))
+
+-- Full drag with start/drag/end
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ Drag $ CustomDrag
+        { onStart: \d pos -&gt; onEvent (DragStarted d.id pos)
+        , onDrag: \d pos -&gt; onEvent (NodeDragged d.id pos)
+        , onEnd: \d pos -&gt; onEvent (DragEnded d.id pos)
+        }
+    ]
+
+-- Simple drag (just position updates)
+P.elem Circle [...]
+  `P.withBehaviors`
+    [ Drag $ SimpleDrag ]  -- Updates __data__.x and __data__.y directly</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pattern_effect_ref_for_mutable_state"><a class="anchor" href="#_pattern_effect_ref_for_mutable_state"></a>Pattern: Effect.Ref for Mutable State</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For high-frequency events like dragging, you might not want to trigger Halogen actions on every pixel move. Use <code>Effect.Ref</code> for intermediate state:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">renderViz container state onEvent = do
+  -- Mutable ref for drag state (doesn't trigger Halogen re-render)
+  dragRef &lt;- Ref.new Nothing
+
+  void $ runD3 do
+    -- ... build viz ...
+    P.elem Circle [...]
+      `P.withBehaviors`
+        [ Drag $ CustomDrag
+            { onStart: \d pos -&gt; Ref.write (Just { id: d.id, start: pos }) dragRef
+            , onDrag: \d pos -&gt; do
+                -- Update DOM directly for smooth dragging
+                updateCirclePosition d.id pos
+            , onEnd: \d pos -&gt; do
+                -- Only notify Halogen when drag ends
+                mDrag &lt;- Ref.read dragRef
+                for_ mDrag \drag -&gt;
+                  onEvent (NodeDragComplete drag.id pos)
+                Ref.write Nothing dragRef
+            }
+        ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pattern_debouncing_events"><a class="anchor" href="#_pattern_debouncing_events"></a>Pattern: Debouncing Events</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For events that fire rapidly (zooming, brushing), debounce before triggering Halogen:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import Effect.Timer (setTimeout)
+
+mkDebouncedEmitter :: Int -&gt; (a -&gt; Effect Unit) -&gt; Effect (a -&gt; Effect Unit)
+mkDebouncedEmitter delayMs emit = do
+  timerRef &lt;- Ref.new Nothing
+  pure \value -&gt; do
+    -- Cancel pending timer
+    mTimer &lt;- Ref.read timerRef
+    for_ mTimer clearTimeout
+    -- Set new timer
+    timer &lt;- setTimeout delayMs (emit value)
+    Ref.write (Just timer) timerRef</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_complete_example"><a class="anchor" href="#_complete_example"></a>Complete Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See the Force Explorer showcase for a complete working example of Halogen + PSD3 integration with drag, zoom, and click events.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../getting-started/webapp-architecture.html" class="xref page">Web App Architecture</a> - The big picture</p>
+</li>
+<li>
+<p><a href="zoom.html" class="xref page">Making Visualizations Zoomable</a> - Zoom behavior</p>
+</li>
+<li>
+<p><a href="simple-webpage.html" class="xref page">PSD3 without Halogen</a> - Simpler alternative</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

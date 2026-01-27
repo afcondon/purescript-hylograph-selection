@@ -67,7 +67,7 @@ testScene =
 -- | Should produce a Join constructor in the AST
 basicJoinTree :: Tree DataPoint
 basicJoinTree =
-  J.join "circles" "circle" testPoints circleTemplate
+  J.join "circles" "circle" testPoints _.label circleTemplate
     # J.toTree
   where
   circleTemplate :: DataPoint -> Tree DataPoint
@@ -82,7 +82,7 @@ basicJoinTree =
 -- | Should produce an UpdateJoin constructor in the AST
 gupJoinTree :: Tree DataPoint
 gupJoinTree =
-  J.join "bars" "rect" testPoints rectTemplate
+  J.join "bars" "rect" testPoints _.label rectTemplate
     # J.withGUP gupSpec
     # J.toTree
   where
@@ -109,7 +109,7 @@ gupJoinTree =
 -- | Should produce a NestedJoin constructor in the AST
 nestedJoinTree :: Tree SceneData
 nestedJoinTree =
-  J.nestedJoin "points" "circle" [testScene] _.points circleTemplate
+  J.nestedJoin "points" "circle" [testScene] _.points _.label circleTemplate
     # J.toTree
   where
   circleTemplate :: DataPoint -> Tree DataPoint
@@ -123,7 +123,7 @@ nestedJoinTree =
 -- | Should produce an UpdateNestedJoin constructor in the AST
 fullJoinTree :: Tree SceneData
 fullJoinTree =
-  J.fullJoin "viz" "circle" [testScene] _.points circleTemplate gupSpec
+  J.fullJoin "viz" "circle" [testScene] _.points _.label circleTemplate gupSpec
     # J.toTree
   where
   circleTemplate :: DataPoint -> Tree DataPoint
@@ -146,7 +146,7 @@ fullJoinTree =
 -- | Test 5: Using convenience function basicJoin
 basicJoinConvenienceTree :: Tree DataPoint
 basicJoinConvenienceTree =
-  J.basicJoin "dots" "circle" testPoints dotTemplate
+  J.basicJoin "dots" "circle" testPoints _.label dotTemplate
     # J.toTree
   where
   dotTemplate :: DataPoint -> Tree DataPoint
@@ -159,7 +159,7 @@ basicJoinConvenienceTree =
 -- | Test 6: Using gupJoin convenience function
 gupJoinConvenienceTree :: Tree DataPoint
 gupJoinConvenienceTree =
-  J.gupJoin "animated" "circle" testPoints circleTemplate gup
+  J.gupJoin "animated" "circle" testPoints _.label circleTemplate gup
     # J.toTree
   where
   circleTemplate :: DataPoint -> Tree DataPoint

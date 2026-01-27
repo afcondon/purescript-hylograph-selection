@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Future Directions :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/future-directions.html">
+    <meta name="description" content="Advanced concepts for future exploration">
+    <meta name="keywords" content="future, comonad, build systems, cellular automata, pedagogy">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="future-directions.html">Future Directions</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/future-directions.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Future Directions</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>Captured for later exploration - the "show people things they didn&#8217;t know they could do" tier</em></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pedagogic_recursion_schemes"><a class="anchor" href="#_pedagogic_recursion_schemes"></a>Pedagogic Recursion Schemes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The comonadic spreadsheet abstraction makes recursion schemes approachable:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Fold trees that visualize how SUM actually computes</p>
+</li>
+<li>
+<p>Histomorphisms for moving averages (each step sees its history)</p>
+</li>
+<li>
+<p>The "Context View" showing what a cell can see (neighbors, position)</p>
+</li>
+<li>
+<p><code>extend</code> as the theory behind "fill down"</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This has real teaching potential - spreadsheets as a gateway to FP concepts.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_spreadsheets_as_build_systems"><a class="anchor" href="#_spreadsheets_as_build_systems"></a>Spreadsheets as Build Systems</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reference: "Build Systems à la Carte" by Mokhov, Mitchell, Peyton Jones (2018)</p>
+</div>
+<div class="paragraph">
+<p>Key insight: Excel and Make are both build systems with different rebuild strategies:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Excel: minimal rebuild based on dependency graph</p>
+</li>
+<li>
+<p>Make: topological ordering with timestamps</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Our functional spreadsheet could model:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Dependency tracking</strong> via the expression graph</p>
+</li>
+<li>
+<p><strong>Incremental computation</strong> via selective re-evaluation</p>
+</li>
+<li>
+<p><strong>Build policies</strong> as different evaluation strategies</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This extends naturally to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>CI/CD pipeline visualization</p>
+</li>
+<li>
+<p>Infrastructure-as-spreadsheet (the Kubernetes joke&#8230;&#8203; but maybe not a joke?)</p>
+</li>
+<li>
+<p>Data pipeline orchestration</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cellular_automata_demo"><a class="anchor" href="#_cellular_automata_demo"></a>Cellular Automata Demo</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Game of Life is already implemented in Data.Sheet and Data.Zipper:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">life :: Sheet Boolean -&gt; Boolean
+life s = let alive = extract s
+             count = length (filter identity (neighbors s))
+         in if alive then count == 2 || count == 3 else count == 3
+
+-- One generation
+extend life sheet</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Visual demo: animate the grid, show the comonadic context for each cell.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_full_vision"><a class="anchor" href="#_the_full_vision"></a>The Full Vision</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">Entry Point (familiar)     →    Intermediate           →    Advanced
+─────────────────────────────────────────────────────────────────────
+HOFs in formulas               Fold visualization          Comonadic extend
+=MAP(range, fn)                See SUM's tree              Neighbor contexts
+=FILTER(range, pred)           Recursion scheme picker     Build system modeling
+SQL results as tables          Lens-based data paths       Cellular automata
+PSD3 visualizations            Bidirectional editing       Infrastructure DSL</code></pre>
+</div>
+</div>
+<div class="quoteblock">
+<blockquote>
+First, do what they already do, but better. Then show them what else is possible.
+</blockquote>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also"><a class="anchor" href="#_see_also"></a>See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="functional-spreadsheets.html" class="xref page">Functional Spreadsheets</a> - The comonad foundation</p>
+</li>
+<li>
+<p><a href="unified-dsl.html" class="xref page">Unified Data DSL</a> - The unifying architecture</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Simple CSS Hover Effects :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/css-hover.html">
+    <meta name="description" content="How to implement lightweight hover effects using CSS">
+    <meta name="keywords" content="CSS, hover, effects, simple, performance">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="css-hover.html">Simple CSS Hover Effects</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/css-hover.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Simple CSS Hover Effects</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>For simple hover effects that only affect the hovered element, CSS is faster and simpler than JavaScript. This guide shows how to implement CSS-based hover effects with PSD3.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_when_to_use_css_hover"><a class="anchor" href="#_when_to_use_css_hover"></a>When to Use CSS Hover</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use CSS hover when:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The effect only affects the hovered element itself</p>
+</li>
+<li>
+<p>You want maximum performance (no JavaScript on mouse move)</p>
+</li>
+<li>
+<p>The effect is purely visual (color, size, opacity changes)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Use JavaScript hover (see <a href="coordinated-highlighting.html" class="xref page">Coordinated Highlighting</a>) when:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Multiple elements should respond to one hover</p>
+</li>
+<li>
+<p>You need to access datum values</p>
+</li>
+<li>
+<p>Effects span multiple views</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_basic_css_hover"><a class="anchor" href="#_basic_css_hover"></a>Basic CSS Hover</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_add_a_class_to_your_elements"><a class="anchor" href="#_1_add_a_class_to_your_elements"></a>1. Add a Class to Your Elements</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Expr.Friendly (class_)
+
+myVisualization =
+  A.joinData "circles" "circle" myData \d -&gt;
+    A.elem Circle
+      [ cx (from _.x)
+      , cy (from _.y)
+      , r (num 5.0)
+      , fill (text "steelblue")
+      , class_ (text "data-point")  -- Add a class for CSS targeting
+      ]</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_define_css_hover_rules"><a class="anchor" href="#_2_define_css_hover_rules"></a>2. Define CSS Hover Rules</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.data-point {
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+}
+
+.data-point:hover {
+  r: 8;  /* SVG attribute - grows the circle */
+  fill: coral;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_common_hover_patterns"><a class="anchor" href="#_common_hover_patterns"></a>Common Hover Patterns</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_highlight_on_hover"><a class="anchor" href="#_highlight_on_hover"></a>Highlight on Hover</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.node {
+  transition: opacity 0.2s, stroke-width 0.2s;
+}
+
+.node:hover {
+  opacity: 1 !important;
+  stroke: #fbbf24;
+  stroke-width: 2px;
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scale_up_on_hover"><a class="anchor" href="#_scale_up_on_hover"></a>Scale Up on Hover</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.bar {
+  transition: transform 0.15s ease-out;
+  transform-origin: bottom center;
+}
+
+.bar:hover {
+  transform: scaleY(1.05);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_glow_effect"><a class="anchor" href="#_glow_effect"></a>Glow Effect</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.highlight-target {
+  transition: filter 0.2s;
+}
+
+.highlight-target:hover {
+  filter: drop-shadow(0 0 8px currentColor);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cursor_feedback"><a class="anchor" href="#_cursor_feedback"></a>Cursor Feedback</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.clickable {
+  cursor: pointer;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_combining_with_psd3_behaviors"><a class="anchor" href="#_combining_with_psd3_behaviors"></a>Combining with PSD3 Behaviors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can use CSS for visual feedback while using PSD3 behaviors for logic:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">A.elem Circle
+  [ class_ (text "data-point clickable")
+  , cx (from _.x)
+  , cy (from _.y)
+  ]
+  `A.withBehaviors`
+    [ onClick \d -&gt; handleClick d.id  -- JavaScript handles the click
+    -- CSS handles the hover effect (no behavior needed)
+    ]</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">/* CSS handles all the visual hover feedback */
+.data-point {
+  transition: all 0.15s;
+}
+
+.data-point:hover {
+  fill: coral;
+  r: 8;
+}
+
+.clickable {
+  cursor: pointer;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_performance_tips"><a class="anchor" href="#_performance_tips"></a>Performance Tips</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Use <code>transform</code> and <code>opacity</code></strong> for animations - they&#8217;re GPU-accelerated</p>
+</li>
+<li>
+<p><strong>Avoid animating <code>width</code>, <code>height</code>, <code>top</code>, <code>left</code></strong> - they trigger layout</p>
+</li>
+<li>
+<p><strong>Keep transitions short</strong> (150-200ms) for responsive feel</p>
+</li>
+<li>
+<p><strong>Use <code>will-change</code></strong> sparingly for complex animations</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.optimized-hover {
+  will-change: transform, opacity;
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+.optimized-hover:hover {
+  transform: scale(1.1);
+  opacity: 0.9;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_svg_specific_considerations"><a class="anchor" href="#_svg_specific_considerations"></a>SVG-Specific Considerations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>SVG attributes like <code>r</code>, <code>cx</code>, <code>cy</code> can be animated with CSS, but browser support varies:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">/* Works in modern browsers */
+circle {
+  transition: r 0.2s;
+}
+
+circle:hover {
+  r: 10;
+}
+
+/* More compatible: use transform instead */
+circle {
+  transition: transform 0.2s;
+  transform-origin: center;
+}
+
+circle:hover {
+  transform: scale(1.5);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="coordinated-highlighting.html" class="xref page">Coordinated Highlighting</a> - Multi-element hover effects</p>
+</li>
+<li>
+<p><a href="linked-brushing.html" class="xref page">Linked Brushing</a> - Selection across views</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

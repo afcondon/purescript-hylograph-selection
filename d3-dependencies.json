@@ -4,18 +4,18 @@
   "generated": "2026-01-19",
   "note": "Run 'grep -r \"from \\\"d3\" src --include=\"*.js\" | sort -u' to regenerate this list",
   "dependencies": {
-    "d3-brush": "^3.0.0",
     "d3-force": "^3.0.0",
     "d3-interpolate": "^3.0.1",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.2.0",
-    "d3-transition": "^3.0.1",
-    "d3-zoom": "^3.0.0"
+    "d3-transition": "^3.0.1"
   },
   "removed": {
+    "d3-brush": "REMOVED 2026-01-19 - use PSD3.Interaction.Brush for native Pointer Events brush",
     "d3-drag": "REMOVED 2026-01-19 - use PSD3.Interaction.Pointer for native Pointer Events drag",
+    "d3-zoom": "REMOVED 2026-01-19 - use PSD3.Interaction.Zoom for native Pointer Events zoom",
     "d3-chord": "REMOVED 2026-01 - use pure PureScript PSD3.Layout.Chord",
     "d3-hierarchy": "REMOVED 2026-01 - use pure PureScript PSD3.Layout.Hierarchy.*",
     "d3-ease": "REMOVED 2026-01 - pure PureScript PSD3.Transition.Engine handles easing"
@@ -26,14 +26,12 @@
     "d3-timer": "^3.0.1"
   },
   "usedBy": {
-    "d3-brush": ["src/PSD3/Brush/FFI.js"],
     "d3-force": ["src/PSD3/Internal/FFI.js"],
     "d3-interpolate": ["src/PSD3/Scale.js"],
     "d3-scale": ["src/PSD3/Internal/FFI.js", "src/PSD3/Scale.js", "src/PSD3/Scale/FP.js"],
     "d3-scale-chromatic": ["src/PSD3/Internal/FFI.js", "src/PSD3/Scale.js"],
-    "d3-selection": ["src/PSD3/Brush/FFI.js", "src/PSD3/Internal/Behavior/FFI.js", "src/PSD3/Internal/FFI.js", "src/PSD3/Internal/Transition/FFI.js"],
-    "d3-shape": ["src/PSD3/Internal/FFI.js"],
-    "d3-transition": ["src/PSD3/Internal/Transition/FFI.js"],
-    "d3-zoom": ["src/PSD3/Internal/Behavior/FFI.js", "src/PSD3/Internal/FFI.js"]
+    "d3-selection": ["src/PSD3/Internal/Behavior/FFI.js", "src/PSD3/Internal/FFI.js", "src/PSD3/Internal/Transition/FFI.js"],
+    "d3-shape": ["src/PSD3/Internal/FFI.js", "src/PSD3/Internal/Generators/Line.js"],
+    "d3-transition": ["src/PSD3/Internal/Transition/FFI.js"]
   }
 }

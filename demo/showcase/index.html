@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Showcase - PSD3 Selection</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .breadcrumb { color: #64748b; margin-bottom: 20px; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    .intro { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    .projects { display: flex; flex-direction: column; gap: 30px; }
+    .project {
+      background: #1e293b;
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      transition: all 0.2s;
+    }
+    .project:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+    .project .preview {
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      min-height: 200px;
+    }
+    .project .info { padding: 30px; }
+    .project h2 { color: #e2e8f0; font-size: 1.5rem; margin-bottom: 10px; }
+    .project p { color: #94a3b8; line-height: 1.6; margin-bottom: 15px; }
+    .project .tech { font-size: 0.8rem; color: #64748b; }
+    .section-title { color: #64748b; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.1em; margin: 40px 0 20px; }
+    @media (max-width: 768px) {
+      .project { grid-template-columns: 1fr; }
+      .project .preview { min-height: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="../">PSD3 Selection</a> / Showcase
+    </nav>
+
+    <h1>Showcase</h1>
+    <p class="intro">Larger examples and applications built with PSD3. These demonstrate what's possible when you combine the library's features.</p>
+
+    <h3 class="section-title">Examples</h3>
+    <div class="projects">
+      <a href="#simpsons" class="project">
+        <div class="preview">📈</div>
+        <div class="info">
+          <h2>Simpson's Paradox</h2>
+          <p>A statistical visualization demonstrating how aggregate trends can hide subgroup patterns. Interactive exploration of a classic data science concept.</p>
+          <div class="tech">PSD3 Selection · Scales · Coordinated Views</div>
+        </div>
+      </a>
+
+      <a href="#health-wealth" class="project">
+        <div class="preview">🌍</div>
+        <div class="info">
+          <h2>Health & Wealth of Nations</h2>
+          <p>Gapminder-style animated bubble chart showing the relationship between income and life expectancy over time.</p>
+          <div class="tech">PSD3 Selection · Animation · Scales</div>
+        </div>
+      </a>
+
+      <a href="#force-explorer" class="project">
+        <div class="preview">🔮</div>
+        <div class="info">
+          <h2>Force Explorer</h2>
+          <p>Interactive tool for exploring force simulation parameters. Adjust forces in real-time and see their effects.</p>
+          <div class="tech">PSD3 Simulation · Interactive Controls</div>
+        </div>
+      </a>
+    </div>
+
+    <h3 class="section-title">Applications</h3>
+    <div class="projects">
+      <a href="https://github.com/afcondon/code-explorer" class="project" target="_blank">
+        <div class="preview">🔍</div>
+        <div class="info">
+          <h2>Code Explorer</h2>
+          <p>Visualize codebase structure and dependencies. Navigate complex codebases through interactive graphs and matrices.</p>
+          <div class="tech">PSD3 Selection · PSD3 Graph · Halogen · Standalone Application</div>
+        </div>
+      </a>
+
+      <a href="#sheetless" class="project">
+        <div class="preview">📊</div>
+        <div class="info">
+          <h2>Sheetless</h2>
+          <p>A functional spreadsheet with higher-order formulas. Demonstrates the computation-as-data-transformation paradigm.</p>
+          <div class="tech">PSD3 Sheetless · Halogen · Expression Language</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

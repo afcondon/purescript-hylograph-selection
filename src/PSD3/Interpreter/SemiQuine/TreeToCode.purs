@@ -213,6 +213,10 @@ attrToCode maybeSample attr = case attr of
     let (AttributeName name) = rec.name
     in attrFnName name <> " $ animated $ animatedTo \"" <> name <> "\" (...) # withDuration " <> show rec.config.duration
 
+  AnimatedCompound rec ->
+    let (AttributeName name) = rec.name
+    in attrFnName name <> " $ animatedCompound (" <> show (Array.length rec.toValues) <> " components) # withDuration " <> show rec.config.duration
+
 -- | Convert static value to Friendly DSL code
 staticValueToCode :: AttributeValue -> String
 staticValueToCode = case _ of
@@ -257,6 +261,7 @@ showElemType = case _ of
   Rect -> "Rect"
   Path -> "Path"
   Line -> "Line"
+  Polygon -> "Polygon"
   Text -> "Text"
   Div -> "Div"
   Span -> "Span"

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Understanding - PSD3 Selection</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .breadcrumb { color: #64748b; margin-bottom: 20px; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
+    h1 { font-size: 2.5rem; color: #ec4899; margin-bottom: 10px; }
+    .intro { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    .articles { display: flex; flex-direction: column; gap: 20px; }
+    .article {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 30px;
+      text-decoration: none;
+      color: inherit;
+      border-left: 4px solid #ec4899;
+      transition: all 0.2s;
+    }
+    .article:hover { background: #334155; transform: translateX(5px); }
+    .article h2 { color: #e2e8f0; margin-bottom: 10px; }
+    .article p { color: #94a3b8; line-height: 1.6; }
+    .article .concept { font-size: 0.875rem; color: #ec4899; margin-top: 15px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="../">PSD3 Selection</a> / Understanding
+    </nav>
+
+    <h1>Understanding</h1>
+    <p class="intro">Deep dives into the architecture and design philosophy of PSD3. Learn why things work the way they do and gain insight into the underlying concepts.</p>
+
+    <div class="articles">
+      <a href="finally-tagless.html" class="article">
+        <h2>Finally Tagless Architecture</h2>
+        <p>The core pattern that enables PSD3's multi-interpreter design. Understand how the same code can be rendered, tested, and documented.</p>
+        <div class="concept">Key concept: expressions as type class instances</div>
+      </a>
+
+      <a href="ast.html" class="article">
+        <h2>The Selection AST</h2>
+        <p>Visualizations are trees, not command sequences. Learn how the declarative tree structure enables inspection, transformation, and multiple interpretation.</p>
+        <div class="concept">Key concept: visualizations as data</div>
+      </a>
+
+      <a href="interpreters.html" class="article">
+        <h2>Interpreters</h2>
+        <p>The same AST can be rendered to DOM, converted to documentation, or used for testing. Explore the available interpreters and how to write your own.</p>
+        <div class="concept">Key concept: separation of specification from execution</div>
+      </a>
+
+      <a href="design-decisions.html" class="article">
+        <h2>Design Decisions</h2>
+        <p>Why Effect and Effect.Ref? How does the FFI strategy work? Understand the pragmatic choices that shape PSD3.</p>
+        <div class="concept">Key concept: functional purity with escape hatches</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

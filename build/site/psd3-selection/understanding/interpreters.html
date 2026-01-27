@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Interpreters :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/interpreters.html">
+    <meta name="description" content="The multiple backends that bring PSD3 visualizations to life">
+    <meta name="keywords" content="interpreters, D3, rendering, testing">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="interpreters.html">Interpreters</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/interpreters.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Interpreters</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The same PSD3 visualization can be interpreted multiple ways. This page covers the available interpreters and when to use each.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_available_interpreters"><a class="anchor" href="#_available_interpreters"></a>Available Interpreters</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_d3_interpreter_primary"><a class="anchor" href="#_d3_interpreter_primary"></a>D3 Interpreter (Primary)</h3>
+<div class="paragraph">
+<p>Renders your visualization to the DOM via D3.js.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Render (runD3, select, renderTree)
+
+main = void $ runD3 do
+  container &lt;- select "#chart"
+  renderTree container myViz</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use for</strong>: Production rendering in the browser.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_english_interpreter"><a class="anchor" href="#_english_interpreter"></a>English Interpreter</h3>
+<div class="paragraph">
+<p>Produces a human-readable description of what the visualization will do.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Interpreter.English (toEnglish)
+
+description = toEnglish myViz
+-- "Create an SVG element with width 400 and height 300,
+--  containing a circle at (200, 150) with radius 50..."</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use for</strong>: Documentation, debugging, accessibility descriptions.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mermaid_interpreter"><a class="anchor" href="#_mermaid_interpreter"></a>Mermaid Interpreter</h3>
+<div class="paragraph">
+<p>Generates a Mermaid diagram showing the AST structure.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Interpreter.Mermaid (toMermaid)
+
+diagram = toMermaid myViz
+-- "graph TD\n  A[SVG] --&gt; B[Circle]\n  ..."</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use for</strong>: Visualizing complex tree structures, documentation.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_metaast_interpreter"><a class="anchor" href="#_metaast_interpreter"></a>MetaAST Interpreter</h3>
+<div class="paragraph">
+<p>Converts the typed AST to a simpler untyped representation.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Interpreter.MetaAST (toMetaAST)
+
+meta = toMetaAST myViz</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use for</strong>: Serialization, cross-language interop, tooling.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_writing_custom_interpreters"><a class="anchor" href="#_writing_custom_interpreters"></a>Writing Custom Interpreters</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since the AST is just data, you can write your own interpreters:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Count elements in a visualization
+countElements :: forall datum. Tree datum -&gt; Int
+countElements (Node node) = 1 + sum (map countElements node.children)
+countElements (Join j) = 1  -- Count the join itself
+countElements _ = 1</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_interpreter_pattern"><a class="anchor" href="#_the_interpreter_pattern"></a>The Interpreter Pattern</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This is the power of the declarative approach:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Describe</strong> what you want (build the tree)</p>
+</li>
+<li>
+<p><strong>Interpret</strong> it however you need (render, test, document)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The same visualization spec serves multiple purposes without modification.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_further_reading"><a class="anchor" href="#_further_reading"></a>Further Reading</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="finally-tagless.html" class="xref page">Finally Tagless Architecture</a></p>
+</li>
+<li>
+<p><a href="the-ast.html" class="xref page">The Selection AST</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

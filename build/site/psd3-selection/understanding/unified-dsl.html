@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Unified Data DSL: Bridging Computation and Visualization :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/unified-dsl.html">
+    <meta name="description" content="A finally-tagless DSL where spreadsheets and visualizations share the same operations">
+    <meta name="keywords" content="DSL, finally tagless, data flow, spreadsheet, visualization">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="unified-dsl.html">Unified Data DSL</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/unified-dsl.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Unified Data DSL: Bridging Computation and Visualization</h1>
+<div class="sect1">
+<h2 id="_the_core_insight"><a class="anchor" href="#_the_core_insight"></a>The Core Insight</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Traditional thinking separates:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Spreadsheets</strong>: compute values from data</p>
+</li>
+<li>
+<p><strong>Visualizations</strong>: render data to DOM</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>But at their core, both are doing the same thing: <strong>transforming data through a typed pipeline</strong>. The only difference is what comes out the other end.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">Data Source → [map/fold/filter] → Output
+                    ↓
+            Spreadsheet: Values
+            Visualization: DOM Trees
+            Analysis: Statistics
+            Export: JSON/CSV</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This document describes a <strong>unified finally-tagless DSL</strong> where:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Data flow operations are defined once, abstractly</p>
+</li>
+<li>
+<p>Different interpreters produce different outputs</p>
+</li>
+<li>
+<p>The same computation can be a spreadsheet cell AND a visualization</p>
+</li>
+<li>
+<p>Types ensure correctness across both worlds</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_1_the_unified_datadsl"><a class="anchor" href="#_part_1_the_unified_datadsl"></a>Part 1: The Unified DataDSL</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_core_type_class"><a class="anchor" href="#_core_type_class"></a>Core Type Class</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- | The fundamental operations on data, independent of output type
+class DataDSL repr where
+  -- Primitives
+  num    :: Number -&gt; repr Number
+  str    :: String -&gt; repr String
+  bool   :: Boolean -&gt; repr Boolean
+
+  -- Data source binding ("join points")
+  source :: forall a. DataSource a -&gt; repr (Array a)
+
+  -- The universal data operations
+  mapA    :: forall a b. (a -&gt; b) -&gt; repr (Array a) -&gt; repr (Array b)
+  foldA   :: forall a b. (b -&gt; a -&gt; b) -&gt; b -&gt; repr (Array a) -&gt; repr b
+  filterA :: forall a. (a -&gt; Boolean) -&gt; repr (Array a) -&gt; repr (Array a)
+  zipA    :: forall a b. repr (Array a) -&gt; repr (Array b) -&gt; repr (Array (Tuple a b))
+
+  -- Arithmetic
+  add :: repr Number -&gt; repr Number -&gt; repr Number
+  mul :: repr Number -&gt; repr Number -&gt; repr Number</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_why_this_is_profound"><a class="anchor" href="#_why_this_is_profound"></a>Why This is Profound</h3>
+<div class="paragraph">
+<p>This captures the essence of D3&#8217;s data join:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">// D3
+selection.selectAll("rect")
+  .data(myData)           // ← source
+  .join("rect")
+  .attr("height", d =&gt; d.value)  // ← mapA (\d -&gt; d.value)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And the essence of spreadsheet formulas:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">=MAP(A1:A10, x =&gt; x * 1.1)   -- mapA (\x -&gt; x * 1.1) (source range)
+=SUM(B1:B10)                  -- foldA (+) 0 (source range)
+=FILTER(C1:C10, x =&gt; x &gt; 0)   -- filterA (\x -&gt; x &gt; 0) (source range)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>They are the same operations.</strong> Only the interpreter differs.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_2_data_sources_as_join_points"><a class="anchor" href="#_part_2_data_sources_as_join_points"></a>Part 2: Data Sources as Join Points</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In D3, a data join binds data to DOM elements. In our unified model, a <strong>join point</strong> is where data enters a computation pipeline:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">source :: DataSource a -&gt; repr (Array a)
+
+-- This single operation replaces:
+-- - D3's selection.data()
+-- - Spreadsheet's cell range reference
+-- - Database query execution
+-- - File loading</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The key insight: <strong>the join point is abstract</strong>. The interpreter decides what "binding data" means:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In a spreadsheet: look up cell values</p>
+</li>
+<li>
+<p>In D3: bind to DOM selection</p>
+</li>
+<li>
+<p>In analysis: load from database</p>
+</li>
+<li>
+<p>In testing: inject mock data</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_3_display_as_profunctor"><a class="anchor" href="#_part_3_display_as_profunctor"></a>Part 3: Display as Profunctor</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Display transformations are <strong>typed morphisms</strong> that compose:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- | Percentage: Number -&gt; String
+-- | Pipeline: scale by 100 → round to 1 decimal → show → add "%"
+percentageD :: forall repr. DisplayPrimitives repr =&gt; repr Number String
+percentageD =
+  suffixD "%" `composeD` fixedD 1 `composeD` scaleD 100.0
+
+-- | Currency: Number -&gt; String
+currencyD :: forall repr. DisplayPrimitives repr =&gt; repr Number String
+currencyD =
+  prefixD "$" `composeD` fixedD 2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The profunctor structure gives us:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Reusability</strong>: Define <code>percentageD</code> once, use it anywhere</p>
+</li>
+<li>
+<p><strong>Composability</strong>: Chain transformations type-safely</p>
+</li>
+<li>
+<p><strong>Adaptability</strong>: <code>lmapD</code> adapts display to any source type</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_4_the_same_computation_multiple_interpretations"><a class="anchor" href="#_part_4_the_same_computation_multiple_interpretations"></a>Part 4: The Same Computation, Multiple Interpretations</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- | Define a computation abstractly
+quarterlyAnalysis :: forall repr. DataDSL repr =&gt;
+  DataSource Quarter -&gt; repr (Array GrowthRate)
+quarterlyAnalysis src =
+  mapA computeGrowth $
+    filterA (_.revenue &gt;&gt;&gt; (_ &gt; 0.0)) $
+      source src
+
+-- | Spreadsheet interpretation: produces cell values
+runAsSheet :: Array GrowthRate
+runAsSheet = evalSheet (quarterlyAnalysis quarterlyData)
+
+-- | Visualization interpretation: produces a bar chart
+runAsViz :: Tree GrowthRate
+runAsViz = evalViz $
+  join (quarterlyAnalysis quarterlyData) \rate -&gt;
+    elem Rect
+      [ height (scaleY rate.value)
+      , fill "steelblue"
+      ]
+
+-- | Analysis interpretation: produces statistics
+runAsStats :: Statistics
+runAsStats = evalStats (quarterlyAnalysis quarterlyData)</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_5_decomposing_psd3s_join_variants"><a class="anchor" href="#_part_5_decomposing_psd3s_join_variants"></a>Part 5: Decomposing PSD3&#8217;s Join Variants</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_current_psd3_structure_problematic"><a class="anchor" href="#_current_psd3_structure_problematic"></a>Current PSD3 Structure (Problematic)</h3>
+<div class="paragraph">
+<p>PSD3 currently has four join constructors:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">data Tree datum
+  = Node (TreeNode datum)
+  | Join { ... }              -- Basic
+  | NestedJoin { ... }        -- + decompose
+  | UpdateJoin { ... }        -- + GUP behaviors
+  | UpdateNestedJoin { ... }  -- + decompose + GUP</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is a <strong>Cartesian product</strong> of features, leading to exponential growth.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_decomposed_design_proposed"><a class="anchor" href="#_decomposed_design_proposed"></a>Decomposed Design (Proposed)</h3>
+<div class="paragraph">
+<p>Factor into orthogonal, composable concerns:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- | Core join: bind data to template
+class JoinDSL repr where
+  join :: forall a. repr (Array a) -&gt; (a -&gt; repr (Tree a)) -&gt; repr (Tree a)
+
+-- | Decomposition: extract nested data
+class JoinDSL repr &lt;= NestedJoinDSL repr where
+  withDecompose :: forall outer inner.
+    (outer -&gt; Array inner) -&gt; ...
+
+-- | GUP behaviors: enter/update/exit
+class JoinDSL repr &lt;= GUPDSL repr where
+  withGUP :: forall a. GUPBehaviors a -&gt; ...
+
+-- | Compose them freely
+myViz =
+  withGUP enterFadeIn $
+    withDecompose _.points $
+      join sourceData pointTemplate</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_philosophical_win"><a class="anchor" href="#_the_philosophical_win"></a>The Philosophical Win</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Data visualization and data computation are <strong>not separate disciplines</strong>. They are two views of the same underlying reality: <strong>typed data flowing through transformations</strong>.</p>
+</div>
+<div class="paragraph">
+<p>By unifying the DSL, we:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Eliminate artificial boundaries between "spreadsheet people" and "visualization people"</p>
+</li>
+<li>
+<p>Enable live links between computed values and their visual representations</p>
+</li>
+<li>
+<p>Make the full power of functional programming available in both contexts</p>
+</li>
+<li>
+<p>Create a foundation for tools that truly integrate analysis and presentation</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also"><a class="anchor" href="#_see_also"></a>See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="functional-spreadsheets.html" class="xref page">Functional Spreadsheets</a> - The comonad foundation</p>
+</li>
+<li>
+<p><a href="finally-tagless.html" class="xref page">Finally Tagless Architecture</a> - The encoding technique</p>
+</li>
+<li>
+<p><a href="design-decisions.html" class="xref page">Design Decisions</a> - Pragmatic choices</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

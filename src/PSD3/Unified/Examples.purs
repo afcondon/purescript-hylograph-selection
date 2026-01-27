@@ -7,12 +7,12 @@
 -- |
 -- | 1. **DataDSL**: Unified computations for spreadsheet and viz
 -- | 2. **Display**: Profunctor-based non-destructive formatting
--- | 3. **Join Combinators**: Composable data joins (new!)
+-- | 3. **AST Joins**: Data binding patterns for visualization
 module PSD3.Unified.Examples where
 
-import Prelude hiding (add, sub, mul, div, not, (>>>), join)
+import Prelude hiding (add, sub, mul, div, not, (>>>))
 
-import PSD3.AST (Tree, elem, joinData)
+import PSD3.AST (Tree, elem, joinData, nestedJoin, updateJoin, updateNestedJoin)
 import PSD3.Internal.Selection.Types (ElementType(..))
 import PSD3.Internal.Attribute (Attribute)
 import PSD3.Unified.DataDSL (class DataDSL, mapA, foldA, filterA, sumA, avgA, source, DataSource(..))
@@ -20,7 +20,6 @@ import Data.Maybe (Maybe(..))
 import PSD3.Unified.Display (Display, runDisplay, (>>>))
 import PSD3.Unified.Display as D
 import PSD3.Unified.Attribute (attr, attrStatic)
-import PSD3.Unified.Join as J
 import PSD3.Expr.Interpreter.Eval (EvalD(..), runEvalD)
 
 -- =============================================================================
@@ -178,22 +177,16 @@ formatGrowthLabel =
   runDisplay quarterGrowthDisplay
 
 -- =============================================================================
--- Example 8: Composable Join Combinators (NEW!)
+-- Example 8: AST Join Functions
 -- =============================================================================
 
--- | Simple join using new combinators
+-- | Simple data join
 -- |
--- | Old style:
--- | ```purescript
--- | joinData "circles" "circle" points $ \p ->
--- |   elem Circle [cx p.x, cy p.y]
--- | ```
--- |
--- | New style: same result, but composable!
+-- | Use `joinData` for one-shot renders where elements don't update.
+-- | For dynamic updates, use `updateJoin` with a keyFn.
 simpleJoinExample :: Array DataPoint -> Tree DataPoint
 simpleJoinExample points =
-  J.join "circles" "circle" points circleTemplate
-    # J.toTree
+  joinData "circles" "circle" points circleTemplate
   where
   circleTemplate :: DataPoint -> Tree DataPoint
   circleTemplate _ = elem Circle
@@ -205,23 +198,25 @@ simpleJoinExample points =
 
 -- | Join with GUP (General Update Pattern) - enter/update/exit
 -- |
--- | Old style required UpdateJoin constructor with all params together.
--- | New style: add GUP independently with `withGUP`
+-- | For dynamic updates, use `updateJoin` with a keyFn to identify elements.
+-- | The keyFn extracts a unique string identifier from each datum.
 joinWithGUPExample :: Array DataPoint -> Tree DataPoint
 joinWithGUPExample points =
-  J.join "circles" "circle" points circleTemplate
-    # J.withGUP
-        { enter: Just $ J.enterSpec
+  updateJoin "circles" "circle" points circleTemplate
+    { enter: Just
+        { attrs:
             [ attr "r" (const 0.0) D.showNumD
             , attr "opacity" (const 0.0) D.showNumD
             ]
-            Nothing  -- No transition (instant)
-        , update: Just $ J.updateSpec [] Nothing
-        , exit: Just $ J.exitSpec
-            [ attr "opacity" (const 0.0) D.showNumD ]
-            Nothing
+        , transition: Nothing  -- No transition (instant)
         }
-    # J.toTree
+    , update: Just { attrs: [], transition: Nothing }
+    , exit: Just
+        { attrs: [ attr "opacity" (const 0.0) D.showNumD ]
+        , transition: Nothing
+        }
+    , keyFn: Just \p -> show p.x <> "," <> show p.y <> "," <> p.category
+    }
   where
   circleTemplate :: DataPoint -> Tree DataPoint
   circleTemplate _ = elem Circle
@@ -239,14 +234,13 @@ type SceneData =
 -- | Nested join with type decomposition
 -- |
 -- | The scene data contains an array of points.
--- | withDecompose extracts the inner array for joining.
+-- | `nestedJoin` extracts the inner array for joining.
 -- |
--- | Uses the convenience function `nestedJoin` which handles
--- | the type transition correctly.
+-- | Use this for one-shot renders with type decomposition.
+-- | For dynamic updates with decomposition, use `updateNestedJoin`.
 nestedJoinExample :: SceneData -> Tree SceneData
 nestedJoinExample scene =
-  J.nestedJoin "points" "circle" [scene] _.points circleTemplate
-    # J.toTree
+  nestedJoin "points" "circle" [scene] _.points circleTemplate
   where
   circleTemplate :: DataPoint -> Tree DataPoint
   circleTemplate _ = elem Circle
@@ -260,12 +254,19 @@ nestedJoinExample scene =
 -- | This is the most powerful combination - handles:
 -- | - Type-changing decomposition (SceneData -> Array DataPoint)
 -- | - Enter/update/exit behaviors with transitions
--- |
--- | Uses `fullJoin` convenience constructor.
 fullJoinExample :: SceneData -> Tree SceneData
 fullJoinExample scene =
-  J.fullJoin "viz" "circle" [scene] _.points circleTemplate gupSpec
-    # J.toTree
+  updateNestedJoin "viz" "circle" [scene] _.points circleTemplate
+    { enter: Just
+        { attrs: [ attr "r" (const 0.0) D.showNumD ]
+        , transition: Nothing
+        }
+    , update: Nothing
+    , exit: Just
+        { attrs: [ attr "opacity" (const 0.0) D.showNumD ]
+        , transition: Nothing
+        }
+    }
   where
   circleTemplate :: DataPoint -> Tree DataPoint
   circleTemplate _ = elem Circle
@@ -273,13 +274,6 @@ fullJoinExample scene =
     , attr "cy" _.y D.showNumD
     , attr "r" _.value D.showNumD
     ]
-  gupSpec =
-    { enter: Just $ J.noTransition
-        [ attr "r" (const 0.0) D.showNumD ]
-    , update: Nothing
-    , exit: Just $ J.noTransition
-        [ attr "opacity" (const 0.0) D.showNumD ]
-    }
 
 -- =============================================================================
 -- Summary
@@ -303,9 +297,9 @@ fullJoinExample scene =
      - Adapt to different types: lmapD _.field display
      - Reusable across entire codebase
 
-  4. COMPOSABLE JOINS (NEW!)
-     - Build joins step by step: join # withDecompose # withGUP # toTree
-     - Mix and match features independently
-     - Same power as four constructors, better composability
-     - Easy to add new features (withSort, withFilter, etc.)
+  4. AST JOIN FUNCTIONS
+     - joinData: Basic data join for one-shot renders
+     - nestedJoin: Type decomposition (outer → inner data)
+     - updateJoin: GUP with keyFn for dynamic updates
+     - updateNestedJoin: Decomposition + GUP combined
 -}

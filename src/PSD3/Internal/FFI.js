@@ -1,23 +1,23 @@
-// D3 dependencies: d3-selection, d3-force, d3-shape (arc only), d3-zoom, d3-scale-chromatic, d3-scale
+// D3 dependencies: d3-force, d3-shape (arc only), d3-scale-chromatic, d3-scale
+// NOTE: d3-selection REMOVED - use native DOM APIs
 // NOTE: d3-drag REMOVED - use PSD3.Interaction.Pointer for native drag
+// NOTE: d3-zoom REMOVED - use PSD3.Interaction.Zoom for native zoom
 // NOTE: d3-chord removed - use DataViz.Layout.Chord from psd3-layout
 // NOTE: d3-hierarchy removed - use DataViz.Layout.Hierarchy.Pack from psd3-layout
 // NOTE: d3-ease removed - unused (PureScript Transition.Engine handles easing)
 // NOTE: d3-shape links (linkHorizontal/Vertical/Radial) removed - Path DSL handles links
-import { select, selectAll } from "d3-selection";
 import {
   forceSimulation, forceCenter, forceCollide, forceLink,
   forceManyBody, forceRadial, forceX, forceY
 } from "d3-force";
 import { arc } from "d3-shape";
-import { zoom } from "d3-zoom";
 import { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridis } from "d3-scale-chromatic";
 import { scaleLinear, scaleOrdinal } from "d3-scale";
 
 // =============================================================================
 // Direct D3 Re-exports (for demo components to use without direct D3 imports)
 // =============================================================================
-export { select, selectAll, zoom };
+// NOTE: select/selectAll removed - use native DOM document.querySelector/querySelectorAll
 export { schemeCategory10, schemeTableau10, interpolateRdYlGn, interpolateViridis };
 export { scaleLinear, scaleOrdinal };
 
@@ -28,24 +28,43 @@ const debug = false
 // Drag behaviors now use native Pointer Events via PSD3.Interaction.Pointer.
 
 export function getIndexFromDatum_(datum) { return (typeof datum.index == `undefined`) ? "?" : datum.index }
-export function selectionOn_(selection) { return event => callback => { return selection.on(event, callback) } }
-export function d3AddTransition_(selection) {
-  return transition => {
-    var handle
-    if (transition.name == '') {
-      handle = selection.transition()
-      // if transition is unnamed we configure it...
-      if (transition.duration != 0) {
-        handle.duration(transition.duration)
-      }
-      if (transition.delay != 0) {
-        handle.delay(transition.delay)
-      }
-    } else {
-      handle = selection.transition(transition.name)
+
+// DEPRECATED: selectionOn_ - use element.addEventListener() directly
+export function selectionOn_(selection) {
+  console.warn('[DEPRECATED] selectionOn_ is deprecated. Use element.addEventListener() instead.');
+  return event => callback => {
+    // For backward compat, try to call .on() if it exists
+    if (selection && typeof selection.on === 'function') {
+      return selection.on(event, callback);
     }
-    return handle
-  }
+    console.error('selectionOn_: selection does not have .on() method');
+    return selection;
+  };
+}
+
+// DEPRECATED: d3AddTransition_ - use pure PureScript transitions or Web Animations API
+export function d3AddTransition_(selection) {
+  console.warn('[DEPRECATED] d3AddTransition_ is deprecated. Use withPureTransitions or Web Animations API.');
+  return transition => {
+    // For backward compat, try to call .transition() if it exists
+    if (selection && typeof selection.transition === 'function') {
+      var handle;
+      if (transition.name == '') {
+        handle = selection.transition();
+        if (transition.duration != 0) {
+          handle.duration(transition.duration);
+        }
+        if (transition.delay != 0) {
+          handle.delay(transition.delay);
+        }
+      } else {
+        handle = selection.transition(transition.name);
+      }
+      return handle;
+    }
+    console.error('d3AddTransition_: selection does not have .transition() method');
+    return selection;
+  };
 }
 export const linksForceName_ = "links"
 export const dummyForceHandle_ = null
@@ -155,37 +174,54 @@ export function readSimulationVariables_(simulation) {
   }
 }
 
-export function d3PreserveSimulationPositions_(selection) {
+// DEPRECATED: d3PreserveSimulationPositions_ - no longer uses D3 selections
+// The selection parameter is now expected to be an array of elements or nodes
+export function d3PreserveSimulationPositions_(selectionOrNodes) {
   return nodedata => keyFn => {
-    // create a map from our chosen id to the OLD obj reference, got from the data thats attached to selection
-    const oldNodeMap = new Map(selection.data().map(d => [keyFn(d), d]));
-    // create a map from our chosen id to the NEW / incoming obj reference
-    const newNodeMap = new Map(nodedata.map(d => [keyFn(d), d]));
-    // we need to copy the fx/fy (at least) from the updating data 
-    console.log(`FFI: d3PreserveSimulationPositions_ given ${nodedata.length} nodes, in selection ${selection.data().length}`);
+    console.warn('[DEPRECATED] d3PreserveSimulationPositions_ is deprecated. Use simulation.nodes() directly.');
+    // Try to get data from selection (D3) or assume it's already node data
+    let oldData;
+    if (selectionOrNodes && typeof selectionOrNodes.data === 'function') {
+      oldData = selectionOrNodes.data();
+    } else if (Array.isArray(selectionOrNodes)) {
+      oldData = selectionOrNodes;
+    } else {
+      oldData = [];
+    }
 
-    // REVIEW (also what if we wanted r, say, or x, to change???)
-    // we need to be able to specify which fields are to change, ideally, and which are not
+    const oldNodeMap = new Map(oldData.map(d => [keyFn(d), d]));
+    const newNodeMap = new Map(nodedata.map(d => [keyFn(d), d]));
+
     let updatedNodeData = nodedata.map(d => {
-      let id = keyFn(d)
-      let newNode = newNodeMap.get(id)
-      let shell = {}
+      let id = keyFn(d);
+      let newNode = newNodeMap.get(id);
+      let shell = {};
       if (newNode) {
-        console.log(`FFI: copying fx/fy from incoming node to old object (if present)`);
-        shell = { fx: newNode.fx, fy: newNode.fy, gridXY: newNode.gridXY, updated: true }
+        shell = { fx: newNode.fx, fy: newNode.fy, gridXY: newNode.gridXY, updated: true };
       }
-      return Object.assign(oldNodeMap.get(id) || d, shell)
+      return Object.assign(oldNodeMap.get(id) || d, shell);
     });
-    return updatedNodeData
-  }
+    return updatedNodeData;
+  };
 }
-export function d3PreserveLinkReferences_(link) {
+
+// DEPRECATED: d3PreserveLinkReferences_ - no longer uses D3 selections
+export function d3PreserveLinkReferences_(linkSelectionOrData) {
   return links => {
-    const old = new Map(link.data().map(d => [getLinkID_(d), d]));
+    console.warn('[DEPRECATED] d3PreserveLinkReferences_ is deprecated.');
+    let oldData;
+    if (linkSelectionOrData && typeof linkSelectionOrData.data === 'function') {
+      oldData = linkSelectionOrData.data();
+    } else if (Array.isArray(linkSelectionOrData)) {
+      oldData = linkSelectionOrData;
+    } else {
+      oldData = [];
+    }
+
+    const old = new Map(oldData.map(d => [getLinkID_(d), d]));
     let updatedLinkData = links.map(d => Object.assign(old.get(getLinkID_(d)) || d, {}));
-    // now, based on link signature, we should really de-swizzle here? and we may HAVE TO do so
-    return updatedLinkData
-  }
+    return updatedLinkData;
+  };
 }
 export function getIDsFromNodes_(nodes) {
   return keyFn => {
@@ -377,23 +413,54 @@ export function onTick_(simulation) {
     return result;
   }
 }
+// DEPRECATED: defaultNodeTick_ - use native DOM tick handlers
+// This function expects a D3 selection. Consider using element arrays with native setAttribute.
 export function defaultNodeTick_(label) {
-  return simulation => nodeSelection => {
+  return simulation => nodeSelectionOrElements => {
+    console.warn('[DEPRECATED] defaultNodeTick_ is deprecated. Use native DOM tick handlers.');
     simulation.on('tick.' + label, () => {
-      nodeSelection.attr('cx', d => d.x)
-        .attr('cy', d => d.y)
-    })
-  }
+      // Try D3 selection API first, then fall back to element array
+      if (nodeSelectionOrElements && typeof nodeSelectionOrElements.attr === 'function') {
+        nodeSelectionOrElements.attr('cx', d => d.x).attr('cy', d => d.y);
+      } else if (nodeSelectionOrElements && nodeSelectionOrElements.forEach) {
+        nodeSelectionOrElements.forEach(el => {
+          const d = el.__data__;
+          if (d) {
+            el.setAttribute('cx', d.x);
+            el.setAttribute('cy', d.y);
+          }
+        });
+      }
+    });
+  };
 }
+
+// DEPRECATED: defaultLinkTick_ - use native DOM tick handlers
+// This function expects a D3 selection. Consider using element arrays with native setAttribute.
 export function defaultLinkTick_(label) {
-  return simulation => linksShown => {
+  return simulation => linksSelectionOrElements => {
+    console.warn('[DEPRECATED] defaultLinkTick_ is deprecated. Use native DOM tick handlers.');
     simulation.on('tick.' + label, () => {
-      linksShown.attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
-    })
-  }
+      // Try D3 selection API first, then fall back to element array
+      if (linksSelectionOrElements && typeof linksSelectionOrElements.attr === 'function') {
+        linksSelectionOrElements
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+      } else if (linksSelectionOrElements && linksSelectionOrElements.forEach) {
+        linksSelectionOrElements.forEach(el => {
+          const d = el.__data__;
+          if (d && d.source && d.target) {
+            el.setAttribute('x1', d.source.x);
+            el.setAttribute('y1', d.source.y);
+            el.setAttribute('x2', d.target.x);
+            el.setAttribute('y2', d.target.y);
+          }
+        });
+      }
+    });
+  };
 }
 export function lookupForceByName_(simulation) {
   return name => {

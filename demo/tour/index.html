@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Tour - PSD3 Selection</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .breadcrumb { color: #64748b; margin-bottom: 20px; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    .intro { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .example {
+      background: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .example:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+    .example .preview {
+      height: 160px;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      font-size: 3rem;
+    }
+    .example .info { padding: 20px; }
+    .example h2 { color: #e2e8f0; font-size: 1.1rem; margin-bottom: 8px; }
+    .example p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
+    .example .tags { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .example .tag {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      background: #0f172a;
+      border-radius: 4px;
+      color: #64748b;
+    }
+    .coming-soon {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .coming-soon .preview::after {
+      content: "Coming Soon";
+      font-size: 0.875rem;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="../">PSD3 Selection</a> / Tour
+    </nav>
+
+    <h1>Interactive Tour</h1>
+    <p class="intro">Live examples demonstrating PSD3 capabilities. Each example includes the source code and lets you experiment with the visualization.</p>
+
+    <div class="examples">
+      <a href="circles.html" class="example coming-soon">
+        <div class="preview">⭕</div>
+        <div class="info">
+          <h2>Basic Shapes</h2>
+          <p>Circles, rectangles, and paths. The building blocks of SVG visualization.</p>
+          <div class="tags">
+            <span class="tag">basics</span>
+            <span class="tag">SVG</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="bar-chart.html" class="example coming-soon">
+        <div class="preview">📊</div>
+        <div class="info">
+          <h2>Bar Chart</h2>
+          <p>Data binding with joinData. Scales and axes.</p>
+          <div class="tags">
+            <span class="tag">data join</span>
+            <span class="tag">scales</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="tree.html" class="example coming-soon">
+        <div class="preview">🌳</div>
+        <div class="info">
+          <h2>Tree Layout</h2>
+          <p>Hierarchical data visualization with expandable nodes.</p>
+          <div class="tags">
+            <span class="tag">hierarchy</span>
+            <span class="tag">layout</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="force.html" class="example coming-soon">
+        <div class="preview">🕸️</div>
+        <div class="info">
+          <h2>Force Network</h2>
+          <p>Interactive force-directed graph with drag and zoom.</p>
+          <div class="tags">
+            <span class="tag">simulation</span>
+            <span class="tag">interaction</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="sankey.html" class="example coming-soon">
+        <div class="preview">🌊</div>
+        <div class="info">
+          <h2>Sankey Diagram</h2>
+          <p>Flow visualization showing quantities between nodes.</p>
+          <div class="tags">
+            <span class="tag">flow</span>
+            <span class="tag">layout</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="transitions.html" class="example coming-soon">
+        <div class="preview">✨</div>
+        <div class="info">
+          <h2>Transitions</h2>
+          <p>Smooth animations for enter, update, and exit.</p>
+          <div class="tags">
+            <span class="tag">animation</span>
+            <span class="tag">GUP</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

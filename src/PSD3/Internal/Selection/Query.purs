@@ -123,7 +123,7 @@ import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import PSD3.Internal.Selection.Types (SBoundOwns, SEmpty, Selection(..), SelectionImpl(..))
+import PSD3.Internal.Selection.Types (SBoundOwns, SEmpty, Selection(..), SelectionImpl(..), mkBoundSelection)
 import Partial.Unsafe (unsafePartial)
 import Unsafe.Reference (unsafeRefEq)
 import Web.DOM.Document (Document)
@@ -404,12 +404,7 @@ filterByData predicate (Selection impl) = do
   let filteredElements = map (\(Tuple elem _) -> elem) filtered
   let filteredData = map (\(Tuple _ datum) -> datum) filtered
 
-  pure $ Selection $ BoundSelection
-    { elements: filteredElements
-    , data: filteredData
-    , indices: indices
-    , document: doc
-    }
+  pure $ mkBoundSelection filteredElements filteredData indices doc
 
 -- | Find first element where data matches predicate
 -- |
@@ -433,18 +428,8 @@ findByData predicate (Selection impl) = do
   let maybeMatch = Array.find (\(Tuple _ datum) -> predicate datum) zipped
 
   case maybeMatch of
-    Nothing -> pure $ Selection $ BoundSelection
-      { elements: []
-      , data: []
-      , indices: indices
-      , document: doc
-      }
-    Just (Tuple elem datum) -> pure $ Selection $ BoundSelection
-      { elements: [ elem ]
-      , data: [ datum ]
-      , indices: indices
-      , document: doc
-      }
+    Nothing -> pure $ mkBoundSelection [] [] indices doc
+    Just (Tuple elem datum) -> pure $ mkBoundSelection [ elem ] [ datum ] indices doc
 
 --------------------------------------------------------------------------------
 -- DOM Traversal

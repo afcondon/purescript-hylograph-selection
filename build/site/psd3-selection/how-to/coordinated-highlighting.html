@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Coordinated Highlighting :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/coordinated-highlighting.html">
+    <meta name="description" content="Synchronize visual emphasis across multiple views">
+    <meta name="keywords" content="highlighting, hover, interaction, cross-view">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="coordinated-highlighting.html">Coordinated Highlighting</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/coordinated-highlighting.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Coordinated Highlighting</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Coordinated highlighting synchronizes visual emphasis across multiple views. When a user hovers over an element in one visualization, related elements in all views respond - some highlighted as primary, others as related, and unrelated elements dimmed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_two_tier_hover_system"><a class="anchor" href="#_the_two_tier_hover_system"></a>The Two-Tier Hover System</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>PSD3 provides two tiers of hover behavior:</p>
+</div>
+<div class="sect2">
+<h3 id="_tier_1_element_local_hover_simple"><a class="anchor" href="#_tier_1_element_local_hover_simple"></a>Tier 1: Element-Local Hover (Simple)</h3>
+<div class="paragraph">
+<p>For basic hover effects that only affect the element itself:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (onHover)
+
+-- Simple style change on hover
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onHover
+        { enter: [{ attr: "stroke", value: "#333" }, { attr: "stroke-width", value: "3" }]
+        , leave: [{ attr: "stroke", value: "#ddd" }, { attr: "stroke-width", value: "1.5" }]
+        }
+    ]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is CSS-speed, element-local, and requires no coordination. Use it for simple feedback.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tier_2_coordinated_highlighting_cross_view"><a class="anchor" href="#_tier_2_coordinated_highlighting_cross_view"></a>Tier 2: Coordinated Highlighting (Cross-View)</h3>
+<div class="paragraph">
+<p>For synchronized highlighting across multiple visualizations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (HighlightClass(..), onCoordinatedHighlight)
+import Data.Maybe (Maybe(..))
+
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onCoordinatedHighlight
+        { identify: \d -&gt; d.name           -- What does this element represent?
+        , classify: \hoveredId d -&gt;        -- How should it respond to hover?
+            if d.name == hoveredId then Primary
+            else if hoveredId `elem` d.connections then Related
+            else Dimmed
+        , group: Nothing                   -- Coordination scope (Nothing = global)
+        , tooltip: Nothing                 -- Optional tooltip (see tooltip howto)
+        }
+    ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_core_concepts"><a class="anchor" href="#_core_concepts"></a>Core Concepts</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_identity_what_does_this_element_represent"><a class="anchor" href="#_identity_what_does_this_element_represent"></a>Identity: What Does This Element Represent?</h3>
+<div class="paragraph">
+<p>The <code>identify</code> function extracts a string identity from the element&#8217;s datum:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">identify: \d -&gt; d.moduleName  -- A module node
+identify: \d -&gt; d.id          -- A generic entity
+identify: \d -&gt; show d.row &lt;&gt; "-" &lt;&gt; show d.col  -- A matrix cell</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This identity is broadcast when the element is hovered.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_classification_how_should_elements_respond"><a class="anchor" href="#_classification_how_should_elements_respond"></a>Classification: How Should Elements Respond?</h3>
+<div class="paragraph">
+<p>The <code>classify</code> function receives the hovered identity and the element&#8217;s datum, returning a <code>HighlightClass</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">data HighlightClass
+  = Primary   -- The hovered element itself (.highlight-primary)
+  | Related   -- Connected/related elements (.highlight-related)
+  | Dimmed    -- Unrelated elements (.highlight-dimmed)
+  | Neutral   -- No change (default appearance)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Example classifications:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Simple same-name matching
+classify: \hoveredId d -&gt;
+  if d.name == hoveredId then Primary else Dimmed
+
+-- Relationship-aware (e.g., dependency graph)
+classify: \hoveredId d -&gt;
+  if d.name == hoveredId then Primary
+  else if hoveredId `elem` d.dependencies then Related
+  else if d.name `elem` getReverseDeps hoveredId then Related
+  else Dimmed
+
+-- Matrix cell (row/column relationships)
+classify: \hoveredId d -&gt;
+  if d.rowName == hoveredId &amp;&amp; d.colName == hoveredId then Primary
+  else if d.rowName == hoveredId || d.colName == hoveredId then Related
+  else Dimmed</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_groups_scoping_coordination"><a class="anchor" href="#_groups_scoping_coordination"></a>Groups: Scoping Coordination</h3>
+<div class="paragraph">
+<p>By default, all elements with <code>group: Nothing</code> coordinate globally. Use named groups to isolate coordination:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- These two views coordinate with each other
+onCoordinatedHighlight { ..., group: Just "main-view" }
+
+-- This view has independent highlighting
+onCoordinatedHighlight { ..., group: Just "detail-panel" }</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_css_classes"><a class="anchor" href="#_css_classes"></a>CSS Classes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The library applies these CSS classes based on classification:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">/* Primary - the hovered element and its equivalents */
+.highlight-primary {
+  opacity: 1 !important;
+  stroke: #fbbf24 !important;
+  stroke-width: 2px !important;
+}
+
+/* Related - connected elements */
+.highlight-related {
+  opacity: 0.85 !important;
+  stroke: #60a5fa !important;
+  stroke-width: 1.5px !important;
+}
+
+/* Dimmed - unrelated elements */
+.highlight-dimmed {
+  opacity: 0.2 !important;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Customize these in your CSS to match your visualization&#8217;s aesthetic.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pattern_enriched_datum_types"><a class="anchor" href="#_pattern_enriched_datum_types"></a>Pattern: Enriched Datum Types</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When using data joins with coordinated highlighting, create enriched datum types that carry everything needed for both rendering AND classification:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Enriched type with pre-computed relationships
+type NodeDatum =
+  { id :: String
+  , name :: String
+  , x :: Number
+  , y :: Number
+  , dependencies :: Array String    -- For classification
+  , dependents :: Array String      -- For classification
+  , cluster :: Int                  -- For coloring
+  }
+
+-- Build enriched data before the join
+let enrichedNodes = nodes &lt;#&gt; \n -&gt;
+  { id: n.id
+  , name: n.name
+  , x: n.x
+  , y: n.y
+  , dependencies: getDeps n.id graph
+  , dependents: getReverseDeps n.id graph
+  , cluster: n.cluster
+  }
+
+-- Use in data join with template
+T.joinData "nodes" "g" enrichedNodes $ \node -&gt;
+  T.elem Group [...]
+    `T.withBehaviors`
+      [ onCoordinatedHighlight
+          { identify: _.name
+          , classify: \hoveredId d -&gt;
+              if d.name == hoveredId then Primary
+              else if hoveredId `elem` d.dependencies then Related
+              else if hoveredId `elem` d.dependents then Related
+              else Dimmed
+          , group: Nothing
+          , tooltip: Nothing
+          }
+      ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_multiple_element_types"><a class="anchor" href="#_multiple_element_types"></a>Multiple Element Types</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Different element types can participate in the same coordination with different classification logic:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Nodes: Primary if same name
+nodeHighlight = onCoordinatedHighlight
+  { identify: _.name
+  , classify: \hoveredId d -&gt;
+      if d.name == hoveredId then Primary else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+
+-- Links: Related if either endpoint matches
+linkHighlight = onCoordinatedHighlight
+  { identify: \l -&gt; l.source.name  -- Links identify by source
+  , classify: \hoveredId l -&gt;
+      if l.source.name == hoveredId || l.target.name == hoveredId
+        then Related
+        else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+
+-- Labels: Primary if same name
+labelHighlight = onCoordinatedHighlight
+  { identify: _.name
+  , classify: \hoveredId d -&gt;
+      if d.name == hoveredId then Primary else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_important_datum_timing"><a class="anchor" href="#_important_datum_timing"></a>Important: Datum Timing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The library reads <code><em>data</em></code> fresh at event time, not at registration time. This means you can attach behaviors before D3 binds data to elements - a common pattern with the Tree API&#8217;s <code>T.withBehaviors</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cleanup"><a class="anchor" href="#_cleanup"></a>Cleanup</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When re-rendering visualizations, call <code>clearAllHighlights_</code> to reset state:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.FFI (clearAllHighlights_)
+
+-- Before re-rendering
+liftEffect clearAllHighlights_</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This removes all highlight classes and clears the element registry.</p>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

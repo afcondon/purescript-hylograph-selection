@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Coordinated Tooltips :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/tooltips.html">
+    <meta name="description" content="Implement tooltips integrated with coordinated highlighting">
+    <meta name="keywords" content="tooltips, hover, labels, interaction">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="tooltips.html">Tooltips</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/tooltips.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Coordinated Tooltips</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Tooltips in PSD3 are integrated with the coordinated highlighting system. This enables three distinct tooltip behaviors, from traditional mouse-following tooltips to direct labels that appear on elements across views.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quick_start"><a class="anchor" href="#_quick_start"></a>Quick Start</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Add a tooltip to any element with coordinated highlighting:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (HighlightClass(..), TooltipTrigger(..), onCoordinatedHighlight)
+import Data.Maybe (Maybe(..))
+
+T.elem Circle [...]
+  `T.withBehaviors`
+    [ onCoordinatedHighlight
+        { identify: \d -&gt; d.name
+        , classify: \hoveredId d -&gt;
+            if d.name == hoveredId then Primary else Dimmed
+        , group: Nothing
+        , tooltip: Just
+            { content: \d -&gt; d.name &lt;&gt; ": " &lt;&gt; show d.value
+            , showWhen: OnHover
+            }
+        }
+    ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tooltip_triggers"><a class="anchor" href="#_tooltip_triggers"></a>Tooltip Triggers</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_onhover_traditional_tooltip"><a class="anchor" href="#_onhover_traditional_tooltip"></a>OnHover: Traditional Tooltip</h3>
+<div class="paragraph">
+<p>Shows a single tooltip that follows the mouse cursor. Only the element directly under the mouse shows its tooltip.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">tooltip: Just
+  { content: \d -&gt; d.name
+  , showWhen: OnHover
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use when:</strong> You want classic tooltip behavior - one tooltip, at the mouse position, for the element being pointed at.</p>
+</div>
+<div class="paragraph">
+<p><strong>Behavior:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Tooltip appears near mouse cursor</p>
+</li>
+<li>
+<p>Moves with mouse</p>
+</li>
+<li>
+<p>Only one tooltip visible at a time</p>
+</li>
+<li>
+<p>Disappears on mouse leave</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_whenprimary_direct_labels"><a class="anchor" href="#_whenprimary_direct_labels"></a>WhenPrimary: Direct Labels</h3>
+<div class="paragraph">
+<p>Shows tooltips on ALL elements that classify as <code>Primary</code> across all views. This implements the "direct labeling" principle - information appears right where it&#8217;s relevant.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">tooltip: Just
+  { content: \d -&gt; d.name
+  , showWhen: WhenPrimary
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use when:</strong> You want to label corresponding elements across views. When you hover on "ModuleA" in the bubble chart, "ModuleA" labels appear on the chord diagram and matrix too.</p>
+</div>
+<div class="paragraph">
+<p><strong>Behavior:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Multiple tooltips can appear simultaneously</p>
+</li>
+<li>
+<p>Each tooltip positioned near its element</p>
+</li>
+<li>
+<p>Great for showing "this is the same thing" across views</p>
+</li>
+<li>
+<p>Labels stay fixed (don&#8217;t follow mouse)</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_whenrelated_labels_on_connections"><a class="anchor" href="#_whenrelated_labels_on_connections"></a>WhenRelated: Labels on Connections</h3>
+<div class="paragraph">
+<p>Shows tooltips on ALL elements that classify as <code>Primary</code> OR <code>Related</code>. This can show a lot of information - use judiciously.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">tooltip: Just
+  { content: \d -&gt; d.relationship  -- e.g., "depends on" or "imported by"
+  , showWhen: WhenRelated
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Use when:</strong> You want to show relationship information. Hovering on a module could label all its dependencies and dependents with their relationship type.</p>
+</div>
+<div class="paragraph">
+<p><strong>Behavior:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Many tooltips can appear at once</p>
+</li>
+<li>
+<p>Can become visually busy</p>
+</li>
+<li>
+<p>Powerful for understanding connections</p>
+</li>
+<li>
+<p>Consider using for specific relationship views only</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_content_functions"><a class="anchor" href="#_content_functions"></a>Content Functions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>content</code> function receives the element&#8217;s datum and returns a string:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Simple name
+content: \d -&gt; d.name
+
+-- With value
+content: \d -&gt; d.name &lt;&gt; ": " &lt;&gt; show d.value
+
+-- Multi-line (newlines work)
+content: \d -&gt; d.name &lt;&gt; "\n" &lt;&gt;
+               "Deps: " &lt;&gt; show (length d.dependencies) &lt;&gt; "\n" &lt;&gt;
+               "Cluster: " &lt;&gt; show d.cluster
+
+-- Contextual based on element type
+content: \cell -&gt;
+  if cell.value &gt; 0.0
+    then cell.rowName &lt;&gt; " depends on " &lt;&gt; cell.colName
+    else cell.rowName &lt;&gt; " / " &lt;&gt; cell.colName</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_styling_tooltips"><a class="anchor" href="#_styling_tooltips"></a>Styling Tooltips</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The library creates tooltips with default styling. Override with CSS:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.coordinated-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  color: #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Make primary tooltips more prominent */
+.highlight-primary + .coordinated-tooltip {
+  background: rgba(251, 191, 36, 0.95);
+  color: #1e293b;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_patterns_and_recipes"><a class="anchor" href="#_patterns_and_recipes"></a>Patterns and Recipes</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_different_tooltips_per_view"><a class="anchor" href="#_different_tooltips_per_view"></a>Different Tooltips Per View</h3>
+<div class="paragraph">
+<p>Each element can have its own tooltip content. Use this to show view-specific information:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Bubble pack: show metrics
+bubbleTooltip = Just
+  { content: \d -&gt; d.name &lt;&gt; "\n" &lt;&gt;
+                   "Size: " &lt;&gt; show d.size &lt;&gt; "\n" &lt;&gt;
+                   "Cluster: " &lt;&gt; show d.cluster
+  , showWhen: OnHover
+  }
+
+-- Chord diagram: show connection count
+chordTooltip = Just
+  { content: \d -&gt; d.name &lt;&gt; "\n" &lt;&gt;
+                   "Connections: " &lt;&gt; show d.connectionCount
+  , showWhen: OnHover
+  }
+
+-- Matrix: show relationship
+matrixCellTooltip = Just
+  { content: \d -&gt; d.rowName &lt;&gt; " → " &lt;&gt; d.colName
+  , showWhen: OnHover
+  }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hover_only_elements_no_tooltip"><a class="anchor" href="#_hover_only_elements_no_tooltip"></a>Hover-Only Elements (No Tooltip)</h3>
+<div class="paragraph">
+<p>Some elements might only need highlighting, not tooltips:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Links just highlight, no tooltip
+onCoordinatedHighlight
+  { identify: \l -&gt; l.source.name
+  , classify: \hoveredId l -&gt; ...
+  , group: Nothing
+  , tooltip: Nothing  -- No tooltip for links
+  }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_primary_labels_hover_details"><a class="anchor" href="#_primary_labels_hover_details"></a>Primary Labels + Hover Details</h3>
+<div class="paragraph">
+<p>Combine <code>WhenPrimary</code> for labels with <code>OnHover</code> for details on different element types:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Nodes get simple labels across views
+nodeConfig = onCoordinatedHighlight
+  { identify: _.name
+  , classify: ...
+  , group: Nothing
+  , tooltip: Just { content: _.name, showWhen: WhenPrimary }
+  }
+
+-- The hovered element also gets detailed tooltip
+detailConfig = onCoordinatedHighlight
+  { identify: _.name
+  , classify: ...
+  , group: Nothing
+  , tooltip: Just
+      { content: \d -&gt; d.name &lt;&gt; "\n" &lt;&gt; "Full details..."
+      , showWhen: OnHover
+      }
+  }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_conditional_tooltips"><a class="anchor" href="#_conditional_tooltips"></a>Conditional Tooltips</h3>
+<div class="paragraph">
+<p>The content function can return empty strings or minimal content based on conditions:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">tooltip: Just
+  { content: \d -&gt;
+      if d.isImportant
+        then d.name &lt;&gt; " (critical path)"
+        else ""  -- No tooltip for unimportant items
+  , showWhen: WhenPrimary
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_performance_considerations"><a class="anchor" href="#_performance_considerations"></a>Performance Considerations</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><code>OnHover</code>: Single tooltip, minimal overhead</p>
+</li>
+<li>
+<p><code>WhenPrimary</code>: Multiple tooltips, but only on matching elements</p>
+</li>
+<li>
+<p><code>WhenRelated</code>: Can create many tooltips - test with your data scale</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For large datasets, consider:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Using <code>OnHover</code> for most elements</p>
+</li>
+<li>
+<p>Only enabling <code>WhenPrimary</code> for key navigation elements</p>
+</li>
+<li>
+<p>Avoiding <code>WhenRelated</code> unless the relationship count is bounded</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_design_philosophy"><a class="anchor" href="#_design_philosophy"></a>Design Philosophy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The tooltip system follows the principle of <strong>direct labeling</strong> from data visualization best practices:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+Labels should be placed as close as possible to the data they describe.
+</blockquote>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>OnHover</code> is indirect (cursor &#8594; separate tooltip)</p>
+</li>
+<li>
+<p><code>WhenPrimary</code> is direct (label on the element itself)</p>
+</li>
+<li>
+<p><code>WhenRelated</code> extends direct labeling to show connections</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Choose based on information density and user task:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Exploration</strong>: <code>OnHover</code> keeps the view uncluttered</p>
+</li>
+<li>
+<p><strong>Comparison</strong>: <code>WhenPrimary</code> shows corresponding elements</p>
+</li>
+<li>
+<p><strong>Understanding relationships</strong>: <code>WhenRelated</code> reveals connections</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

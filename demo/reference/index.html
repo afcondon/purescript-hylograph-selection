@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference - PSD3 Selection</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .breadcrumb { color: #64748b; margin-bottom: 20px; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
+    h1 { font-size: 2.5rem; color: #f59e0b; margin-bottom: 10px; }
+    .intro { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    .sections { display: flex; flex-direction: column; gap: 30px; }
+    .section h2 { color: #e2e8f0; font-size: 1.25rem; margin-bottom: 15px; }
+    .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .module {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 15px 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .module:hover { background: #334155; }
+    .module h3 { color: #f59e0b; font-size: 0.9rem; font-family: monospace; margin-bottom: 5px; }
+    .module p { color: #64748b; font-size: 0.8rem; }
+    .external {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e293b;
+      padding: 15px 25px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #f59e0b;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .external:hover { background: #334155; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="../">PSD3 Selection</a> / Reference
+    </nav>
+
+    <h1>Reference</h1>
+    <p class="intro">Technical reference for the PSD3 Selection API. For complete documentation, see Pursuit.</p>
+
+    <a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" class="external">
+      View Full API on Pursuit →
+    </a>
+
+    <div class="sections">
+      <section class="section">
+        <h2>Core Modules</h2>
+        <div class="modules">
+          <a href="modules.html#psd3" class="module">
+            <h3>PSD3</h3>
+            <p>Re-exports essential API</p>
+          </a>
+          <a href="modules.html#ast" class="module">
+            <h3>PSD3.AST</h3>
+            <p>Tree building functions</p>
+          </a>
+          <a href="modules.html#expr" class="module">
+            <h3>PSD3.Expr.Friendly</h3>
+            <p>Attribute DSL</p>
+          </a>
+          <a href="modules.html#render" class="module">
+            <h3>PSD3.Render</h3>
+            <p>DOM rendering</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Interpreters</h2>
+        <div class="modules">
+          <a href="modules.html#d3" class="module">
+            <h3>PSD3.Interpreter.D3</h3>
+            <p>Primary DOM renderer</p>
+          </a>
+          <a href="modules.html#english" class="module">
+            <h3>PSD3.Interpreter.English</h3>
+            <p>Human-readable output</p>
+          </a>
+          <a href="modules.html#mermaid" class="module">
+            <h3>PSD3.Interpreter.Mermaid</h3>
+            <p>AST diagrams</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Data & Scales</h2>
+        <div class="modules">
+          <a href="modules.html#scale" class="module">
+            <h3>PSD3.Scale</h3>
+            <p>D3 scale wrappers</p>
+          </a>
+          <a href="modules.html#tree" class="module">
+            <h3>PSD3.Data.Tree</h3>
+            <p>Tree data structures</p>
+          </a>
+          <a href="modules.html#graph" class="module">
+            <h3>PSD3.Data.Graph</h3>
+            <p>Graph algorithms</p>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

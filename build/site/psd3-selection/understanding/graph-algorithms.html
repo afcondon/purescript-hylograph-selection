@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Graph Algorithms Library Design :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/graph-algorithms.html">
+    <meta name="description" content="Comprehensive design for purescript-psd3-graph">
+    <meta name="keywords" content="graph, algorithms, pathfinding, centrality, community detection">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="graph-algorithms.html">Graph Algorithms</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/graph-algorithms.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Graph Algorithms Library Design</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>A companion library to <code>psd3-simulation</code> for graph algorithms, analysis, and layout.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_core_types"><a class="anchor" href="#_core_types"></a>Core Types</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Graph representations
+newtype NodeId = NodeId String
+type Edge r = { from :: NodeId, to :: NodeId | r }
+type WeightedEdge = Edge (weight :: Number)
+
+-- Multiple representations for different use cases
+data Graph a =
+  | AdjacencyList (Map NodeId (Array { neighbor :: NodeId | a }))
+  | EdgeList (Array (Edge a))</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pathfinding_algorithms"><a class="anchor" href="#_pathfinding_algorithms"></a>Pathfinding Algorithms</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Algorithm</th>
+<th class="tableblock halign-left valign-top">Use Case</th>
+<th class="tableblock halign-left valign-top">Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>A</strong>*</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Single-source with heuristic</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">O((V+E) log V)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Dijkstra</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Single-source, no heuristic</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">O((V+E) log V)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Bellman-Ford</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Handles negative weights</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">O(VE)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Floyd-Warshall</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All-pairs shortest paths</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">O(V³)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>BFS</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unweighted shortest path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">O(V+E)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- With tracing for visualization
+findPathWithTrace :: NodeId -&gt; NodeId -&gt; Graph -&gt;
+  { result :: PathResult
+  , explored :: Array NodeId      -- nodes visited
+  , frontier :: Array NodeId      -- final frontier
+  , steps :: Array SearchStep     -- for animation!
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Visualization potential</strong>: Animate the search process - show explored nodes, current frontier, backtracking.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_connectivity_analysis"><a class="anchor" href="#_connectivity_analysis"></a>Connectivity Analysis</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Connected components
+connectedComponents :: Graph -&gt; Array (Set NodeId)
+
+-- For directed graphs
+stronglyConnectedComponents :: Graph -&gt; Array (Set NodeId)  -- Tarjan's
+
+-- Critical infrastructure
+bridges :: Graph -&gt; Array Edge           -- edges whose removal disconnects
+articulationPoints :: Graph -&gt; Array NodeId  -- nodes whose removal disconnects</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Visualization potential</strong>: Color components differently, highlight bridges/articulation points.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_centrality_measures"><a class="anchor" href="#_centrality_measures"></a>Centrality Measures</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>These are <strong>gold</strong> for visualization - size/color nodes by importance.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type Centrality = Map NodeId Number
+
+degreeCentrality :: Graph -&gt; Centrality           -- simple: count edges
+betweennessCentrality :: Graph -&gt; Centrality      -- how often on shortest paths
+closenessCentrality :: Graph -&gt; Centrality        -- average distance to all others
+eigenvectorCentrality :: Graph -&gt; Centrality      -- connected to important nodes
+pageRank :: Number -&gt; Graph -&gt; Centrality         -- the classic</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Visualization potential</strong>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Node size = centrality</p>
+</li>
+<li>
+<p>Color gradient by centrality</p>
+</li>
+<li>
+<p>"Most important nodes" highlighting</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_community_detection"><a class="anchor" href="#_community_detection"></a>Community Detection</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Louvain algorithm (fast, good results)
+detectCommunities :: Graph -&gt; Array (Set NodeId)
+
+-- With modularity score
+detectCommunitiesWithScore :: Graph -&gt;
+  { communities :: Array (Set NodeId), modularity :: Number }
+
+-- Hierarchical community structure
+type Dendrogram = Tree (Set NodeId)
+hierarchicalCommunities :: Graph -&gt; Dendrogram</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Visualization potential</strong>: Color by community, nested circle packing, collapsible clusters.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_graph_metrics"><a class="anchor" href="#_graph_metrics"></a>Graph Metrics</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type GraphMetrics =
+  { nodes :: Int
+  , edges :: Int
+  , density :: Number              -- edges / max possible edges
+  , averageDegree :: Number
+  , diameter :: Maybe Int          -- longest shortest path
+  , radius :: Maybe Int            -- min eccentricity
+  , averagePathLength :: Number
+  , clusteringCoefficient :: Number
+  }
+
+analyze :: Graph -&gt; GraphMetrics</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_layout_algorithms"><a class="anchor" href="#_layout_algorithms"></a>Layout Algorithms</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type Layout = Map NodeId { x :: Number, y :: Number }
+
+-- Hierarchical (for DAGs, trees)
+sugiyamaLayout :: Graph -&gt; Layout
+
+-- Simple deterministic layouts
+circularLayout :: Graph -&gt; Layout
+gridLayout :: Graph -&gt; Layout
+
+-- Tree-specific
+radialTreeLayout :: NodeId -&gt; Graph -&gt; Layout
+tidyTreeLayout :: NodeId -&gt; Graph -&gt; Layout</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_api_design_tracing_is_optional"><a class="anchor" href="#_api_design_tracing_is_optional"></a>API Design: Tracing is Optional</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Standard API (most users)
+module Data.Graph.Pathfinding where
+
+findPath :: NodeId -&gt; NodeId -&gt; Graph -&gt; PathResult
+dijkstra :: NodeId -&gt; Graph -&gt; Map NodeId Number
+bfs :: NodeId -&gt; Graph -&gt; Array NodeId
+
+-- Traced API (for visualization, opt-in import)
+module Data.Graph.Pathfinding.Traced where
+
+findPathTraced :: NodeId -&gt; NodeId -&gt; Graph -&gt; TracedResult PathResult</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Users who just want algorithms import <code>Data.Graph.Pathfinding</code>.
+Users building visualizations also import <code>Data.Graph.Pathfinding.Traced</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_integration_with_psd3"><a class="anchor" href="#_integration_with_psd3"></a>Integration with PSD3</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Example: size by PageRank
+centrality &lt;- pageRank 0.85 graph
+let sizeFromRank node = 5.0 + 20.0 * (fromMaybe 0.0 $ Map.lookup node.id centrality)
+setNodeSizes sizeFromRank simulation</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_phased_implementation"><a class="anchor" href="#_phased_implementation"></a>Phased Implementation</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_phase_1_consolidation"><a class="anchor" href="#_phase_1_consolidation"></a>Phase 1: Consolidation</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Create psd3-graph repo</p>
+</li>
+<li>
+<p>Move <code>Data.Graph.Algorithms</code> from psd3-selection</p>
+</li>
+<li>
+<p>Move tree utilities from psd3-tree</p>
+</li>
+<li>
+<p>Add A* from psd3-astar-demo</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_2_pathfinding_suite"><a class="anchor" href="#_phase_2_pathfinding_suite"></a>Phase 2: Pathfinding Suite</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Dijkstra (A* without heuristic)</p>
+</li>
+<li>
+<p>BFS/DFS with parent tracking</p>
+</li>
+<li>
+<p>Traced variants of all algorithms</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_3_analysis"><a class="anchor" href="#_phase_3_analysis"></a>Phase 3: Analysis</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Centrality measures (degree, betweenness)</p>
+</li>
+<li>
+<p>Cycle detection</p>
+</li>
+<li>
+<p>Graph metrics</p>
+</li>
+<li>
+<p>Connected components</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_4_advanced"><a class="anchor" href="#_phase_4_advanced"></a>Phase 4: Advanced</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Community detection (Louvain)</p>
+</li>
+<li>
+<p>PageRank</p>
+</li>
+<li>
+<p>Strongly connected components (Tarjan&#8217;s)</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_5_layouts"><a class="anchor" href="#_phase_5_layouts"></a>Phase 5: Layouts</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Sugiyama (hierarchical)</p>
+</li>
+<li>
+<p>Radial tree</p>
+</li>
+<li>
+<p>Circular</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_demo_ideas"><a class="anchor" href="#_demo_ideas"></a>Demo Ideas</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Algorithm Visualizer</strong>: Step through A*/Dijkstra/BFS, show exploration</p>
+</li>
+<li>
+<p><strong>Social Network Analyzer</strong>: Load graph, compute centralities, detect communities</p>
+</li>
+<li>
+<p><strong>Dependency Graph</strong>: Topological sort, cycle detection, critical path</p>
+</li>
+<li>
+<p><strong>Network Resilience</strong>: Remove nodes/edges, show component fragmentation</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also"><a class="anchor" href="#_see_also"></a>See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../how-to/zoom.html" class="xref page">Zoomable Visualizations</a> - For large graphs</p>
+</li>
+<li>
+<p><a href="the-ast.html" class="xref page">The Selection AST</a> - Tree structures</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

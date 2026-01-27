@@ -38,7 +38,6 @@ module PSD3.Unified.Join
   , JoinConfig
     -- * Smart Constructors
   , join
-  , join'
     -- * Decomposition Combinator
   , withDecompose
   , Decomposer
@@ -127,50 +126,26 @@ data JoinSpec outer inner
 -- Smart Constructors
 -- =============================================================================
 
--- | Create a basic join specification
+-- | Create a basic join specification with key function
 -- |
--- | This is the foundation - just data, a name, and a template.
+-- | This is the foundation - data, a name, keyFn for identity, and a template.
 -- | Decomposition and GUP can be added with combinators.
 -- |
--- | ```purescript
--- | join "circles" "circle" circleData $ \d ->
--- |   elem Circle [cx d.x, cy d.y, r d.radius]
--- | ```
-join :: forall datum.
-  String ->               -- Name for this join
-  String ->               -- Element key (e.g., "circle")
-  Array datum ->          -- Data to join
-  (datum -> Tree datum) ->  -- Template function
-  JoinSpec datum datum
-join name key data_ template =
-  JoinSpec
-    { data_
-    , template
-    , config:
-        { name
-        , key
-        , keyFn: Nothing
-        , decompose: Nothing
-        , gup: Nothing
-        }
-    }
-
--- | Create a basic join with custom key function
--- |
--- | The key function extracts identity for matching in updates.
+-- | The key function extracts identity for matching in updates. This is
+-- | mandatory because dynamic updates need stable identity matching.
 -- |
 -- | ```purescript
--- | join' "nodes" "g" nodeData (_.id) $ \node ->
+-- | join "nodes" "g" nodeData _.id $ \node ->
 -- |   elem Group [...]
 -- | ```
-join' :: forall datum.
+join :: forall datum.
   String ->                      -- Name
   String ->                      -- Element key
   Array datum ->                 -- Data
-  (datum -> String) ->           -- Key function for identity
+  (datum -> String) ->           -- Key function for identity (mandatory)
   (datum -> Tree datum) ->       -- Template
   JoinSpec datum datum
-join' name key data_ keyFn template =
+join name key data_ keyFn template =
   JoinSpec
     { data_
     , template
@@ -326,6 +301,7 @@ basicJoin :: forall datum.
   String ->                    -- Name
   String ->                    -- Key
   Array datum ->               -- Data
+  (datum -> String) ->         -- Key function for identity
   (datum -> Tree datum) ->     -- Template
   JoinSpec datum datum
 basicJoin = join
@@ -336,10 +312,11 @@ nestedJoin :: forall outer inner.
   String ->                        -- Key
   Array outer ->                   -- Outer data
   (outer -> Array inner) ->        -- Decomposer
+  (inner -> String) ->             -- Key function for inner identity
   (inner -> Tree inner) ->         -- Template
   JoinSpec outer inner
-nestedJoin name key data_ decomposer template =
-  join name key data_ (unsafeCoerce template)
+nestedJoin name key data_ decomposer keyFn template =
+  join name key data_ (unsafeCoerce keyFn) (unsafeCoerce template)
     # withDecompose decomposer
 
 -- | GUP join (equivalent to old `UpdateJoin`)
@@ -347,11 +324,12 @@ gupJoin :: forall datum.
   String ->                        -- Name
   String ->                        -- Key
   Array datum ->                   -- Data
+  (datum -> String) ->             -- Key function for identity
   (datum -> Tree datum) ->         -- Template
   GUPSpec datum ->                 -- GUP behaviors
   JoinSpec datum datum
-gupJoin name key data_ template gup =
-  join name key data_ template
+gupJoin name key data_ keyFn template gup =
+  join name key data_ keyFn template
     # withGUP gup
 
 -- | Full join with decomposition and GUP (equivalent to old `UpdateNestedJoin`)
@@ -360,11 +338,12 @@ fullJoin :: forall outer inner.
   String ->                        -- Key
   Array outer ->                   -- Outer data
   (outer -> Array inner) ->        -- Decomposer
+  (inner -> String) ->             -- Key function for inner identity
   (inner -> Tree inner) ->         -- Template
   GUPSpec inner ->                 -- GUP behaviors
   JoinSpec outer inner
-fullJoin name key data_ decomposer template gup =
-  join name key data_ (unsafeCoerce template)
+fullJoin name key data_ decomposer keyFn template gup =
+  join name key data_ (unsafeCoerce keyFn) (unsafeCoerce template)
     # withDecompose decomposer
     # withGUP gup
 

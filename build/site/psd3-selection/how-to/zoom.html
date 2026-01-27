@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Making Visualizations Zoomable :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/zoom.html">
+    <meta name="description" content="How to add pan and zoom functionality to visualizations">
+    <meta name="keywords" content="zoom, pan, interactive, navigation">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="zoom.html">Zoomable Visualizations</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/zoom.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Making Visualizations Zoomable</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Zoom and pan allow users to explore large or detailed visualizations. This guide shows how to add zoom behavior to your PSD3 visualizations.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_basic_zoom_setup"><a class="anchor" href="#_basic_zoom_setup"></a>Basic Zoom Setup</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (Behavior(..), ZoomBehavior(..), ScaleExtent(..))
+
+zoomableViz :: A.AST Unit
+zoomableViz =
+  A.named SVG "svg"
+    [ width (num 800.0)
+    , height (num 600.0)
+    ]
+    `A.withBehaviors`
+      [ Zoom $ defaultZoom (ScaleExtent 0.5 10.0) ".zoom-group" ]
+    `A.withChild`
+      A.named Group "zoom-group"
+        [ class_ (text "zoom-group") ]
+        `A.withChildren`
+          [ -- Your visualization content here
+            A.elem Circle [ cx (num 400.0), cy (num 300.0), r (num 50.0) ]
+          ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_it_works"><a class="anchor" href="#_how_it_works"></a>How It Works</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Zoom behavior</strong> attaches to the SVG (captures mouse/touch events)</p>
+</li>
+<li>
+<p><strong>Transform</strong> is applied to a child group (the <code>.zoom-group</code>)</p>
+</li>
+<li>
+<p>Content inside the group moves and scales together</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">&lt;svg&gt;                         ← Captures zoom events
+  &lt;g class="zoom-group"       ← Receives transform
+     transform="translate(100,50) scale(2)"&gt;
+    &lt;circle .../&gt;             ← Moves with the group
+    &lt;rect .../&gt;
+  &lt;/g&gt;
+&lt;/svg&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_zoom_configuration"><a class="anchor" href="#_zoom_configuration"></a>Zoom Configuration</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Scale extent: min and max zoom levels
+ScaleExtent 0.1 10.0   -- Can zoom out to 10%, in to 1000%
+ScaleExtent 1.0 5.0    -- No zoom out, up to 5x zoom in
+
+-- Default zoom helper
+defaultZoom :: ScaleExtent -&gt; Selector -&gt; ZoomBehavior
+defaultZoom extent targetSelector = ZoomBehavior
+  { scaleExtent: extent
+  , target: targetSelector
+  , onZoom: Nothing  -- Use default transform behavior
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_custom_zoom_handlers"><a class="anchor" href="#_custom_zoom_handlers"></a>Custom Zoom Handlers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For more control, provide a custom zoom handler:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">Zoom $ ZoomBehavior
+  { scaleExtent: ScaleExtent 0.5 10.0
+  , target: ".zoom-group"
+  , onZoom: Just \transform -&gt; do
+      -- transform :: { k :: Number, x :: Number, y :: Number }
+      -- k = scale, x/y = translation
+
+      -- Update some state based on zoom
+      when (transform.k &gt; 5.0) do
+        showDetailedLabels
+
+      -- Log zoom level
+      log $ "Zoom: " &lt;&gt; show transform.k
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_zoom_with_semantic_levels"><a class="anchor" href="#_zoom_with_semantic_levels"></a>Zoom with Semantic Levels</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Change what&#8217;s displayed based on zoom level:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type ZoomLevel = Overview | Intermediate | Detailed
+
+zoomLevelFromScale :: Number -&gt; ZoomLevel
+zoomLevelFromScale k
+  | k &lt; 1.5 = Overview
+  | k &lt; 4.0 = Intermediate
+  | otherwise = Detailed
+
+-- In your visualization, render different content per level
+renderAtZoomLevel :: ZoomLevel -&gt; Array DataPoint -&gt; A.AST DataPoint
+renderAtZoomLevel level points = case level of
+  Overview -&gt;
+    -- Just show dots
+    A.joinData "points" "circle" points \d -&gt;
+      A.elem Circle [ cx (from _.x), cy (from _.y), r (num 3.0) ]
+
+  Intermediate -&gt;
+    -- Show dots with labels on hover
+    A.joinData "points" "g" points \d -&gt;
+      A.elem Group []
+        `A.withChildren`
+          [ A.elem Circle [ cx (from _.x), cy (from _.y), r (num 5.0) ]
+          , A.elem Text [ x (from _.x), y (from _.y), opacity (num 0.0) ]
+              `A.withBehaviors` [ showOnHover ]
+          ]
+
+  Detailed -&gt;
+    -- Always show labels
+    A.joinData "points" "g" points \d -&gt;
+      A.elem Group []
+        `A.withChildren`
+          [ A.elem Circle [ cx (from _.x), cy (from _.y), r (num 8.0) ]
+          , A.elem Text [ x (from _.x), y (from _.y), textContent (from _.name) ]
+          ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_zoom_to_fit"><a class="anchor" href="#_zoom_to_fit"></a>Zoom to Fit</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Programmatically zoom to show all content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.FFI (zoomTo, zoomIdentity)
+
+-- Zoom to show a specific bounding box
+zoomToFit :: D3Selection -&gt; BoundingBox -&gt; Effect Unit
+zoomToFit svg { x, y, width, height } = do
+  let svgWidth = 800.0
+      svgHeight = 600.0
+      scale = min (svgWidth / width) (svgHeight / height) * 0.9
+      translateX = svgWidth / 2.0 - scale * (x + width / 2.0)
+      translateY = svgHeight / 2.0 - scale * (y + height / 2.0)
+  zoomTo svg { k: scale, x: translateX, y: translateY }
+
+-- Reset zoom to identity
+resetZoom :: D3Selection -&gt; Effect Unit
+resetZoom svg = zoomIdentity svg</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_combining_zoom_with_drag"><a class="anchor" href="#_combining_zoom_with_drag"></a>Combining Zoom with Drag</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When elements are draggable inside a zoomable container:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- The zoom group handles panning
+A.named SVG "svg" [...]
+  `A.withBehaviors` [ Zoom $ defaultZoom (ScaleExtent 0.5 5.0) ".zoom-group" ]
+  `A.withChild`
+    A.named Group "zoom-group" [ class_ (text "zoom-group") ]
+      `A.withChild`
+        -- Individual nodes are draggable
+        A.joinData "nodes" "g" nodes \node -&gt;
+          A.elem Group [...]
+            `A.withBehaviors`
+              [ Drag SimpleDrag ]  -- Drag works in zoomed coordinates</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mobile_touch_support"><a class="anchor" href="#_mobile_touch_support"></a>Mobile Touch Support</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Zoom behavior automatically handles touch events:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Pinch</strong>: Two-finger pinch to zoom</p>
+</li>
+<li>
+<p><strong>Pan</strong>: One-finger drag to pan (when zoom is active)</p>
+</li>
+<li>
+<p><strong>Double-tap</strong>: Zoom in</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>No additional configuration needed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_performance_tips"><a class="anchor" href="#_performance_tips"></a>Performance Tips</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Use CSS transforms</strong> - They&#8217;re GPU-accelerated</p>
+</li>
+<li>
+<p><strong>Throttle zoom callbacks</strong> for expensive operations</p>
+</li>
+<li>
+<p><strong>Consider level-of-detail</strong> to reduce rendering at low zoom</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="halogen-events.html" class="xref page">Halogen Events from PSD3</a> - Integrate zoom with app state</p>
+</li>
+<li>
+<p><a href="linked-brushing.html" class="xref page">Linked Brushing</a> - Another interaction pattern</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

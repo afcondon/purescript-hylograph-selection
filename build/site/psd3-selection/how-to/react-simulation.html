@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Force Simulations in React :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/react-simulation.html">
+    <meta name="description" content="How to run PSD3 force simulations in React with tick callbacks and drag">
+    <meta name="keywords" content="React, simulation, force, drag, animation">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="react-simulation.html">Force Simulations in React</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/react-simulation.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Force Simulations in React</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Force-directed layouts require continuous animation during simulation. This guide shows how to integrate PSD3&#8217;s force engine with React components.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_challenge"><a class="anchor" href="#_the_challenge"></a>The Challenge</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Force simulations run at ~60fps, updating node positions each tick. You need to:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create and configure the simulation</p>
+</li>
+<li>
+<p>Update DOM positions on each tick (fast path, not React re-renders)</p>
+</li>
+<li>
+<p>Support drag interaction that reheats the simulation</p>
+</li>
+<li>
+<p>Clean up properly when the component unmounts</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_complete_example"><a class="anchor" href="#_complete_example"></a>Complete Example</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.ForceEngine.Simulation as Sim
+import PSD3.ForceEngine.Types (ForceSpec(..))
+
+mkForceGraph :: Component {}
+mkForceGraph = do
+  containerId &lt;- useContainerId
+
+  component "ForceGraph" \_props -&gt; React.do
+    isRunning /\ setIsRunning &lt;- useState true
+
+    useEffectOnce do
+      -- Create sample data
+      let nodes = createNodes 20
+          links = createLinks nodes
+
+      -- 1. Create simulation
+      sim &lt;- Sim.create Sim.defaultConfig
+
+      -- 2. Set up tick callback for DOM updates
+      Sim.onTick (updateDOMPositions containerId) sim
+
+      -- 3. Configure simulation
+      Sim.setNodes nodes sim
+      Sim.setLinks links sim
+
+      -- 4. Add forces
+      Sim.addForce (ManyBody "charge"
+        { strength: -30.0, theta: 0.9, distanceMin: 1.0, distanceMax: 1000.0 }) sim
+      Sim.addForce (Link "link"
+        { distance: 30.0, strength: 1.0, iterations: 1 }) sim
+      Sim.addForce (Center "center"
+        { x: 200.0, y: 150.0, strength: 1.0 }) sim
+
+      -- 5. Render initial state
+      void $ runD3 do
+        let selector = "#" &lt;&gt; containerId
+        clear selector
+        container &lt;- select selector
+        renderTree container (forceGraphAST nodes)
+
+      -- 6. Start simulation
+      Sim.start sim
+
+      -- 7. Attach drag behavior
+      nodeElements &lt;- Sim.querySelectorElements ("#" &lt;&gt; containerId &lt;&gt; " circle")
+      Sim.attachDrag nodeElements sim
+
+      -- 8. Cleanup on unmount
+      pure do
+        Sim.stop sim
+        setIsRunning (\_ -&gt; false)
+
+    pure $ R.div
+      { id: containerId
+      , style: R.css { width: "400px", height: "300px" }
+      }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_tick_callback"><a class="anchor" href="#_the_tick_callback"></a>The Tick Callback</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The tick callback runs ~60fps during simulation. Use direct DOM manipulation for performance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- PureScript
+updateDOMPositions :: String -&gt; Effect Unit
+updateDOMPositions containerId = do
+  circles &lt;- Sim.querySelectorElements ("#" &lt;&gt; containerId &lt;&gt; " circle")
+  updateCirclePositions circles
+
+-- FFI (JavaScript) - direct DOM access is fastest
+foreign import updateCirclePositions :: Array Element -&gt; Effect Unit</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-javascript hljs" data-lang="javascript">// JavaScript FFI
+export const updateCirclePositions = (circles) =&gt; () =&gt; {
+  for (const circle of circles) {
+    const d = circle.__data__;  // D3's bound data
+    if (d) {
+      circle.setAttribute('cx', d.x);
+      circle.setAttribute('cy', d.y);
+    }
+  }
+};</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Don&#8217;t trigger React re-renders in the tick callback. Direct DOM manipulation is essential for 60fps performance.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_drag_behavior"><a class="anchor" href="#_drag_behavior"></a>Drag Behavior</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>Sim.attachDrag</code> provides simulation-aware drag:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- After rendering, attach drag to node elements
+nodeElements &lt;- Sim.querySelectorElements ("#" &lt;&gt; containerId &lt;&gt; " circle")
+Sim.attachDrag nodeElements sim</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This sets up D3 drag handlers that:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Drag start</strong>: Reheat simulation (alpha → 1.0)</p>
+</li>
+<li>
+<p><strong>During drag</strong>: Fix node position (<code>fx</code>/<code>fy</code> set to pointer position)</p>
+</li>
+<li>
+<p><strong>Drag end</strong>: Release node (<code>fx</code>/<code>fy</code> cleared, node floats free)</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_alternative_pinning_drag"><a class="anchor" href="#_alternative_pinning_drag"></a>Alternative: Pinning Drag</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For exploration interfaces where users want to "pin" nodes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">Sim.attachPinningDrag nodeElements sim</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Behavior:
+- First drag: pins the node where dropped
+- Subsequent drags: small movement (&lt;3px) unpins, larger movement repositions</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_node_data_structure"><a class="anchor" href="#_node_data_structure"></a>Node Data Structure</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Simulation nodes need specific fields:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type ForceNode =
+  { id :: Int
+  , x :: Number, y :: Number      -- Position (mutated by simulation)
+  , vx :: Number, vy :: Number    -- Velocity (mutated by forces)
+  , fx :: Nullable Number         -- Fixed x (set during drag)
+  , fy :: Nullable Number         -- Fixed y (set during drag)
+  , group :: Int                  -- Your custom data
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cleanup"><a class="anchor" href="#_cleanup"></a>Cleanup</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Always stop the simulation when the component unmounts:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">useEffectOnce do
+  -- ... setup ...
+
+  -- Return cleanup function
+  pure do
+    Sim.stop sim</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This cancels the animation frame loop and prevents memory leaks.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="react-events.html" class="xref page">React Events from PSD3</a> - Click handlers</p>
+</li>
+<li>
+<p><a href="react-integration.html" class="xref page">PSD3 in a React App</a> - Basic integration</p>
+</li>
+<li>
+<p><a href="halogen-events.html" class="xref page">Halogen Events from PSD3</a> - Compare approaches</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

@@ -34,12 +34,20 @@
 module PSD3.Expr.Animation
   ( -- * Builder type
     AnimatedBuilder
+  , AnimatedPathBuilder
     -- * Core operators
   , animatedTo
   , animatedToIndexed
   , animatedFrom
   , animatedFromStatic
   , animatedFromIndexed
+    -- * Path animation operators
+  , animatedLinkVertical
+  , animatedLinkHorizontal
+  , pathWithDuration
+  , pathWithEasing
+  , pathWithDelay
+  , animatedPathAttr
     -- * Config modifiers
   , withDuration
   , withEasing
@@ -59,7 +67,8 @@ module PSD3.Expr.Animation
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Array (index)
+import Data.Maybe (Maybe(..), fromMaybe)
 import PSD3.Internal.Attribute (AnimatedValue(..), AnimationConfig, AttributeName(..), Attribute(..), EasingType(..), defaultAnimationConfig)
 import PSD3.Internal.Attribute (EasingType(..)) as AttrTypes
 import PSD3.Expr.Interpreter.Eval (EvalD, runEvalD)
@@ -288,6 +297,160 @@ shrinkTo endRadius = AnimatedAttr
   , toValue: StaticAnimValue endRadius
   , config: defaultAnimationConfig
   }
+
+-- =============================================================================
+-- Path Animation
+-- =============================================================================
+
+-- | Builder for animated path attributes
+-- |
+-- | Tracks the from/to values for path components and the generator function.
+-- | Used for animating paths like linkVertical where we interpolate coordinates
+-- | and regenerate the path string on each frame.
+type AnimatedPathBuilder datum =
+  { fromValues :: Array (AnimatedValue datum)  -- From values for each component
+  , toValues :: Array (AnimatedValue datum)    -- To values for each component
+  , generator :: Array Number -> String        -- Combines interpolated values into final string
+  , config :: AnimationConfig
+  }
+
+-- | Create an animated vertical link path
+-- |
+-- | Animates from current positions to new positions, regenerating the cubic
+-- | bezier path on each frame. Used for tree visualizations.
+-- |
+-- | ```purescript
+-- | animatedLinkVertical
+-- |   { fromSourceX: field @"sourceX", fromSourceY: field @"sourceY"
+-- |   , fromTargetX: field @"targetX", fromTargetY: field @"targetY" }
+-- |   { toSourceX: field @"newSourceX", toSourceY: field @"newSourceY"
+-- |   , toTargetX: field @"newTargetX", toTargetY: field @"newTargetY" }
+-- |   # pathWithDuration 500.0
+-- | ```
+animatedLinkVertical
+  :: forall datum
+   . { fromSourceX :: EvalD datum Number
+     , fromSourceY :: EvalD datum Number
+     , fromTargetX :: EvalD datum Number
+     , fromTargetY :: EvalD datum Number
+     }
+  -> { toSourceX :: EvalD datum Number
+     , toSourceY :: EvalD datum Number
+     , toTargetX :: EvalD datum Number
+     , toTargetY :: EvalD datum Number
+     }
+  -> AnimatedPathBuilder datum
+animatedLinkVertical from to =
+  { fromValues:
+      [ DataAnimValue (\d -> runEvalD from.fromSourceX d 0)
+      , DataAnimValue (\d -> runEvalD from.fromSourceY d 0)
+      , DataAnimValue (\d -> runEvalD from.fromTargetX d 0)
+      , DataAnimValue (\d -> runEvalD from.fromTargetY d 0)
+      ]
+  , toValues:
+      [ DataAnimValue (\d -> runEvalD to.toSourceX d 0)
+      , DataAnimValue (\d -> runEvalD to.toSourceY d 0)
+      , DataAnimValue (\d -> runEvalD to.toTargetX d 0)
+      , DataAnimValue (\d -> runEvalD to.toTargetY d 0)
+      ]
+  , generator: linkVerticalGenerator
+  , config: defaultAnimationConfig
+  }
+
+-- | Create an animated horizontal link path
+-- |
+-- | Same as animatedLinkVertical but for horizontal (left-to-right) trees.
+animatedLinkHorizontal
+  :: forall datum
+   . { fromSourceX :: EvalD datum Number
+     , fromSourceY :: EvalD datum Number
+     , fromTargetX :: EvalD datum Number
+     , fromTargetY :: EvalD datum Number
+     }
+  -> { toSourceX :: EvalD datum Number
+     , toSourceY :: EvalD datum Number
+     , toTargetX :: EvalD datum Number
+     , toTargetY :: EvalD datum Number
+     }
+  -> AnimatedPathBuilder datum
+animatedLinkHorizontal from to =
+  { fromValues:
+      [ DataAnimValue (\d -> runEvalD from.fromSourceX d 0)
+      , DataAnimValue (\d -> runEvalD from.fromSourceY d 0)
+      , DataAnimValue (\d -> runEvalD from.fromTargetX d 0)
+      , DataAnimValue (\d -> runEvalD from.fromTargetY d 0)
+      ]
+  , toValues:
+      [ DataAnimValue (\d -> runEvalD to.toSourceX d 0)
+      , DataAnimValue (\d -> runEvalD to.toSourceY d 0)
+      , DataAnimValue (\d -> runEvalD to.toTargetX d 0)
+      , DataAnimValue (\d -> runEvalD to.toTargetY d 0)
+      ]
+  , generator: linkHorizontalGenerator
+  , config: defaultAnimationConfig
+  }
+
+-- | Set the animation duration for a path animation
+pathWithDuration :: forall datum. Number -> AnimatedPathBuilder datum -> AnimatedPathBuilder datum
+pathWithDuration ms builder =
+  builder { config = builder.config { duration = ms } }
+
+-- | Set the easing function for a path animation
+pathWithEasing :: forall datum. EasingType -> AnimatedPathBuilder datum -> AnimatedPathBuilder datum
+pathWithEasing easing builder =
+  builder { config = builder.config { easing = easing } }
+
+-- | Set the delay for a path animation
+pathWithDelay :: forall datum. Number -> AnimatedPathBuilder datum -> AnimatedPathBuilder datum
+pathWithDelay ms builder =
+  builder { config = builder.config { delay = ms } }
+
+-- | Convert an AnimatedPathBuilder to an Attribute
+-- |
+-- | This creates an AnimatedCompound attribute that will interpolate all
+-- | path coordinates and regenerate the path string on each animation frame.
+animatedPathAttr :: forall datum. AnimatedPathBuilder datum -> Attribute datum
+animatedPathAttr builder = AnimatedCompound
+  { name: AttributeName "d"
+  , fromValues: builder.fromValues
+  , toValues: builder.toValues
+  , generator: builder.generator
+  , config: builder.config
+  }
+
+-- =============================================================================
+-- Path Generators
+-- =============================================================================
+
+-- | Generate a vertical link path (for top-down trees)
+-- | Takes [sourceX, sourceY, targetX, targetY]
+-- | Generates: "M sourceX,sourceY C sourceX,midY targetX,midY targetX,targetY"
+linkVerticalGenerator :: Array Number -> String
+linkVerticalGenerator vals =
+  let sourceX = fromMaybe 0.0 (index vals 0)
+      sourceY = fromMaybe 0.0 (index vals 1)
+      targetX = fromMaybe 0.0 (index vals 2)
+      targetY = fromMaybe 0.0 (index vals 3)
+      midY = (sourceY + targetY) / 2.0
+  in "M" <> show sourceX <> "," <> show sourceY
+     <> " C" <> show sourceX <> "," <> show midY
+     <> " " <> show targetX <> "," <> show midY
+     <> " " <> show targetX <> "," <> show targetY
+
+-- | Generate a horizontal link path (for left-to-right trees)
+-- | Takes [sourceX, sourceY, targetX, targetY]
+-- | Generates: "M sourceX,sourceY C midX,sourceY midX,targetY targetX,targetY"
+linkHorizontalGenerator :: Array Number -> String
+linkHorizontalGenerator vals =
+  let sourceX = fromMaybe 0.0 (index vals 0)
+      sourceY = fromMaybe 0.0 (index vals 1)
+      targetX = fromMaybe 0.0 (index vals 2)
+      targetY = fromMaybe 0.0 (index vals 3)
+      midX = (sourceX + targetX) / 2.0
+  in "M" <> show sourceX <> "," <> show sourceY
+     <> " C" <> show midX <> "," <> show sourceY
+     <> " " <> show midX <> "," <> show targetY
+     <> " " <> show targetX <> "," <> show targetY
 
 -- =============================================================================
 -- Internal Helpers

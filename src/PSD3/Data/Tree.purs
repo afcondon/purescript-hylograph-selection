@@ -4,7 +4,7 @@ module PSD3.Data.Tree
   , D3_TreeNode
   , TreeType(..)
   , TreeModel
-  , TreeLayout(..)
+  , module ReExports
   , makeD3TreeJSONFromTreeID
   , treeToD3Tree
   , arrayToTree
@@ -13,6 +13,8 @@ module PSD3.Data.Tree
 import Prelude
 
 import Control.Comonad.Cofree (head, tail)
+import Data.Graph.Layout (TreeLayout(..)) as ReExports
+import Data.Graph.Layout (TreeLayout)
 import Data.Array (filter)
 import Data.Array as A
 import Data.Either (Either(..))
@@ -35,14 +37,6 @@ derive instance eqTreeType :: Eq TreeType
 instance showTreeType :: Show TreeType where
   show TidyTree = "Tidy Tree"
   show Dendrogram = "Dendrogram"
-
-data TreeLayout = Radial | Horizontal | Vertical
-derive instance eqTreeLayout :: Eq TreeLayout
-derive instance ordTreeLayout :: Ord TreeLayout
-instance showTreeLayout :: Show TreeLayout where
-  show Radial = "Radial"
-  show Horizontal = "Horizontal"
-  show Vertical = "Vertical"
 
 type TreeModel = {
       json         :: TreeJson_                      -- data from file

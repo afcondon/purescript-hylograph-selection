@@ -107,6 +107,9 @@ describeAttribute (IndexedAttr name src _) =
 describeAttribute (AnimatedAttr rec) =
   "Animate " <> showAttrName rec.name <> " over " <> show rec.config.duration <> "ms"
 
+describeAttribute (AnimatedCompound rec) =
+  "Animate compound " <> showAttrName rec.name <> " with " <> show (length rec.toValues) <> " components over " <> show rec.config.duration <> "ms"
+
 -- | Describe attribute source in English
 describeSource :: AttrSource -> String
 describeSource = case _ of
@@ -125,6 +128,7 @@ showElemType Circle = "circle"
 showElemType Rect = "rectangle"
 showElemType Path = "path"
 showElemType Line = "line"
+showElemType Polygon = "polygon"
 showElemType Text = "text"
 showElemType Div = "div"
 showElemType Span = "span"

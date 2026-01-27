@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>React Events from PSD3 Visualizations :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/react-events.html">
+    <meta name="description" content="How to surface click and interaction events from PSD3 to React state">
+    <meta name="keywords" content="React, events, clicks, callbacks, useState">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="react-events.html">React Events from PSD3</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/react-events.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">React Events from PSD3 Visualizations</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>When building a React application with PSD3 visualizations, you need to bridge events from the D3 world back to React&#8217;s state system. This guide shows you how.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_challenge"><a class="anchor" href="#_the_challenge"></a>The Challenge</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>PSD3 visualizations live in the DOM, managed by D3. React manages your component state. When a user clicks something in the visualization, you need to:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Capture the event in PSD3 via behaviors</p>
+</li>
+<li>
+<p>Extract relevant data (which element was clicked, its datum)</p>
+</li>
+<li>
+<p>Call a React state setter</p>
+</li>
+<li>
+<p>React re-renders to reflect the new state</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_solution_the_callback_bridge"><a class="anchor" href="#_solution_the_callback_bridge"></a>Solution: The Callback Bridge</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Pass React&#8217;s state setter into your visualization AST:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (onClickWithDatum)
+import React.Basic.Hooks (useState, (/\))
+
+mkInteractiveBarChart :: Component { chartData :: Array Number }
+mkInteractiveBarChart = do
+  containerId &lt;- useContainerId
+
+  component "InteractiveBarChart" \props -&gt; React.do
+    -- React state: which bar index is selected
+    selectedBar /\ setSelectedBar &lt;- useState (Nothing :: Maybe Int)
+
+    useEffectOnce do
+      void $ runD3 do
+        let selector = "#" &lt;&gt; containerId
+        clear selector
+        container &lt;- select selector
+        -- Pass the state setter into the AST builder
+        renderTree container (barChartAST props.chartData setSelectedBar)
+      pure mempty
+
+    -- React re-renders when selectedBar changes
+    pure $ R.div_
+      [ R.div { id: containerId }
+      , R.p_ [ R.text $ case selectedBar of
+            Nothing -&gt; "Click a bar to select it"
+            Just idx -&gt; "Selected bar " &lt;&gt; show (idx + 1) ]
+      ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_ast_with_click_behavior"><a class="anchor" href="#_the_ast_with_click_behavior"></a>The AST with Click Behavior</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use <code>withBehaviors</code> to attach event handlers, and <code>onClickWithDatum</code> to access the bound data:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">barChartAST :: Array Number -&gt; ((Maybe Int -&gt; Maybe Int) -&gt; Effect Unit) -&gt; A.AST Number
+barChartAST dataset setSelectedBar =
+  A.elem SVG
+    [ computed "width" (num 500.0)
+    , computed "height" (num 300.0)
+    ]
+    `A.withChild`
+      A.joinData "bars" "rect" dataset \_ -&gt;
+        A.elem Rect
+          [ fromWithIndex "x" (\_ i -&gt; toNumber i * 60.0 + 20.0)
+          , fromWithIndex "y" (\val _ -&gt; 280.0 - val * 2.5)
+          , computed "width" (num 50.0)
+          , fromWithIndex "height" (\val _ -&gt; val * 2.5)
+          , computedStr "cursor" (text "pointer")  -- Visual feedback
+          ]
+          `A.withBehaviors`
+            [ onClickWithDatum \clickedValue -&gt; do
+                -- Find the index of the clicked value
+                let mIdx = Array.findIndex (_ == clickedValue) dataset
+                case mIdx of
+                  Just idx -&gt; setSelectedBar (\_ -&gt; Just idx)
+                  Nothing -&gt; pure unit
+            ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_it_works"><a class="anchor" href="#_how_it_works"></a>How It Works</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong><code>onClickWithDatum</code></strong> - Receives the datum bound to the clicked element (from D3&#8217;s <code><em>data</em></code> property)</p>
+</li>
+<li>
+<p><strong><code>setSelectedBar</code></strong> - React&#8217;s state setter, passed through from the component</p>
+</li>
+<li>
+<p><strong>State update</strong> - <code>setSelectedBar (\_ &#8594; Just idx)</code> triggers React re-render</p>
+</li>
+<li>
+<p><strong>UI updates</strong> - React shows the new selection in the paragraph</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_available_event_behaviors"><a class="anchor" href="#_available_event_behaviors"></a>Available Event Behaviors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>PSD3 provides several event behaviors:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types
+  ( onClick           -- Effect Unit (no datum)
+  , onClickWithDatum  -- (datum -&gt; Effect Unit)
+  , onMouseEnter      -- (datum -&gt; Effect Unit)
+  , onMouseLeave      -- (datum -&gt; Effect Unit)
+  , onMouseEnterWithInfo  -- (MouseEventInfo datum -&gt; Effect Unit)
+  , onMouseLeaveWithInfo  -- (MouseEventInfo datum -&gt; Effect Unit)
+  )</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>MouseEventInfo</code> includes position data for tooltips:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type MouseEventInfo datum =
+  { datum :: datum
+  , clientX :: Number, clientY :: Number  -- Viewport-relative
+  , pageX :: Number, pageY :: Number      -- Document-relative
+  , offsetX :: Number, offsetY :: Number  -- Element-relative
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_pattern_multiple_event_types"><a class="anchor" href="#_pattern_multiple_event_types"></a>Pattern: Multiple Event Types</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Handle different events on the same element:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">A.elem Circle [...]
+  `A.withBehaviors`
+    [ onClickWithDatum \d -&gt; setSelected (Just d.id)
+    , onMouseEnter \d -&gt; setHovered (Just d.id)
+    , onMouseLeave \_ -&gt; setHovered Nothing
+    ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="react-simulation.html" class="xref page">Force Simulations in React</a> - Tick-driven updates</p>
+</li>
+<li>
+<p><a href="halogen-events.html" class="xref page">Halogen Events from PSD3</a> - Compare with Halogen</p>
+</li>
+<li>
+<p><a href="react-integration.html" class="xref page">PSD3 in a React App</a> - Basic integration</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

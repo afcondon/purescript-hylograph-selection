@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HATS Demo - Real Visualizations</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 {
+      color: #0ff;
+    }
+    h2 {
+      color: #f0f;
+      margin-top: 30px;
+    }
+    .demo-container {
+      background: #16213e;
+      border: 1px solid #0f4c75;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 10px 0;
+      min-height: 150px;
+    }
+    svg {
+      background: #0f3460;
+      border-radius: 4px;
+    }
+    #console {
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      margin-top: 20px;
+      border-radius: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .description {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>HATS Demo - Real Visualizations</h1>
+  <p>Hylomorphic Abstract Tree Syntax with data-driven attributes</p>
+
+  <h2>Demo 1: Scatter Plot</h2>
+  <p class="description">Data-driven circle positions using <code>dataNum "cx" _.x</code></p>
+  <div class="demo-container">
+    <svg id="demo1" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 2: Bar Chart</h2>
+  <p class="description">Indexed x positions using <code>indexedNum "x" (\_ i -> ...)</code></p>
+  <div class="demo-container">
+    <svg id="demo2" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 3: Sudoku Board (4×4)</h2>
+  <p class="description">Flattened [[Int]] with data-driven x/y positions: <code>dataNum "x" (\c -> colIdx * cellSize)</code></p>
+  <div class="demo-container">
+    <svg id="demo3" width="150" height="150"></svg>
+  </div>
+
+  <h2>Demo 4: Line Chart Points</h2>
+  <p class="description">Points positioned by data coordinates</p>
+  <div class="demo-container">
+    <svg id="demo4" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 5: Draggable Circles</h2>
+  <p class="description">SimpleDrag behavior - drag circles to reposition</p>
+  <div class="demo-container">
+    <svg id="demo5" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 6: Zoom/Pan Container</h2>
+  <p class="description">Zoom behavior - scroll to zoom, drag to pan</p>
+  <div class="demo-container">
+    <svg id="demo6" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 7: GUP (General Update Pattern)</h2>
+  <p class="description">Enter=green, Update=blue, Exit=red (flash before removal)</p>
+  <div class="demo-container">
+    <div style="margin-bottom: 10px;">
+      <button id="gup-add" style="background: #0a0; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">+ Add</button>
+      <button id="gup-remove" style="background: #a00; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">− Remove</button>
+      <button id="gup-shuffle" style="background: #00a; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer;">⟳ Shuffle</button>
+    </div>
+    <svg id="demo7" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 8: Tree Layout</h2>
+  <p class="description">Reingold-Tilford tree layout with nodes and links</p>
+  <div class="demo-container">
+    <svg id="demo8" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 9: Force-Directed Graph</h2>
+  <p class="description">Nodes repel each other, centering force, collision detection</p>
+  <div class="demo-container">
+    <svg id="demo9" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 10: FromTree with Siblings</h2>
+  <p class="description">Coalgebraic enumeration via <code>_.children</code>, flat output. Tree→Flat DOM hylomorphism.</p>
+  <div class="demo-container">
+    <svg id="demo10" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 11: FromTree with Nested</h2>
+  <p class="description">Preserved hierarchy - tree structure becomes DOM nesting. <code>preserveTree</code> combinator.</p>
+  <div class="demo-container">
+    <svg id="demo11" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 12: Heterogeneous Nodes</h2>
+  <p class="description">Template produces different elements (Circle/Rect/Polygon) based on node data. "Chimera" pattern.</p>
+  <div class="demo-container">
+    <svg id="demo12" width="300" height="150"></svg>
+  </div>
+
+  <h2>Demo 13: Compositional Chart (Monoid)</h2>
+  <p class="description">Chart built with <code>title &lt;&gt; yAxis &lt;&gt; xAxis &lt;&gt; bars &lt;&gt; legend</code>. Monoid enables compositional assembly.</p>
+  <div class="demo-container">
+    <svg id="demo13" width="300" height="150"></svg>
+  </div>
+
+  <h2>Console Output</h2>
+  <div id="console"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // Capture console.log output
+    const consoleDiv = document.getElementById('console');
+    const originalLog = console.log;
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      consoleDiv.textContent += args.join(' ') + '\n';
+    };
+  </script>
+  <script src="hats-demo-bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>PSD3 in a Simple Web Page :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/simple-webpage.html">
+    <meta name="description" content="How to use PSD3 without Halogen or a complex framework">
+    <meta name="keywords" content="simple, webpage, no-framework, vanilla">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="simple-webpage.html">PSD3 in a Simple Web Page</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/simple-webpage.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">PSD3 in a Simple Web Page</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Not every visualization needs a full application framework. This guide shows how to use PSD3 in a simple HTML page with minimal setup.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_when_to_use_this_approach"><a class="anchor" href="#_when_to_use_this_approach"></a>When to Use This Approach</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Quick prototypes and experiments</p>
+</li>
+<li>
+<p>Static visualizations with no complex state</p>
+</li>
+<li>
+<p>Embedding a visualization in an existing non-PureScript page</p>
+</li>
+<li>
+<p>Learning PSD3 without Halogen complexity</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_basic_setup"><a class="anchor" href="#_basic_setup"></a>Basic Setup</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_create_your_html"><a class="anchor" href="#_1_create_your_html"></a>1. Create Your HTML</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-html hljs" data-lang="html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;My Visualization&lt;/title&gt;
+  &lt;style&gt;
+    #chart { width: 800px; height: 600px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id="chart"&gt;&lt;/div&gt;
+  &lt;script src="https://d3js.org/d3.v7.min.js"&gt;&lt;/script&gt;
+  &lt;script src="./my-viz.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_write_your_purescript"><a class="anchor" href="#_2_write_your_purescript"></a>2. Write Your PureScript</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">module Main where
+
+import Prelude
+import Effect (Effect)
+import PSD3.AST as A
+import PSD3.AST (ElementType(..))
+import PSD3.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
+import PSD3.Render (runD3, select, renderTree)
+
+main :: Effect Unit
+main = void $ runD3 do
+  container &lt;- select "#chart"
+  renderTree container myVisualization
+
+myVisualization :: A.AST Unit
+myVisualization =
+  A.elem SVG
+    [ width (num 800.0)
+    , height (num 600.0)
+    ]
+    `A.withChild`
+      A.elem Circle
+        [ cx (num 400.0)
+        , cy (num 300.0)
+        , r (num 100.0)
+        , fill (text "steelblue")
+        ]</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_bundle_and_run"><a class="anchor" href="#_3_bundle_and_run"></a>3. Bundle and Run</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash"># Build PureScript
+spago build
+
+# Bundle for browser
+spago bundle --module Main --outfile my-viz.js
+
+# Open in browser
+open index.html</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_adding_interactivity"><a class="anchor" href="#_adding_interactivity"></a>Adding Interactivity</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For simple interactivity, use behaviors directly:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types (onClick, onHover)
+import Effect.Console (log)
+
+myVisualization :: A.AST Unit
+myVisualization =
+  A.elem SVG [ width (num 800.0), height (num 600.0) ]
+    `A.withChild`
+      A.elem Circle
+        [ cx (num 400.0), cy (num 300.0), r (num 100.0)
+        , fill (text "steelblue")
+        ]
+        `A.withBehaviors`
+          [ onClick \_ -&gt; log "Circle clicked!"
+          , onHover
+              { enter: [{ attr: "fill", value: "coral" }]
+              , leave: [{ attr: "fill", value: "steelblue" }]
+              }
+          ]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_managing_state_with_effect_ref"><a class="anchor" href="#_managing_state_with_effect_ref"></a>Managing State with Effect.Ref</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For simple state without a framework, use <code>Effect.Ref</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import Effect.Ref as Ref
+
+main :: Effect Unit
+main = do
+  -- Mutable state
+  countRef &lt;- Ref.new 0
+
+  void $ runD3 do
+    container &lt;- select "#chart"
+
+    let viz count =
+          A.elem SVG [ width (num 800.0), height (num 600.0) ]
+            `A.withChild`
+              A.elem Text
+                [ x (num 400.0), y (num 300.0)
+                , textContent (text $ "Count: " &lt;&gt; show count)
+                ]
+                `A.withBehaviors`
+                  [ onClick \_ -&gt; do
+                      newCount &lt;- Ref.modify (_ + 1) countRef
+                      -- Re-render with new count
+                      reRender container (viz newCount)
+                  ]
+
+    count &lt;- liftEffect $ Ref.read countRef
+    renderTree container (viz count)</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_loading_external_data"><a class="anchor" href="#_loading_external_data"></a>Loading External Data</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import Affjax.Web as Ajax
+import Affjax.ResponseFormat as RF
+
+main :: Effect Unit
+main = launchAff_ do
+  result &lt;- Ajax.get RF.json "/data/points.json"
+  case result of
+    Left err -&gt; log $ "Failed to load data: " &lt;&gt; printError err
+    Right response -&gt; do
+      let points = decodePoints response.body
+      liftEffect $ renderVisualization points
+
+renderVisualization :: Array Point -&gt; Effect Unit
+renderVisualization points = void $ runD3 do
+  container &lt;- select "#chart"
+  renderTree container (scatterplot points)</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_when_to_graduate_to_halogen"><a class="anchor" href="#_when_to_graduate_to_halogen"></a>When to Graduate to Halogen</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Consider moving to Halogen when you need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Complex application state</p>
+</li>
+<li>
+<p>Multiple interacting components</p>
+</li>
+<li>
+<p>Routing</p>
+</li>
+<li>
+<p>Server communication with loading states</p>
+</li>
+<li>
+<p>Undo/redo functionality</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../getting-started/your-first-selection.html" class="xref page">Your First Selection</a> - PSD3 basics</p>
+</li>
+<li>
+<p><a href="css-hover.html" class="xref page">Simple CSS Hover Effects</a> - Lightweight interactivity</p>
+</li>
+<li>
+<p><a href="../getting-started/webapp-architecture.html" class="xref page">Web App Architecture</a> - When you&#8217;re ready for more</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

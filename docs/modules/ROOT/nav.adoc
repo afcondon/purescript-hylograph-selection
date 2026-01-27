@@ -13,6 +13,7 @@
 * xref:how-to/react-simulation.adoc[Force Simulations in React]
 * xref:how-to/css-hover.adoc[Simple CSS Hover Effects]
 * xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting]
+* xref:how-to/scroll-to-element.adoc[Scrolling to Elements]
 * xref:how-to/tooltips.adoc[Tooltips]
 * xref:how-to/linked-brushing.adoc[Linked Brushing]
 * xref:how-to/zoom.adoc[Zoomable Visualizations]

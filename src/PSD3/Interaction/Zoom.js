@@ -191,6 +191,60 @@ export function attachNativeZoom_(element) {
       return extent;
     }
 
+    // =============================================================================
+    // SVG Coordinate Conversion
+    // =============================================================================
+    // SVG viewBox can scale coordinates differently from screen pixels.
+    // We need to convert screen coordinates to SVG coordinates for proper
+    // zoom point calculation and pan delta computation.
+
+    /**
+     * Convert screen coordinates to SVG coordinates
+     * @param {number} clientX - Screen X coordinate
+     * @param {number} clientY - Screen Y coordinate
+     * @returns {[number, number]} SVG coordinates
+     */
+    function toSVGCoords(clientX, clientY) {
+      const svg = element.ownerSVGElement || element;
+      if (svg.createSVGPoint) {
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const inv = ctm.inverse();
+          const svgPt = pt.matrixTransform(inv);
+          return [svgPt.x, svgPt.y];
+        }
+      }
+      // Fallback: use bounding rect offset (doesn't handle viewBox scaling)
+      const rect = element.getBoundingClientRect();
+      return [clientX - rect.left, clientY - rect.top];
+    }
+
+    /**
+     * Convert screen delta to SVG delta
+     * This accounts for viewBox scaling when computing pan distances.
+     * @param {number} screenDx - Screen X delta
+     * @param {number} screenDy - Screen Y delta
+     * @returns {[number, number]} SVG coordinate deltas
+     */
+    function toSVGDelta(screenDx, screenDy) {
+      const svg = element.ownerSVGElement || element;
+      if (svg.getScreenCTM) {
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          // The CTM includes translation, but we only want the scale part for deltas
+          // For uniform scale (which SVG viewBox gives us), we can use ctm.a (x scale)
+          // Delta in SVG space = delta in screen space / scale
+          const scale = ctm.a; // Assumes uniform scaling (common for SVG viewBox)
+          return [screenDx / scale, screenDy / scale];
+        }
+      }
+      // Fallback: 1:1 mapping
+      return [screenDx, screenDy];
+    }
+
     // Translate extent (pan limits) - null means infinite
     let translateExtent = config.translateExtent || null;
     const infiniteExtent = [[-Infinity, -Infinity], [Infinity, Infinity]];
@@ -230,9 +284,9 @@ export function attachNativeZoom_(element) {
     function handleWheel(event) {
       event.preventDefault();
 
-      // Get pointer position relative to element
-      const rect = element.getBoundingClientRect();
-      const point = [event.clientX - rect.left, event.clientY - rect.top];
+      // Get pointer position in SVG coordinates
+      // This accounts for viewBox scaling
+      const point = toSVGCoords(event.clientX, event.clientY);
 
       // Compute zoom factor from deltaY
       // Negative deltaY = zoom in, positive = zoom out
@@ -243,8 +297,8 @@ export function attachNativeZoom_(element) {
       // This ensures the translation is calculated for the actual clamped scale
       const newK = Math.max(scaleMin, Math.min(scaleMax, transform.k * factor));
 
-      // Don't update if we're already at the limit
-      if (newK === transform.k) return;
+      // Don't update if we're already at the limit (with tolerance for floating point)
+      if (Math.abs(newK - transform.k) < 0.001) return;
 
       const newTransform = zoomAround(transform, point, newK);
       setTransform(newTransform);
@@ -282,8 +336,12 @@ export function attachNativeZoom_(element) {
     function handlePointerMove(event) {
       if (!isPanning) return;
 
-      const dx = event.clientX - panStart[0];
-      const dy = event.clientY - panStart[1];
+      // Calculate screen delta
+      const screenDx = event.clientX - panStart[0];
+      const screenDy = event.clientY - panStart[1];
+
+      // Convert to SVG coordinate delta (accounts for viewBox scaling)
+      const [dx, dy] = toSVGDelta(screenDx, screenDy);
 
       const newTransform = new ZoomTransform(
         transformAtPanStart.k,
@@ -310,9 +368,11 @@ export function attachNativeZoom_(element) {
       event.preventDefault();
       gestureStartTransform = transform;
 
-      // Get center of gesture (approximate with element center for now)
+      // Get center of element in SVG coordinates
       const rect = element.getBoundingClientRect();
-      gestureStartCenter = [rect.width / 2, rect.height / 2];
+      const screenCenterX = rect.left + rect.width / 2;
+      const screenCenterY = rect.top + rect.height / 2;
+      gestureStartCenter = toSVGCoords(screenCenterX, screenCenterY);
     }
 
     function handleGestureChange(event) {
@@ -374,8 +434,11 @@ export function attachNativeZoom_(element) {
 
       // Zoom in/out by factor at center
       zoomBy: (factor) => () => {
+        // Get center in SVG coordinates
         const rect = element.getBoundingClientRect();
-        const center = [rect.width / 2, rect.height / 2];
+        const screenCenterX = rect.left + rect.width / 2;
+        const screenCenterY = rect.top + rect.height / 2;
+        const center = toSVGCoords(screenCenterX, screenCenterY);
         const newK = transform.k * factor;
         const newTransform = zoomAround(transform, center, newK);
         setTransform(newTransform);

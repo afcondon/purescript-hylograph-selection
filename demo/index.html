@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PSD3 Selection - Documentation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .header {
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .quadrants {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #1e293b;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .quadrant {
+      background: #0f172a;
+      padding: 40px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .quadrant:hover {
+      background: #1e293b;
+    }
+
+    .quadrant h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .quadrant.getting-started h2 { color: #22c55e; }
+    .quadrant.how-to h2 { color: #3b82f6; }
+    .quadrant.reference h2 { color: #f59e0b; }
+    .quadrant.understanding h2 { color: #ec4899; }
+
+    .quadrant .type {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 15px;
+    }
+
+    .quadrant p {
+      color: #94a3b8;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .quadrant .links {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .quadrant .links a {
+      font-size: 0.875rem;
+      color: #64748b;
+      text-decoration: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      background: #1e293b;
+      transition: all 0.2s;
+    }
+
+    .quadrant .links a:hover {
+      color: #e2e8f0;
+      background: #334155;
+    }
+
+    .tour-section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .tour-section h2 {
+      font-size: 1.5rem;
+      color: #e2e8f0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .tour-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .tour-card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .tour-card:hover {
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+    }
+
+    .tour-card h3 {
+      color: #e2e8f0;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .tour-card p {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 60px 20px;
+      color: #475569;
+    }
+
+    .footer a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .quadrants {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>PSD3 Selection</h1>
+    <p class="subtitle">Type-safe D3 visualization for PureScript. Build visualizations as data, interpret them multiple ways.</p>
+  </header>
+
+  <main>
+    <div class="quadrants">
+      <a href="getting-started/" class="quadrant getting-started">
+        <div class="type">Learning-oriented</div>
+        <h2>Getting Started</h2>
+        <p>Step-by-step tutorials to help you create your first visualizations. Start here if you're new to PSD3.</p>
+        <div class="links">
+          <a href="getting-started/first-selection.html">First Selection</a>
+          <a href="getting-started/bar-chart.html">Bar Chart</a>
+          <a href="getting-started/from-d3.html">From D3.js</a>
+        </div>
+      </a>
+
+      <a href="how-to/" class="quadrant how-to">
+        <div class="type">Task-oriented</div>
+        <h2>How-To Guides</h2>
+        <p>Practical guides for common tasks. Find solutions to specific problems and learn patterns you can apply.</p>
+        <div class="links">
+          <a href="how-to/highlighting.html">Highlighting</a>
+          <a href="how-to/tooltips.html">Tooltips</a>
+          <a href="how-to/transitions.html">Transitions</a>
+        </div>
+      </a>
+
+      <a href="reference/" class="quadrant reference">
+        <div class="type">Information-oriented</div>
+        <h2>Reference</h2>
+        <p>Technical reference for the API. Complete documentation of modules, types, and functions.</p>
+        <div class="links">
+          <a href="reference/modules.html">Modules</a>
+          <a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank">Pursuit</a>
+        </div>
+      </a>
+
+      <a href="understanding/" class="quadrant understanding">
+        <div class="type">Explanation-oriented</div>
+        <h2>Understanding</h2>
+        <p>Deep dives into how and why PSD3 works. Explore the architecture and design decisions.</p>
+        <div class="links">
+          <a href="understanding/finally-tagless.html">Finally Tagless</a>
+          <a href="understanding/ast.html">The AST</a>
+          <a href="understanding/interpreters.html">Interpreters</a>
+        </div>
+      </a>
+    </div>
+
+    <section class="tour-section">
+      <h2>Interactive Tour</h2>
+      <div class="tour-grid">
+        <a href="tour/circles.html" class="tour-card">
+          <h3>Circles</h3>
+          <p>Basic shapes and attributes</p>
+        </a>
+        <a href="tour/bar-chart.html" class="tour-card">
+          <h3>Bar Chart</h3>
+          <p>Data binding with joinData</p>
+        </a>
+        <a href="tour/tree.html" class="tour-card">
+          <h3>Tree Layout</h3>
+          <p>Hierarchical visualization</p>
+        </a>
+        <a href="tour/force.html" class="tour-card">
+          <h3>Force Network</h3>
+          <p>Interactive node-link diagram</p>
+        </a>
+        <a href="tour/sankey.html" class="tour-card">
+          <h3>Sankey Diagram</h3>
+          <p>Flow visualization</p>
+        </a>
+        <a href="tour/transitions.html" class="tour-card">
+          <h3>Transitions</h3>
+          <p>Animated updates</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Part of the <a href="https://github.com/afcondon/psd3">PSD3</a> ecosystem</p>
+    <p style="margin-top: 10px;">
+      <a href="https://github.com/afcondon/purescript-psd3-selection">GitHub</a> ·
+      <a href="https://pursuit.purescript.org/packages/purescript-psd3-selection">Pursuit</a>
+    </p>
+  </footer>
+</body>
+</html>

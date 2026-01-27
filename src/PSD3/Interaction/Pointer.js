@@ -146,15 +146,18 @@ export function attachSimulationPointerDrag_(element) {
       if (!node) return;
 
       // Update fixed position to follow pointer
-      // We need to convert client coords to SVG coords
+      // We need to convert client coords to simulation space
+      // Using the element's parent group CTM includes any zoom transform
       const svg = element.ownerSVGElement;
       if (svg) {
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
 
-        // Transform through any zoom/pan
-        const ctm = svg.getScreenCTM();
+        // Get CTM from the element's parent (the group inside zoom transform)
+        // This accounts for both SVG viewBox AND any zoom/pan transform
+        const parentGroup = element.parentElement;
+        const ctm = parentGroup?.getScreenCTM?.() || svg.getScreenCTM();
         if (ctm) {
           const svgPt = pt.matrixTransform(ctm.inverse());
           node.fx = svgPt.x;
@@ -248,7 +251,9 @@ export function attachSimulationPointerDragNested_(element) {
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
-        const ctm = svg.getScreenCTM();
+        // Get CTM from parent group to account for zoom transform
+        const parentGroup = element.parentElement;
+        const ctm = parentGroup?.getScreenCTM?.() || svg.getScreenCTM();
         if (ctm) {
           const svgPt = pt.matrixTransform(ctm.inverse());
           node.fx = svgPt.x;
@@ -348,6 +353,7 @@ export function attachSimpleDrag_(element) {
       isDragging = true;
       element.setPointerCapture(event.pointerId);
       event.preventDefault();
+      event.stopPropagation();  // Prevent bubbling to parent handlers
 
       // Raise element to front (SVG-specific)
       if (element.parentNode) {
@@ -355,6 +361,7 @@ export function attachSimpleDrag_(element) {
       }
 
       element.style.cursor = 'grabbing';
+      console.log('[SimpleDrag] pointerdown, isDragging=true');
     }
 
     function handlePointerMove(event) {
@@ -387,8 +394,18 @@ export function attachSimpleDrag_(element) {
     }
 
     function handlePointerUp(event) {
+      console.log('[SimpleDrag] pointerup, isDragging was:', isDragging);
       if (!isDragging) return;
 
+      isDragging = false;
+      element.releasePointerCapture(event.pointerId);
+      element.style.cursor = 'grab';
+      console.log('[SimpleDrag] drag ended');
+    }
+
+    function handlePointerCancel(event) {
+      console.log('[SimpleDrag] pointercancel');
+      if (!isDragging) return;
       isDragging = false;
       element.releasePointerCapture(event.pointerId);
       element.style.cursor = 'grab';
@@ -401,7 +418,7 @@ export function attachSimpleDrag_(element) {
     element.addEventListener('pointerdown', handlePointerDown);
     element.addEventListener('pointermove', handlePointerMove);
     element.addEventListener('pointerup', handlePointerUp);
-    element.addEventListener('pointercancel', handlePointerUp);
+    element.addEventListener('pointercancel', handlePointerCancel);
     element.addEventListener('dragstart', handleDragStart);
 
     element.style.cursor = 'grab';
@@ -490,13 +507,15 @@ export function attachSimulationDragById_(element) {
       if (!node) return;
 
       // Update fixed position to follow pointer
+      // Use parent group CTM to account for zoom transform
       const svg = element.ownerSVGElement;
       if (svg) {
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
 
-        const ctm = svg.getScreenCTM();
+        const parentGroup = element.parentElement;
+        const ctm = parentGroup?.getScreenCTM?.() || svg.getScreenCTM();
         if (ctm) {
           const svgPt = pt.matrixTransform(ctm.inverse());
           node.fx = svgPt.x;
@@ -586,7 +605,9 @@ export function attachSimulationDragNestedById_(element) {
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
-        const ctm = svg.getScreenCTM();
+        // Get CTM from parent group to account for zoom transform
+        const parentGroup = element.parentElement;
+        const ctm = parentGroup?.getScreenCTM?.() || svg.getScreenCTM();
         if (ctm) {
           const svgPt = pt.matrixTransform(ctm.inverse());
           node.fx = svgPt.x;

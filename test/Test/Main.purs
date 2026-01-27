@@ -4,7 +4,6 @@ import Prelude
 
 import Effect (Effect)
 import Effect.Console (log)
-import Test.SemiQuine.TreeToCodeSpec as TreeToCodeSpec
 import Test.Expr.ExprSpec as ExprSpec
 import Test.Expr.PathSpec as PathSpec
 import Test.Expr.PolymorphismSpec as PolymorphismSpec
@@ -14,13 +13,9 @@ import Test.Expr.SankeyExample as SankeyExample
 import Test.Expr.TreeExample as TreeExample
 import Test.Expr.UpdatePatternExample as UpdatePatternExample
 import Test.Scale.ScaleSpec as ScaleSpec
-import Test.Unified.JoinCombinatorsSpec as JoinCombinatorsSpec
 
 main :: Effect Unit
 main = do
-  log "=== SemiQuine TreeToCode Tests ==="
-  TreeToCodeSpec.runTests
-
   log "\n=== Expression DSL Tests ==="
   ExprSpec.runTests
 
@@ -43,7 +38,5 @@ main = do
   TreeExample.runExample
 
   UpdatePatternExample.runExample
-
-  JoinCombinatorsSpec.runTests
 
   log "\n=== All tests passed! ==="

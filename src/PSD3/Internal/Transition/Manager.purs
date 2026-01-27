@@ -30,11 +30,13 @@ module PSD3.Internal.Transition.Manager
     ElementTransitionManager
   , TransitionId
   , TransitionSpec
+  , CompoundTransitionSpec
   , Milliseconds
     -- * Creation and registration
   , create
   , registerTransition
   , registerAnimatedAttr
+  , registerAnimatedCompound
     -- * Coordinator integration
   , toCoordinatorConsumer
   , tick
@@ -84,7 +86,7 @@ type TransitionKey =
   , attrName :: String
   }
 
--- | Specification for a transition
+-- | Specification for a single-value transition
 type TransitionSpec =
   { from :: Number
   , to :: Number
@@ -93,12 +95,29 @@ type TransitionSpec =
   , delay :: Milliseconds
   }
 
+-- | Specification for a compound transition (multiple values → generated string)
+-- | Used for paths where we animate sourceX, sourceY, targetX, targetY
+-- | and regenerate the path string on each frame
+type CompoundTransitionSpec =
+  { fromValues :: Array Number   -- From values for each component
+  , toValues :: Array Number     -- To values for each component
+  , generator :: Array Number -> String  -- Combines interpolated values into final string
+  , duration :: Milliseconds
+  , easing :: EasingType
+  , delay :: Milliseconds
+  }
+
+-- | Transition type (single value or compound)
+data TransitionType
+  = SingleTransition TransitionSpec
+  | CompoundTransition CompoundTransitionSpec
+
 -- | State of an active transition
 type ActiveTransition =
   { id :: TransitionId
   , element :: Element
   , attrName :: String
-  , spec :: TransitionSpec
+  , transitionType :: TransitionType
   , elapsed :: Milliseconds
   , onComplete :: Effect Unit
   }
@@ -156,7 +175,18 @@ registerTransitionWithCallback
   -> TransitionSpec
   -> Effect Unit  -- Completion callback
   -> Effect TransitionId
-registerTransitionWithCallback (ElementTransitionManager ref) element attrName spec onComplete = do
+registerTransitionWithCallback manager element attrName spec onComplete =
+  registerTransitionInternal manager element attrName (SingleTransition spec) onComplete
+
+-- | Internal registration for any transition type
+registerTransitionInternal
+  :: ElementTransitionManager
+  -> Element
+  -> String
+  -> TransitionType
+  -> Effect Unit  -- Completion callback
+  -> Effect TransitionId
+registerTransitionInternal (ElementTransitionManager ref) element attrName transitionType onComplete = do
   state <- Ref.read ref
 
   -- Get or create element ID for this element
@@ -177,7 +207,7 @@ registerTransitionWithCallback (ElementTransitionManager ref) element attrName s
         { id: transitionId
         , element
         , attrName
-        , spec
+        , transitionType
         , elapsed: 0.0
         , onComplete
         }
@@ -227,6 +257,41 @@ registerAnimatedAttr manager element datum index attrName maybeFrom toValue conf
 
   registerTransitionWithCallback manager element attrName spec onComplete
 
+-- | Register a compound animated attribute (for paths and other generated values)
+-- |
+-- | Evaluates the AnimatedValue arrays for from/to values, and registers
+-- | a compound transition that interpolates all values and calls the generator
+-- | to produce the final string value on each frame.
+registerAnimatedCompound
+  :: forall datum
+   . ElementTransitionManager
+  -> Element
+  -> datum
+  -> Int  -- Element index
+  -> String  -- Attribute name (e.g., "d" for paths)
+  -> Array (AnimatedValue datum)  -- From values
+  -> Array (AnimatedValue datum)  -- To values
+  -> (Array Number -> String)     -- Generator function
+  -> AnimationConfig
+  -> Effect Unit  -- Completion callback
+  -> Effect TransitionId
+registerAnimatedCompound manager element datum index attrName fromValues toValues generator config onComplete = do
+  -- Evaluate all from/to values
+  let evaluatedFroms = map (\av -> evalAnimatedValue av datum index) fromValues
+  let evaluatedTos = map (\av -> evalAnimatedValue av datum index) toValues
+
+  -- Create compound spec
+  let compoundSpec =
+        { fromValues: evaluatedFroms
+        , toValues: evaluatedTos
+        , generator
+        , duration: config.duration
+        , easing: config.easing
+        , delay: config.delay
+        }
+
+  registerTransitionInternal manager element attrName (CompoundTransition compoundSpec) onComplete
+
 -- | Evaluate an AnimatedValue with datum and index
 evalAnimatedValue :: forall datum. AnimatedValue datum -> datum -> Int -> Number
 evalAnimatedValue (StaticAnimValue n) _ _ = n
@@ -253,24 +318,39 @@ tick (ElementTransitionManager ref) deltaMs = do
     -- Advance elapsed time
     let newElapsed = trans.elapsed + deltaMs
 
+    -- Get timing info based on transition type
+    let { duration, delay, easing } = case trans.transitionType of
+          SingleTransition spec -> { duration: spec.duration, delay: spec.delay, easing: spec.easing }
+          CompoundTransition spec -> { duration: spec.duration, delay: spec.delay, easing: spec.easing }
+
     -- Calculate effective elapsed (accounting for delay)
-    let effectiveElapsed = max 0.0 (newElapsed - trans.spec.delay)
+    let effectiveElapsed = max 0.0 (newElapsed - delay)
 
     -- Calculate progress
-    let rawProgress = effectiveElapsed / trans.spec.duration
+    let rawProgress = effectiveElapsed / duration
     let clampedProgress = min 1.0 (max 0.0 rawProgress)
 
     -- Apply easing
-    let easedProgress = applyEasing trans.spec.easing clampedProgress
+    let easedProgress = applyEasing easing clampedProgress
 
-    -- Interpolate value
-    let currentValue = lerp trans.spec.from trans.spec.to easedProgress
+    -- Apply value based on transition type
+    case trans.transitionType of
+      SingleTransition spec -> do
+        -- Interpolate single value
+        let currentValue = lerp spec.from spec.to easedProgress
+        setAttribute trans.element trans.attrName (show currentValue)
 
-    -- Apply to DOM
-    setAttribute trans.element trans.attrName (show currentValue)
+      CompoundTransition spec -> do
+        -- Interpolate all values and generate string
+        let interpolatedValues = Array.zipWith
+              (\from to -> lerp from to easedProgress)
+              spec.fromValues
+              spec.toValues
+        let generatedValue = spec.generator interpolatedValues
+        setAttribute trans.element trans.attrName generatedValue
 
     -- Check completion
-    let isComplete = newElapsed >= (trans.spec.duration + trans.spec.delay)
+    let isComplete = newElapsed >= (duration + delay)
 
     if isComplete then do
       -- Call completion callback

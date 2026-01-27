@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Reimagining the Spreadsheet with Functional Programming :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/functional-spreadsheets.html">
+    <meta name="description" content="Exploring spreadsheets through comonads, recursion schemes, and lenses">
+    <meta name="keywords" content="comonad, recursion schemes, lenses, spreadsheet, functional programming">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="functional-spreadsheets.html">Functional Spreadsheets</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/functional-spreadsheets.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Reimagining the Spreadsheet with Functional Programming</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>A design exploration for psd3-sheetless</em></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_insight"><a class="anchor" href="#_the_insight"></a>The Insight</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Traditional spreadsheets are secretly functional programs in disguise - they just don&#8217;t know it. Every formula is a pure function, the dependency graph is a dataflow network, and "fill down" is really <code>extend</code> from comonad theory.</p>
+</div>
+<div class="paragraph">
+<p>What if we made this explicit? What if a spreadsheet was built from the ground up on:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Comonads</strong> for contextual computation</p>
+</li>
+<li>
+<p><strong>Recursion schemes</strong> for structured folds and unfolds</p>
+</li>
+<li>
+<p><strong>Lenses</strong> for composable, bidirectional data access</p>
+</li>
+<li>
+<p><strong>Zippers</strong> for navigation and focus</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_1_the_spreadsheet_as_comonad"><a class="anchor" href="#_1_the_spreadsheet_as_comonad"></a>1. The Spreadsheet as Comonad</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A spreadsheet is a classic example of the <strong>Store comonad</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Store s a ≅ (s -&gt; a, s)
+-- A function from position to value, plus a current focus
+
+class Comonad w where
+  extract :: w a -&gt; a                    -- Get the focused value
+  extend :: (w a -&gt; b) -&gt; w a -&gt; w b     -- Apply at every position
+  duplicate :: w a -&gt; w (w a)            -- Every cell sees the whole sheet</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The key insight: <strong>a formula is a function from "the spreadsheet focused at my position" to a value</strong>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Traditional formula
+=A1 + B1
+
+-- What it really means
+\sheet -&gt; extract (moveLeft sheet) + extract (moveLeft (moveLeft sheet))
+
+-- Or more elegantly
+\sheet -&gt; sumOf (neighbors sheet)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>extend</code> operation says: "apply this formula at every cell, each seeing its own local context." This is exactly what "fill down" does!</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Fill a formula down a column
+extend (\s -&gt; extract (above s) * 1.1) sheet
+-- Every cell becomes 1.1x the cell above it</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_why_this_matters"><a class="anchor" href="#_why_this_matters"></a>Why This Matters</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Formulas become first-class functions</strong> you can compose, test, and visualize</p>
+</li>
+<li>
+<p><strong>Context is explicit</strong> - a formula can access neighbors, regions, the whole sheet</p>
+</li>
+<li>
+<p><strong>"Fill down" has a theory</strong> - it&#8217;s comonadic extend</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_2_recursion_schemes_folds_made_visible"><a class="anchor" href="#_2_recursion_schemes_folds_made_visible"></a>2. Recursion Schemes: Folds Made Visible</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Instead of hiding aggregation behind opaque functions like <code>SUM</code>, make the fold structure explicit and visualizable.</p>
+</div>
+<div class="sect2">
+<h3 id="_the_zoo_of_schemes"><a class="anchor" href="#_the_zoo_of_schemes"></a>The Zoo of Schemes</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Scheme</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Spreadsheet Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>cata</strong> (fold)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>F a → a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SUM, COUNT, MAX - consume structure to value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>ana</strong> (unfold)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>a → F a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generate sequences, date ranges, growth series</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>hylo</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>a → b</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generate then reduce (common pattern)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>para</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>F (μF, a) → a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fold that sees original - compare to previous</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>histo</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>F (Cofree F a) → a</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fold with full history - moving averages!</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>zygo</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Two folds</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Compute mean (need both sum and count)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_example_histomorphism_for_moving_average"><a class="anchor" href="#_example_histomorphism_for_moving_average"></a>Example: Histomorphism for Moving Average</h3>
+<div class="paragraph">
+<p>A histomorphism is a fold where each step can see <strong>all previous results</strong>, not just the immediate one. Perfect for moving averages:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Moving average needs history of last N values
+movingAvg :: Int -&gt; Histo [] Number -&gt; Number
+movingAvg n history =
+  let recent = take n (toList history)
+  in sum recent / length recent
+
+-- Apply to a column
+=histo (movingAvg 3) (A1:A100)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The recursion scheme makes the pattern explicit and visualizable.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_3_lenses_composable_data_access"><a class="anchor" href="#_3_lenses_composable_data_access"></a>3. Lenses: Composable Data Access</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Traditional cell references are ad-hoc string parsing (<code>"A1"</code>, <code>"Sheet2!B3:C10"</code>). Lenses give us composable, type-safe, <strong>bidirectional</strong> access.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Lenses compose with (.)
+revenue :: Lens' Company Number
+q1 :: Lens' YearData QuarterData
+amount :: Lens' QuarterData Number
+
+-- Deep access
+view (revenue . q1 . amount) companyData
+
+-- The magic: bidirectional!
+set (revenue . q1 . amount) 50000 companyData
+-- Updates flow back through the lens path</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_bidirectional_spreadsheets"><a class="anchor" href="#_bidirectional_spreadsheets"></a>Bidirectional Spreadsheets</h3>
+<div class="paragraph">
+<p>The profound implication: if your "view" is computed through lenses, <strong>editing the view updates the source</strong>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">Source Data          Lens Path              View
+┌─────────┐                               ┌─────────┐
+│ sales:  │    (companies.each.revenue)   │ [500,   │
+│  [...]  │ ──────────────────────────────│  300,   │
+│         │           ◄────────────────── │  700]   │
+└─────────┘         (edits flow back!)    └─────────┘</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Change a number in the view, it propagates back to the source.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_4_zippers_focus_and_navigation"><a class="anchor" href="#_4_zippers_focus_and_navigation"></a>4. Zippers: Focus and Navigation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A <strong>zipper</strong> is a data structure with a "focus" point and efficient local navigation. Selection in a spreadsheet is naturally a zipper.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type SheetZipper a =
+  { focus :: a
+  , left :: List a          -- cells to the left
+  , right :: List a         -- cells to the right
+  , above :: List (List a)  -- rows above
+  , below :: List (List a)  -- rows below
+  }
+
+-- Navigation is O(1)
+moveRight :: SheetZipper a -&gt; Maybe (SheetZipper a)
+moveDown :: SheetZipper a -&gt; Maybe (SheetZipper a)</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_connection_to_comonad"><a class="anchor" href="#_connection_to_comonad"></a>Connection to Comonad</h3>
+<div class="paragraph">
+<p>A zipper is a comonad! The <code>duplicate</code> operation gives you "a zipper of zippers" - every position contains the whole structure focused at that position.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">duplicate :: SheetZipper a -&gt; SheetZipper (SheetZipper a)
+-- Every cell now contains "the spreadsheet focused at that cell"
+-- This is exactly what formulas need!</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_5_the_architecture"><a class="anchor" href="#_5_the_architecture"></a>5. The Architecture</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">┌─────────────────────────────────────────────────────────────────┐
+│                         DATA SOURCES                            │
+│  ┌─────────┐    ┌─────────────┐    ┌─────────────┐             │
+│  │ Table   │    │ Unfold      │    │ External    │             │
+│  │ (data)  │    │ (generator) │    │ (API/file)  │             │
+│  └────┬────┘    └──────┬──────┘    └──────┬──────┘             │
+│       └────────────────┼───────────────────┘                    │
+│                        ▼                                        │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    EXPRESSION FOREST                     │   │
+│  │   ┌─────────┐     ┌─────────┐     ┌─────────┐          │   │
+│  │   │ map f   │────▶│ filter p│────▶│ fold +  │          │   │
+│  │   └─────────┘     └─────────┘     └─────────┘          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                        ▼                                        │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                      VIEWS                               │   │
+│  │   ┌─────────┐     ┌─────────┐     ┌─────────┐          │   │
+│  │   │ Table   │     │ Chart   │     │ Tree    │          │   │
+│  │   │ (grid)  │     │ (D3)    │     │ (AST)   │          │   │
+│  │   └─────────┘     └─────────┘     └─────────┘          │   │
+│  │        ▲ Bidirectional via lenses ▲                     │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>"Comonads for User Interfaces" - Arthur Xavier</p>
+</li>
+<li>
+<p>"Recursion Schemes" - Patrick Thomson&#8217;s blog series</p>
+</li>
+<li>
+<p>"Lenses, Folds, and Traversals" - Edward Kmett</p>
+</li>
+<li>
+<p>"The Zipper" - Gérard Huet&#8217;s original paper</p>
+</li>
+<li>
+<p>"Functional Pearl: The Essence of the Iterator Pattern" - Gibbons &amp; Oliveira</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also"><a class="anchor" href="#_see_also"></a>See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="unified-dsl.html" class="xref page">Unified Data DSL</a> - How computation and visualization unite</p>
+</li>
+<li>
+<p><a href="finally-tagless.html" class="xref page">Finally Tagless Architecture</a> - The encoding pattern</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

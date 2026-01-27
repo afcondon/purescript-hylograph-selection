@@ -1,5 +1,7 @@
 # purescript-psd3-selection
 
+[![Tree Builder Demo](../../site/lib-selection/public/demo.jpeg)](/#/tree-builder)
+
 Type-safe D3 selection and attribute library for PureScript.
 
 ## Overview

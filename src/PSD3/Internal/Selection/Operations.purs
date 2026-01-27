@@ -18,21 +18,12 @@ module PSD3.Internal.Selection.Operations
   , renderData
   , appendData
   , on
-  , renderTreeOrd
+  , renderTree
   , renderTreeKeyed
-  , renderTree  -- Deprecated: use renderTreeOrd or renderTreeKeyed
   , reselect
   , elementTypeToString
-    -- * Pure transition support
-  , TransitionContext
-  , createTransitionContext
-  , getTransitionContext
-  , withPureTransitions
-  , applyTransitionToSingleElementPure
-  , partitionAnimatedAttrs
-  , evalAnimatedValue
-  , hasAnimatedAttr
-  , renderTreeWithAnimations
+  , createElementWithNS
+  , getDocument
   ) where
 
 import Prelude hiding (append)
@@ -52,23 +43,15 @@ import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..), fst, snd)
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Ref (Ref)
-import Effect.Ref as Ref
-import Effect.Unsafe (unsafePerformEffect)
 import Effect.Class.Console (log)
 import Effect.Uncurried (mkEffectFn2)
-import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), AnimationConfig, EasingType(..))
-import PSD3.Internal.Transition.Manager as Manager
-import PSD3.Transition.Coordinator as Coordinator
+import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
 import PSD3.Internal.Behavior.FFI as BehaviorFFI
 import PSD3.Internal.Behavior.Types (Behavior(..), DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
-import PSD3.Interaction.Zoom as NativeZoom
-import PSD3.Interaction.Pointer as NativePointer
 import PSD3.Internal.Selection.Join as Join
 import PSD3.Internal.Selection.Types (ElementType(..), JoinResult(..), RenderContext(..), SBoundInherits, SBoundOwns, SEmpty, SExiting, SPending, Selection(..), SelectionImpl(..), elementContext)
 import PSD3.Internal.Transition.FFI as TransitionFFI
 import PSD3.Internal.Transition.Types (TransitionConfig)
-import PSD3.Internal.Transition.Types (Easing(..)) as TransitionTypes
 import PSD3.AST (Tree(..))
 import Partial.Unsafe (unsafePartial, unsafeCrashWith)
 import Unsafe.Coerce (unsafeCoerce)
@@ -88,71 +71,6 @@ import Web.UIEvent.MouseEvent (MouseEvent, clientX, clientY, pageX, pageY)
 -- FFI for offsetX/offsetY (not yet in purescript-web-uievents - PR candidate)
 foreign import offsetX :: MouseEvent -> Number
 foreign import offsetY :: MouseEvent -> Number
-
--- =============================================================================
--- Helper functions for pure transitions
--- =============================================================================
-
--- | Convert TransitionTypes.Easing to Attribute.EasingType
--- |
--- | These are parallel type hierarchies to avoid circular dependencies.
-transitionEasingToAnimEasing :: TransitionTypes.Easing -> EasingType
-transitionEasingToAnimEasing TransitionTypes.Linear = Linear
-transitionEasingToAnimEasing TransitionTypes.QuadIn = QuadIn
-transitionEasingToAnimEasing TransitionTypes.QuadOut = QuadOut
-transitionEasingToAnimEasing TransitionTypes.QuadInOut = QuadInOut
-transitionEasingToAnimEasing TransitionTypes.CubicIn = CubicIn
-transitionEasingToAnimEasing TransitionTypes.CubicOut = CubicOut
-transitionEasingToAnimEasing TransitionTypes.CubicInOut = CubicInOut
-transitionEasingToAnimEasing TransitionTypes.SinIn = SinIn
-transitionEasingToAnimEasing TransitionTypes.SinOut = SinOut
-transitionEasingToAnimEasing TransitionTypes.SinInOut = SinInOut
-transitionEasingToAnimEasing TransitionTypes.ExpIn = ExpIn
-transitionEasingToAnimEasing TransitionTypes.ExpOut = ExpOut
-transitionEasingToAnimEasing TransitionTypes.ExpInOut = ExpInOut
-transitionEasingToAnimEasing TransitionTypes.ElasticIn = ElasticIn
-transitionEasingToAnimEasing TransitionTypes.ElasticOut = ElasticOut
-transitionEasingToAnimEasing TransitionTypes.ElasticInOut = ElasticInOut
-transitionEasingToAnimEasing TransitionTypes.BounceIn = BounceIn
-transitionEasingToAnimEasing TransitionTypes.BounceOut = BounceOut
-transitionEasingToAnimEasing TransitionTypes.BounceInOut = BounceInOut
-transitionEasingToAnimEasing TransitionTypes.BackIn = BackIn
-transitionEasingToAnimEasing TransitionTypes.BackOut = BackOut
-transitionEasingToAnimEasing TransitionTypes.BackInOut = BackInOut
-transitionEasingToAnimEasing TransitionTypes.CircleIn = CircleIn
-transitionEasingToAnimEasing TransitionTypes.CircleOut = CircleOut
-transitionEasingToAnimEasing TransitionTypes.CircleInOut = CircleInOut
--- Fallback for any unmatched variants
-transitionEasingToAnimEasing _ = Linear
-
--- | Convert AttributeValue to Number for animation
--- |
--- | For string values, attempts to parse as number. Returns 0.0 on failure.
-attributeValueToNumber :: AttributeValue -> Number
-attributeValueToNumber (NumberValue n) = n
-attributeValueToNumber (StringValue s) = parseNumberOrZero s
-attributeValueToNumber (BooleanValue true) = 1.0
-attributeValueToNumber (BooleanValue false) = 0.0
-
--- | Parse a string as a number, returning 0.0 if parsing fails
-foreign import parseNumberOrZero :: String -> Number
-
--- | Check if a string can be parsed as a number
-foreign import isNumericString :: String -> Boolean
-
--- | Check if an AttributeValue is numeric (can be animated)
--- |
--- | NumberValue is always numeric.
--- | StringValue is numeric only if it parses as a valid number.
--- | BooleanValue could be animated as 0/1 but for simplicity we treat as non-numeric.
-isNumericAttributeValue :: AttributeValue -> Boolean
-isNumericAttributeValue (NumberValue _) = true
-isNumericAttributeValue (StringValue s) = isNumericString s
-isNumericAttributeValue (BooleanValue _) = false
-
--- =============================================================================
--- Selection operations
--- =============================================================================
 
 -- | Select a single element matching the CSS selector
 -- |
@@ -629,26 +547,17 @@ appendChildInheriting elemType attrs (Selection impl) = liftEffect do
     , document: doc
     }
 
--- | Select existing child elements, inheriting parent's data
+-- | Select child elements, inheriting parent's data
 -- |
--- | This mirrors D3's `selection.select()` behavior: for each parent element,
--- | selects the first child matching the selector and copies the parent's __data__
--- | to the child. This enables data-driven attribute updates on children.
+-- | Like D3's `selection.select()`: for each parent element, selects the first
+-- | child matching the selector and copies the parent's `__data__` to the child.
 -- |
--- | Use this when:
--- | - You have a bound selection of parents (e.g., groups with `__data__`)
--- | - You want to update child elements using the parent's data
--- | - The children were created without their own data binding
+-- | Use when you have groups with bound data and want to update their children.
 -- |
 -- | Example:
 -- | ```purescript
--- | -- Select groups that have data bound
 -- | groups <- selectAllWithData ".treemap-package" container
--- |
--- | -- Select circles within each group, inheriting parent's data
 -- | circles <- selectChildInheriting "circle" groups
--- |
--- | -- Now circles have __data__ and can be updated
 -- | setAttrs [ fill (colorByData _.topoLayer) ] circles
 -- | ```
 selectChildInheriting
@@ -662,21 +571,21 @@ selectChildInheriting selector (Selection impl) = liftEffect do
     { elements: parentElements, data: dataArray, document: doc } = unsafePartial case impl of
       BoundSelection r -> r
 
-  -- For each parent, find first matching child and copy data to it
+  -- For each parent, select the first matching child and inherit data
   results <- Array.zipWith Tuple parentElements dataArray # traverse \(Tuple parent datum) -> do
-    -- Query for first matching child within this parent
-    maybeChild <- queryFirstChild selector parent
+    let parentNode = toParentNode parent
+    maybeChild <- querySelector (QuerySelector selector) parentNode
     case maybeChild of
       Nothing -> pure Nothing
       Just child -> do
-        -- Copy parent's __data__ to child (data inheritance)
+        -- Copy parent's __data__ to child
         setElementData_ datum child
-        pure $ Just { child, datum }
+        pure $ Just (Tuple child datum)
 
   -- Filter to only successful selections
   let paired = Array.catMaybes results
-  let childElements = map _.child paired
-  let childData = map _.datum paired
+  let childElements = map fst paired
+  let childData = map snd paired
 
   pure $ Selection $ BoundSelection
     { elements: childElements
@@ -1047,13 +956,6 @@ querySelectorAllElements selector parents = do
   -- Flatten the array of arrays
   pure $ Array.concat nodeArrays
 
--- | Query first matching child element within a parent
--- | Like querySelector but for a single Element parent
-queryFirstChild :: String -> Element -> Effect (Maybe Element)
-queryFirstChild selector parent = do
-  let parentNode = toParentNode parent
-  querySelector (QuerySelector selector) parentNode
-
 -- | Convert HighlightClass to Int for FFI
 -- | Must match the constants in FFI.js: HC_PRIMARY=0, HC_RELATED=1, HC_DIMMED=2, HC_NEUTRAL=3
 highlightClassToInt :: HighlightClass -> Int
@@ -1075,17 +977,15 @@ tooltipTriggerToInt WhenRelated = 2
 -- | Used by both `on` (for Selection-based API) and `renderTree` (for TreeAPI).
 applyBehaviorToElement :: forall datum. Behavior datum -> Element -> Effect Unit
 applyBehaviorToElement (Zoom (ZoomConfig { scaleExtent: ScaleExtent scaleMin scaleMax, targetSelector })) element =
-  -- Use native zoom (no D3 dependency) instead of D3-based attachZoom_
-  void $ NativeZoom.attachZoomNative element scaleMin scaleMax targetSelector
+  void $ BehaviorFFI.attachZoom_ element scaleMin scaleMax targetSelector
 applyBehaviorToElement (Drag SimpleDrag) element =
-  -- Use native Pointer Events (no D3 dependency)
-  void $ NativePointer.attachSimpleDrag element unit
+  void $ BehaviorFFI.attachSimpleDrag_ element unit
 applyBehaviorToElement (Drag (SimulationDrag simId)) element =
-  -- Use native Pointer Events - look up simulation by ID in registry
-  void $ NativePointer.attachSimulationDragById element simId
+  -- Look up simulation by ID in the global registry
+  void $ BehaviorFFI.attachSimulationDragById_ element simId
 applyBehaviorToElement (Drag (SimulationDragNested simId)) element =
-  -- Use native Pointer Events - for nested datum structure (datum.node is the simulation node)
-  void $ NativePointer.attachSimulationDragNestedById element simId
+  -- For nested datum structure (datum.node is the simulation node)
+  void $ BehaviorFFI.attachSimulationDragNestedById_ element simId
 applyBehaviorToElement (Click handler) element =
   void $ BehaviorFFI.attachClick_ element handler
 applyBehaviorToElement (ClickWithDatum handler) element =
@@ -1196,22 +1096,18 @@ on behavior selection@(Selection impl) = do
 -- |
 -- | Apply attributes to an element
 applyAttributes :: forall datum. Element -> datum -> Int -> Array (Attribute datum) -> Effect Unit
-applyAttributes element datum index attrs = do
-  -- Debug: log first element's transform attribute
-  when (index == 0) do
-    log $ "[applyAttributes] Element 0, applying " <> show (Array.length attrs) <> " attrs"
+applyAttributes element datum index attrs =
   attrs # traverse_ \attr -> case attr of
     StaticAttr (AttributeName name) value ->
       if name == "textContent" then setTextContent_ (attributeValueToString value) element
       else Element.setAttribute name (attributeValueToString value) element
 
-    DataAttr (AttributeName name) _src f -> do
-      let val = attributeValueToString (f datum)
-      -- Debug: log transform attribute for first element
-      when (index == 0 && name == "transform") do
-        log $ "[applyAttributes] Setting transform to: " <> val
-      if name == "textContent" then setTextContent_ val element
-      else Element.setAttribute name val element
+    DataAttr (AttributeName name) _src f ->
+      let
+        val = attributeValueToString (f datum)
+      in
+        if name == "textContent" then setTextContent_ val element
+        else Element.setAttribute name val element
 
     IndexedAttr (AttributeName name) _src f ->
       let
@@ -1220,25 +1116,11 @@ applyAttributes element datum index attrs = do
         if name == "textContent" then setTextContent_ val element
         else Element.setAttribute name val element
 
-    -- For AnimatedAttr in non-transition context, just set the target value immediately
-    AnimatedAttr rec ->
-      let
-        (AttributeName name) = rec.name
-        val = show (evalAnimatedValue rec.toValue datum index)
-      in
-        if name == "textContent" then setTextContent_ val element
-        else Element.setAttribute name val element
+    AnimatedAttr _ ->
+      pure unit -- AnimatedAttr handled separately via animation system
 
-    -- For AnimatedCompound in non-transition context, generate and set the target value immediately
-    AnimatedCompound rec ->
-      let
-        (AttributeName name) = rec.name
-        -- Evaluate all toValues and generate the final string
-        vals = map (\av -> evalAnimatedValue av datum index) rec.toValues
-        val = rec.generator vals
-      in
-        if name == "textContent" then setTextContent_ val element
-        else Element.setAttribute name val element
+    AnimatedCompound _ ->
+      pure unit -- AnimatedCompound handled separately via animation system
 
 attributeValueToString :: AttributeValue -> String
 attributeValueToString (StringValue s) = s
@@ -1250,6 +1132,7 @@ elementTypeToString Circle = "circle"
 elementTypeToString Rect = "rect"
 elementTypeToString Path = "path"
 elementTypeToString Line = "line"
+elementTypeToString Polygon = "polygon"
 elementTypeToString Text = "text"
 elementTypeToString Group = "g"
 elementTypeToString SVG = "svg"
@@ -1272,6 +1155,7 @@ stringToElementType "circle" = Circle
 stringToElementType "rect" = Rect
 stringToElementType "path" = Path
 stringToElementType "line" = Line
+stringToElementType "polygon" = Polygon
 stringToElementType "text" = Text
 stringToElementType "g" = Group
 stringToElementType "svg" = SVG
@@ -1291,9 +1175,6 @@ stringToElementType _ = Group -- Default to Group for unknown types
 
 -- | FFI function to set textContent property
 foreign import setTextContent_ :: String -> Element -> Effect Unit
-
--- | FFI function to execute an effect after a delay (milliseconds)
-foreign import setTimeout_ :: Number -> Effect Unit -> Effect Unit
 
 -- ============================================================================
 -- Transition Helpers for Tree API
@@ -1335,13 +1216,11 @@ applyTransitionToElements config elementDatumPairs attrs = do
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-      -- AnimatedAttr should use the pure transition path, not D3
       AnimatedAttr _ ->
-        unsafeCrashWith "AnimatedAttr in D3 transition path - use applyTransitionToSingleElementPure instead"
+        pure unit -- AnimatedAttr handled separately via animation system
 
-      -- AnimatedCompound should use the pure transition path, not D3
       AnimatedCompound _ ->
-        unsafeCrashWith "AnimatedCompound in D3 transition path - use applyTransitionToSingleElementPure instead"
+        pure unit -- AnimatedCompound handled separately via animation system
 
 -- | Apply a transition to a single element with an explicit index
 -- | Used when elements need per-element attrs but shared stagger timing
@@ -1375,422 +1254,13 @@ applyTransitionToSingleElement config index element datum attrs = do
     IndexedAttr (AttributeName name) _src f ->
       TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-    -- AnimatedAttr should use the pure transition path, not D3
     AnimatedAttr _ ->
-      unsafeCrashWith "AnimatedAttr in D3 transition path - use applyTransitionToSingleElementPure instead"
+      pure unit -- AnimatedAttr handled separately via animation system
 
-    -- AnimatedCompound should use the pure transition path, not D3
     AnimatedCompound _ ->
-      unsafeCrashWith "AnimatedCompound in D3 transition path - use applyTransitionToSingleElementPure instead"
+      pure unit -- AnimatedCompound handled separately via animation system
 
--- | Apply a transition to a single element using pure PureScript transitions
--- |
--- | This is the pure alternative to `applyTransitionToSingleElement` that uses
--- | the ElementTransitionManager instead of D3 transitions.
--- |
--- | Apply a transition to a single element using pure PureScript transitions.
--- |
--- | ALL attributes are animated through the Manager (RAF-based interpolation).
--- | This works for SVG geometric attributes (cx, cy, r, x, y, d) unlike Web Animations API.
--- |
--- | - StaticAttr/DataAttr/IndexedAttr: animated from current value to target value
--- | - AnimatedAttr: animated from explicit from value to explicit to value
-applyTransitionToSingleElementPure
-  :: forall datum
-   . Manager.ElementTransitionManager
-  -> TransitionConfig
-  -> Int -- Explicit index for stagger calculation
-  -> Element
-  -> datum
-  -> Array (Attribute datum)
-  -> Effect Unit
-  -> Effect Unit
-applyTransitionToSingleElementPure manager config index element datum attrs onAllComplete = do
-  let Milliseconds duration = config.duration
-  let baseDelay = maybe 0.0 unwrap config.delay
-  let stagger = fromMaybe 0.0 config.staggerDelay
-  let effectiveDelay = baseDelay + (toNumber index * stagger)
-  let easing = fromMaybe Linear (transitionEasingToAnimEasing <$> config.easing)
-
-  -- Process attributes: animate numeric ones through Manager, set non-numeric immediately
-  attrs # traverse_ \attr -> case attr of
-    StaticAttr (AttributeName name) value ->
-      -- Check if value is numeric (can be animated)
-      if isNumericAttributeValue value then do
-        -- Animate from current value to target value
-        let targetValue = attributeValueToNumber value
-        let animConfig = { duration, delay: effectiveDelay, easing }
-        _ <- Manager.registerAnimatedAttr manager element datum index name
-          Nothing  -- from: read from DOM
-          (StaticAnimValue targetValue)  -- to: the target value
-          animConfig
-          onAllComplete
-        pure unit
-      else do
-        -- Non-numeric (colors, paths, etc.): set AFTER the transition completes
-        -- This ensures enter animations show the starting color before transitioning
-        let totalDelay = effectiveDelay + duration
-        setTimeout_ totalDelay $ do
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-
-    DataAttr (AttributeName name) _src f -> do
-      let value = f datum
-      -- Check if value is numeric (can be animated)
-      if isNumericAttributeValue value then do
-        -- Animate from current value to data-dependent target value
-        let targetValue = attributeValueToNumber value
-        let animConfig = { duration, delay: effectiveDelay, easing }
-        _ <- Manager.registerAnimatedAttr manager element datum index name
-          Nothing  -- from: read from DOM
-          (StaticAnimValue targetValue)  -- to: the target value
-          animConfig
-          onAllComplete
-        pure unit
-      else do
-        -- Non-numeric: set AFTER the transition completes
-        let totalDelay = effectiveDelay + duration
-        setTimeout_ totalDelay $ do
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-
-    IndexedAttr (AttributeName name) _src f -> do
-      let value = f datum index
-      -- Check if value is numeric (can be animated)
-      if isNumericAttributeValue value then do
-        -- Animate from current value to index-dependent target value
-        let targetValue = attributeValueToNumber value
-        let animConfig = { duration, delay: effectiveDelay, easing }
-        _ <- Manager.registerAnimatedAttr manager element datum index name
-          Nothing  -- from: read from DOM
-          (StaticAnimValue targetValue)  -- to: the target value
-          animConfig
-          onAllComplete
-        pure unit
-      else do
-        -- Non-numeric: set AFTER the transition completes
-        let totalDelay = effectiveDelay + duration
-        setTimeout_ totalDelay $ do
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-
-    AnimatedAttr rec -> do
-      let (AttributeName name) = rec.name
-      -- Use explicit from/to values from the AnimatedAttr
-      -- AnimatedAttr is always numeric by design
-      let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
-      _ <- Manager.registerAnimatedAttr manager element datum index name rec.fromValue rec.toValue animConfig onAllComplete
-      pure unit
-
-    AnimatedCompound rec -> do
-      let (AttributeName name) = rec.name
-      -- Use compound transition for paths and other generated values
-      let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
-      _ <- Manager.registerAnimatedCompound manager element datum index name rec.fromValues rec.toValues rec.generator animConfig onAllComplete
-      pure unit
-
--- | Partition attributes into animated and non-animated
-partitionAnimatedAttrs :: forall datum. Array (Attribute datum) -> { animated :: Array (Attribute datum), nonAnimated :: Array (Attribute datum) }
-partitionAnimatedAttrs attrs =
-  let
-    isAnimated (AnimatedAttr _) = true
-    isAnimated (AnimatedCompound _) = true
-    isAnimated _ = false
-    animated = Array.filter isAnimated attrs
-    nonAnimated = Array.filter (not <<< isAnimated) attrs
-  in
-    { animated, nonAnimated }
-
--- | Evaluate an AnimatedValue to get the actual number
-evalAnimatedValue :: forall datum. AnimatedValue datum -> datum -> Int -> Number
-evalAnimatedValue (StaticAnimValue n) _ _ = n
-evalAnimatedValue (DataAnimValue f) d _ = f d
-evalAnimatedValue (IndexedAnimValue f) d i = f d i
-
--- | Check if any attribute in the array is an AnimatedAttr or AnimatedCompound
-hasAnimatedAttr :: forall datum. Array (Attribute datum) -> Boolean
-hasAnimatedAttr = Array.any isAnimated
-  where
-    isAnimated (AnimatedAttr _) = true
-    isAnimated (AnimatedCompound _) = true
-    isAnimated _ = false
-
--- =============================================================================
--- TransitionContext for Pure PureScript Animations
--- =============================================================================
-
--- | Context required for pure PureScript animations with AnimatedAttr
--- |
--- | Contains the transition manager and coordinator needed to drive animations
--- | without D3's transition system.
--- |
--- | Usage:
--- | ```purescript
--- | -- Create context once per animation session
--- | ctx <- createTransitionContext
--- |
--- | -- Use with renderTreeWithAnimations
--- | renderTreeWithAnimations ctx parentSel tree
--- |
--- | -- Start the animation loop
--- | Coordinator.start ctx.coordinator
--- | ```
-type TransitionContext =
-  { manager :: Manager.ElementTransitionManager
-  , coordinator :: Coordinator.Coordinator
-  , registeredRef :: Ref Boolean  -- Track if Manager is registered with Coordinator
-  }
-
--- | Module-level ref for active transition context
--- |
--- | This is set by `renderTreeWithAnimations` before rendering and cleared after.
--- | Used by UpdateJoin handlers to access the context for AnimatedAttr transitions.
--- |
--- | NOTE: This is a safe use of unsafePerformEffect because we're just creating
--- | a mutable ref that's used to thread context through the rendering process.
-currentTransitionContext :: Ref (Maybe TransitionContext)
-currentTransitionContext = unsafePerformEffect $ Ref.new Nothing
-
--- | Get the current transition context (if any)
--- |
--- | Returns Nothing if not inside a `renderTreeWithAnimations` call.
-getTransitionContext :: Effect (Maybe TransitionContext)
-getTransitionContext = Ref.read currentTransitionContext
-
--- | Create a new transition context
--- |
--- | Creates a Manager and Coordinator that can be used for pure PureScript transitions.
--- | The Coordinator handles the RAF loop, and the Manager tracks per-element transitions.
-createTransitionContext :: Effect TransitionContext
-createTransitionContext = do
-  manager <- Manager.create
-  coordinator <- Coordinator.create
-  registeredRef <- Ref.new false
-  pure { manager, coordinator, registeredRef }
-
--- | Ensure the Manager is registered with the Coordinator exactly once
--- |
--- | This prevents multiple registrations from causing the Manager to tick
--- | multiple times per frame (which would cause transitions to run too fast).
-ensureManagerRegistered :: TransitionContext -> Effect Unit
-ensureManagerRegistered ctx = do
-  alreadyRegistered <- Ref.read ctx.registeredRef
-  unless alreadyRegistered do
-    _ <- Coordinator.register ctx.coordinator
-      { tick: Manager.toCoordinatorConsumer ctx.manager
-      , onComplete: pure unit
-      }
-    Coordinator.start ctx.coordinator
-    Ref.write true ctx.registeredRef
-
--- | Run an Effect with pure transitions enabled
--- |
--- | This sets up a TransitionContext before running the action, allowing
--- | `withTransition`, `withTransitionStaggered`, and similar functions to use
--- | pure PureScript transitions instead of D3 transitions.
--- |
--- | Example:
--- | ```purescript
--- | withPureTransitions do
--- |   -- All withTransition calls here use pure PS transitions
--- |   animateFade selection 0.5
--- |   animateMove selection 200.0
--- | ```
--- |
--- | Note: The context is cleared after the action completes. If transitions are
--- | still running, the coordinator continues until they complete.
-withPureTransitions :: forall a. Effect a -> Effect a
-withPureTransitions action = do
-  -- Create or reuse existing context
-  existingCtx <- Ref.read currentTransitionContext
-  ctx <- case existingCtx of
-    Just c -> pure c
-    Nothing -> createTransitionContext
-
-  -- Set context
-  Ref.write (Just ctx) currentTransitionContext
-
-  -- Run action
-  result <- action
-
-  -- Ensure Manager is registered exactly once and coordinator is running
-  ensureManagerRegistered ctx
-
-  -- Clear context (coordinator keeps running until transitions complete)
-  Ref.write Nothing currentTransitionContext
-
-  pure result
-
--- | Apply a transition to a single element, auto-selecting D3 or pure path
--- |
--- | - If context is available: ALWAYS use pure path (Web Animations API cannot animate SVG attributes)
--- | - If attrs contain AnimatedAttr AND no context: crash with helpful message
--- | - If no context and no AnimatedAttr: use D3 FFI path (fallback)
-applyTransitionAuto
-  :: forall datum
-   . TransitionConfig
-  -> Int -- Explicit index for stagger calculation
-  -> Element
-  -> datum
-  -> Array (Attribute datum)
-  -> Effect Unit
-applyTransitionAuto config index element datum attrs = do
-  maybeCtx <- getTransitionContext
-  case maybeCtx of
-    Just ctx -> do
-      -- ALWAYS use pure transition path when context is available
-      -- Web Animations API cannot animate SVG geometric attributes (cx, cy, r, x, y, d, etc.)
-      -- The pure Manager-based path uses RAF and direct attribute setting which works for all SVG attrs
-      applyTransitionToSingleElementPure ctx.manager config index element datum attrs (pure unit)
-      -- Ensure Manager is registered exactly once and coordinator is running
-      ensureManagerRegistered ctx
-    Nothing | hasAnimatedAttr attrs ->
-      -- AnimatedAttr requires context - crash with helpful message
-      unsafeCrashWith "AnimatedAttr used without TransitionContext. Use renderTreeWithAnimations instead of renderTree."
-    Nothing ->
-      -- No context and no AnimatedAttr, use D3 FFI path (fallback for legacy code)
-      applyTransitionToSingleElement config index element datum attrs
-
--- | Apply an exit transition, auto-selecting D3 or pure path
--- |
--- | - If context is available: ALWAYS use pure path (Web Animations API cannot animate SVG attributes)
--- | - If attrs contain AnimatedAttr AND no context: crash with helpful message
--- | - If no context and no AnimatedAttr: use D3 FFI path (fallback)
-applyExitTransitionAuto
-  :: forall datum
-   . TransitionConfig
-  -> Array (Tuple Element datum)
-  -> Array (Attribute datum)
-  -> Effect Unit
-applyExitTransitionAuto config elementDatumPairs attrs = do
-  maybeCtx <- getTransitionContext
-  case maybeCtx of
-    Just ctx -> do
-      -- ALWAYS use pure transition path when context is available
-      -- Web Animations API cannot animate SVG geometric attributes
-      applyExitTransitionPure ctx.manager config elementDatumPairs attrs
-      -- Ensure Manager is registered exactly once and coordinator is running
-      ensureManagerRegistered ctx
-    Nothing | hasAnimatedAttr attrs ->
-      -- AnimatedAttr requires context - crash with helpful message
-      unsafeCrashWith "AnimatedAttr in exit transition requires TransitionContext. Use renderTreeWithAnimations instead of renderTree."
-    Nothing ->
-      -- No context and no AnimatedAttr, use D3 FFI path (fallback for legacy code)
-      applyExitTransitionToElements config elementDatumPairs attrs
-
--- | Apply exit transition using pure PureScript transitions
--- |
--- | Numeric attributes are animated through the Manager, non-numeric are set immediately.
--- | Element is removed after all animations complete.
--- | This works for SVG geometric attributes unlike Web Animations API.
-applyExitTransitionPure
-  :: forall datum
-   . Manager.ElementTransitionManager
-  -> TransitionConfig
-  -> Array (Tuple Element datum)
-  -> Array (Attribute datum)
-  -> Effect Unit
-applyExitTransitionPure manager config elementDatumPairs attrs = do
-  let Milliseconds duration = config.duration
-  let baseDelay = maybe 0.0 unwrap config.delay
-  let stagger = fromMaybe 0.0 config.staggerDelay
-  let easing = fromMaybe Linear (transitionEasingToAnimEasing <$> config.easing)
-
-  elementDatumPairs # traverseWithIndex_ \index (Tuple element datum) -> do
-    let effectiveDelay = baseDelay + (toNumber index * stagger)
-
-    -- Track how many attrs to process (to know when all complete)
-    let attrCount = Array.length attrs
-    completedRef <- Ref.new 0
-
-    -- Helper to remove element from DOM after all animations complete
-    let removeElement = do
-          maybeParent <- Node.parentNode (Element.toNode element)
-          case maybeParent of
-            Just parent -> void $ Node.removeChild (Element.toNode element) parent
-            Nothing -> pure unit
-
-    -- Callback for when a single attr animation completes
-    let onAttrComplete = do
-          completed <- Ref.modify (_ + 1) completedRef
-          when (completed >= attrCount) removeElement
-
-    -- If no attrs, remove immediately
-    when (attrCount == 0) removeElement
-
-    -- Process attributes: animate numeric ones, set non-numeric immediately
-    attrs # traverse_ \attr -> case attr of
-      StaticAttr (AttributeName name) value ->
-        if isNumericAttributeValue value then do
-          let targetValue = attributeValueToNumber value
-          let animConfig = { duration, delay: effectiveDelay, easing }
-          _ <- Manager.registerAnimatedAttr manager element datum index name
-            Nothing  -- from: read from DOM
-            (StaticAnimValue targetValue)
-            animConfig
-            onAttrComplete
-          pure unit
-        else do
-          -- Non-numeric: set immediately, count as complete
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-          onAttrComplete
-
-      DataAttr (AttributeName name) _src f -> do
-        let value = f datum
-        if isNumericAttributeValue value then do
-          let targetValue = attributeValueToNumber value
-          let animConfig = { duration, delay: effectiveDelay, easing }
-          _ <- Manager.registerAnimatedAttr manager element datum index name
-            Nothing  -- from: read from DOM
-            (StaticAnimValue targetValue)
-            animConfig
-            onAttrComplete
-          pure unit
-        else do
-          -- Non-numeric: set immediately, count as complete
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-          onAttrComplete
-
-      IndexedAttr (AttributeName name) _src f -> do
-        let value = f datum index
-        if isNumericAttributeValue value then do
-          let targetValue = attributeValueToNumber value
-          let animConfig = { duration, delay: effectiveDelay, easing }
-          _ <- Manager.registerAnimatedAttr manager element datum index name
-            Nothing  -- from: read from DOM
-            (StaticAnimValue targetValue)
-            animConfig
-            onAttrComplete
-          pure unit
-        else do
-          -- Non-numeric: set immediately, count as complete
-          if name == "textContent"
-            then setTextContent_ (attributeValueToString value) element
-            else Element.setAttribute name (attributeValueToString value) element
-          onAttrComplete
-
-      AnimatedAttr rec -> do
-        let (AttributeName name) = rec.name
-        -- AnimatedAttr is always numeric by design
-        let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
-        _ <- Manager.registerAnimatedAttr manager element datum index name rec.fromValue rec.toValue animConfig onAttrComplete
-        pure unit
-
-      AnimatedCompound rec -> do
-        let (AttributeName name) = rec.name
-        -- Use compound transition for paths and other generated values
-        let animConfig = rec.config { delay = rec.config.delay + effectiveDelay }
-        _ <- Manager.registerAnimatedCompound manager element datum index name rec.fromValues rec.toValues rec.generator animConfig onAttrComplete
-        pure unit
-
--- | Apply a transition with removal to an array of elements (D3 path)
+-- | Apply a transition with removal to an array of elements
 -- | Used for exit phase - elements animate out then are removed from DOM
 -- |
 -- | Supports staggered delays: if config.staggerDelay is set, each element's
@@ -1826,13 +1296,11 @@ applyExitTransitionToElements config elementDatumPairs attrs = do
       IndexedAttr (AttributeName name) _src f ->
         TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-      -- AnimatedAttr should use the pure transition path, not D3
       AnimatedAttr _ ->
-        unsafeCrashWith "AnimatedAttr in D3 exit transition path - use pure transition path instead"
+        pure unit -- AnimatedAttr handled separately via animation system
 
-      -- AnimatedCompound should use the pure transition path, not D3
       AnimatedCompound _ ->
-        unsafeCrashWith "AnimatedCompound in D3 exit transition path - use pure transition path instead"
+        pure unit -- AnimatedCompound handled separately via animation system
 
     -- Schedule removal after transition completes
     TransitionFFI.transitionRemove_ transition
@@ -2123,7 +1591,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
       case exitBehavior.transition of
         Just transConfig -> do
           let pairs = getExitingElementDatumPairs exitSel
-          liftEffect $ applyExitTransitionAuto transConfig pairs exitBehavior.attrs
+          liftEffect $ applyExitTransitionToElements transConfig pairs exitBehavior.attrs
         Nothing -> do
           -- No transition - apply attrs immediately, then remove
           _ <- setAttrsExit exitBehavior.attrs exitSel
@@ -2171,7 +1639,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
               finalAttrs = case joinSpec.template datum of
                 Node nodeSpec -> nodeSpec.attrs
                 _ -> [] -- Non-Node templates don't have attrs
-            applyTransitionAuto transConfig index element datum finalAttrs
+            applyTransitionToSingleElement transConfig index element datum finalAttrs
         Nothing -> pure unit
 
       pure rendered
@@ -2195,7 +1663,7 @@ renderNodeHelper parentSel (UpdateJoin joinSpec) = do
           let pairs = getBoundElementDatumPairs updateSel
           -- Use traverseWithIndex_ to get proper stagger index
           liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-            applyTransitionAuto transConfig index element datum updateBehavior.attrs
+            applyTransitionToSingleElement transConfig index element datum updateBehavior.attrs
           -- Just return the existing elements - don't re-render and overwrite
           pure $ getElementsFromBoundSelection updateSel
         Nothing -> do
@@ -2300,7 +1768,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
       case (unsafeCoerce exitBehavior).transition of
         Just transConfig -> do
           let pairs = getExitingElementDatumPairs exitSel
-          liftEffect $ applyExitTransitionAuto transConfig pairs (unsafeCoerce exitBehavior.attrs)
+          liftEffect $ applyExitTransitionToElements transConfig pairs (unsafeCoerce exitBehavior.attrs)
         Nothing -> do
           -- No transition - apply attrs immediately, then remove
           _ <- setAttrsExit (unsafeCoerce exitBehavior.attrs) exitSel
@@ -2351,7 +1819,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
               finalAttrs = case (unsafeCoerce joinSpec.template) datum of
                 Node nodeSpec -> nodeSpec.attrs
                 _ -> []
-            applyTransitionAuto transConfig index element datum finalAttrs
+            applyTransitionToSingleElement transConfig index element datum finalAttrs
         Nothing -> pure unit
 
       pure rendered
@@ -2368,7 +1836,7 @@ renderNodeHelper parentSel (UpdateNestedJoin joinSpec) = do
           -- because that would immediately set attrs, overwriting the transition's start values.
           let pairs = getBoundElementDatumPairs updateSel
           liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-            applyTransitionAuto transConfig index element datum (unsafeCoerce updateBehavior.attrs)
+            applyTransitionToSingleElement transConfig index element datum (unsafeCoerce updateBehavior.attrs)
           -- Just return the existing elements - don't re-render and overwrite
           pure $ getElementsFromBoundSelection updateSel
         Nothing -> do
@@ -2591,42 +2059,6 @@ renderTemplatesForBoundSelection templateFn boundSel = do
     )
     dataArray
 
--- | Keyed version of renderTemplatesForBoundSelection (no Ord constraint)
--- |
--- | Updates existing elements in a bound selection with their templates.
--- | Used for UPDATE handling in keyed joins.
-renderTemplatesForBoundSelectionKeyed
-  :: forall datum parent
-   . (datum -> Tree datum) -- Template function
-  -> Selection SBoundOwns parent datum -- Bound selection from join (update set)
-  -> Effect (Array Element)
-renderTemplatesForBoundSelectionKeyed templateFn boundSel = do
-  -- Extract elements and data from the bound selection
-  let Selection impl = boundSel
-  let
-    { elements, data: dataArray, document: doc } = unsafePartial case impl of
-      BoundSelection rec -> rec
-
-  -- Debug: log how many elements we're updating
-  when (Array.length dataArray > 0) do
-    log $ "[renderTemplatesForBoundSelectionKeyed] Updating " <> show (Array.length dataArray) <> " elements"
-
-  -- For each (element, datum) pair, update the element based on template
-  traverseWithIndex
-    ( \idx datum -> do
-        case Array.index elements idx of
-          Nothing -> unsafeCrashWith "renderTemplatesForBoundSelectionKeyed: index out of bounds"
-          Just element -> do
-            -- Build the template tree for this datum
-            let tree = templateFn datum
-
-            -- Update the element's attributes based on the template
-            _ <- updateElementFromTree element datum idx tree doc
-
-            pure element
-    )
-    dataArray
-
 -- | Helper: Update a single element's attributes from a tree template
 updateElementFromTree :: forall datum. Element -> datum -> Int -> Tree datum -> Document -> Effect Unit
 updateElementFromTree element datum index tree doc = do
@@ -2635,16 +2067,9 @@ updateElementFromTree element datum index tree doc = do
 
   case tree of
     Node nodeSpec -> do
-      -- Debug: log first element update
-      when (index == 0) do
-        log $ "[updateElementFromTree] Updating element 0, attrs count: " <> show (Array.length nodeSpec.attrs)
       -- Apply each attribute from the template to the element
       applyAttributes element datum index nodeSpec.attrs
-    _ -> do
-      -- Debug: log if we hit the non-Node case
-      when (index == 0) do
-        log "[updateElementFromTree] Tree is NOT a Node - skipping attr update"
-      pure unit
+    _ -> pure unit -- For joins/groups, we don't update attributes directly
 
 -- | Helper: Render children from a template function for each datum in a bound selection
 -- |
@@ -2751,500 +2176,51 @@ appendChildrenFromNestedTemplate decomposer templateFn boundSel = do
   -- Combine all the child selection maps
   pure $ Array.foldl Map.union Map.empty childMaps
 
--- | Render a declarative tree structure (Ord-based identity matching)
+-- | Render a declarative tree structure
 -- |
--- | Use this for trees containing `Join` or `NestedJoin` which need Ord for
--- | element identity matching. Also use for `UpdateJoin` without `keyFn`.
--- |
--- | For trees using only `UpdateJoin`/`UpdateNestedJoin` with key functions,
--- | prefer `renderTreeKeyed` which doesn't require the Ord constraint.
-renderTreeOrd
+-- | Walks the tree, creates DOM elements, and returns a map of named selections.
+-- | This is the core implementation of the declarative API.
+renderTree
   :: forall parent parentDatum datum
-   . Ord datum -- Needed for Eq-based data joins
+   . Ord datum -- Needed for data joins
   => Selection SEmpty parent parentDatum
   -> Tree datum
   -> Effect (Map String (Selection SBoundOwns Element datum))
-renderTreeOrd parent tree = do
+renderTree parent tree = do
   -- Use a State-like pattern to accumulate named selections
   -- Returns (element created, map of named selections in subtree)
   Tuple _ selectionsMap <- renderNodeHelper parent tree
   pure selectionsMap
 
--- | Deprecated: use `renderTreeOrd` or `renderTreeKeyed` explicitly
+-- | Render a tree using key functions from UpdateJoin instead of Ord constraint
 -- |
--- | This alias is kept for backward compatibility. Prefer the explicit variants.
-renderTree
-  :: forall parent parentDatum datum
-   . Ord datum
-  => Selection SEmpty parent parentDatum
-  -> Tree datum
-  -> Effect (Map String (Selection SBoundOwns Element datum))
-renderTree = renderTreeOrd
-
--- | Render a declarative tree structure with pure PureScript animation support
+-- | This is for cases where the datum type doesn't have Ord, but UpdateJoin
+-- | provides a keyFn for identity matching. The keyFn in the AST handles keying.
 -- |
--- | This is the animation-aware version of `renderTree`. Use this when your tree
--- | contains `AnimatedAttr` attributes that need the pure PureScript transition system.
--- |
--- | The provided TransitionContext is used to:
--- | - Register animated transitions with the ElementTransitionManager
--- | - Drive animations via the Coordinator's RAF loop
--- |
--- | Usage:
--- | ```purescript
--- | -- Create context once
--- | manager <- Manager.create
--- | coordinator <- Coordinator.create
--- | let ctx = { manager, coordinator }
--- |
--- | -- Render with animations
--- | selections <- renderTreeWithAnimations ctx parentSel myTree
--- |
--- | -- Animations are automatically started when AnimatedAttr is encountered
--- | -- The coordinator handles the RAF loop
--- | ```
--- |
--- | Note: If you use `renderTree` (without context) and your tree contains
--- | `AnimatedAttr`, the rendering will crash with a helpful error message
--- | telling you to use `renderTreeWithAnimations` instead.
-renderTreeWithAnimations
-  :: forall parent parentDatum datum
-   . Ord datum
-  => TransitionContext
-  -> Selection SEmpty parent parentDatum
-  -> Tree datum
-  -> Effect (Map String (Selection SBoundOwns Element datum))
-renderTreeWithAnimations ctx parent tree = do
-  -- Set context for the duration of rendering
-  Ref.write (Just ctx) currentTransitionContext
-  -- Render the tree (AnimatedAttr will use pure path via applyTransitionAuto)
-  result <- renderTreeOrd parent tree
-  -- Clear context after rendering
-  Ref.write Nothing currentTransitionContext
-  pure result
-
--- =============================================================================
--- Keyed Rendering (No Ord constraint)
--- =============================================================================
-
--- | Render a declarative tree structure (key-based identity matching)
--- |
--- | Use this for trees containing only `UpdateJoin` and `UpdateNestedJoin`
--- | which use key functions for element identity matching. This does NOT
--- | require an `Ord datum` constraint.
--- |
--- | **RUNTIME ERRORS**: This function will crash at runtime if the tree contains:
--- | - `Join` (use `renderTreeOrd` instead)
--- | - `NestedJoin` (use `renderTreeOrd` instead)
--- | - `UpdateJoin` with `keyFn: Nothing` (provide a keyFn or use `renderTreeOrd`)
--- |
--- | This is the appropriate choice for force simulations where `SimulationNode r`
--- | is an extensible record that can't have `Ord` derived.
+-- | Note: Uses unsafeCoerce to bypass the Ord constraint. This is safe when
+-- | the tree uses UpdateJoin with a keyFn, as that's what determines identity.
 renderTreeKeyed
   :: forall parent parentDatum datum
    . Selection SEmpty parent parentDatum
   -> Tree datum
   -> Effect (Map String (Selection SBoundOwns Element datum))
 renderTreeKeyed parent tree = do
-  Tuple _ selectionsMap <- renderNodeHelperKeyed parent tree
-  pure selectionsMap
+  -- Use a wrapper that provides Ord instance via pointer equality
+  -- The actual keying uses keyFn from UpdateJoin, so Ord is never actually used
+  let wrappedTree = unsafeCoerce tree :: Tree OrdWrapper
+  let wrappedParent = unsafeCoerce parent :: Selection SEmpty parent OrdWrapper
+  result <- renderTree wrappedParent wrappedTree
+  pure $ unsafeCoerce result
 
--- | Helper: Render a single node without Ord constraint (keyed joins only)
--- |
--- | This is the non-Ord version of renderNodeHelper. It supports:
--- | - Node (element creation)
--- | - UpdateJoin with keyFn (keyed data join)
--- | - UpdateNestedJoin (always uses key-based join)
--- | - LocalCoordSpace (recursive)
--- | - ConditionalRender (recursive)
--- |
--- | It does NOT support (will crash):
--- | - Join (requires Ord for Eq-based matching)
--- | - NestedJoin (requires Ord for Eq-based matching)
--- | - UpdateJoin without keyFn (requires Ord fallback)
-renderNodeHelperKeyed
-  :: forall p pd d
-   . Selection SEmpty p pd
-  -> Tree d
-  -> Effect (Tuple Element (Map String (Selection SBoundOwns Element d)))
--- For Node, delegate to renderNodeHelperWithDatumKeyed with Nothing and index 0
-renderNodeHelperKeyed parentSel (Node node) = renderNodeHelperWithDatumKeyed parentSel (Node node) Nothing 0
+-- | Internal wrapper that provides Ord instance for renderTreeKeyed
+-- | The Ord instance is never actually used since UpdateJoin has keyFn
+data OrdWrapper
 
--- Join requires Ord - crash with helpful message
-renderNodeHelperKeyed _ (Join joinSpec) =
-  unsafeCrashWith $ "renderTreeKeyed: Join '" <> joinSpec.name <> "' requires Ord-based identity matching. Use renderTreeOrd instead, or convert to UpdateJoin with a keyFn."
+instance eqOrdWrapper :: Eq OrdWrapper where
+  eq _ _ = true
 
--- NestedJoin requires Ord - crash with helpful message
-renderNodeHelperKeyed _ (NestedJoin joinSpec) =
-  unsafeCrashWith $ "renderTreeKeyed: NestedJoin '" <> joinSpec.name <> "' requires Ord-based identity matching. Use renderTreeOrd instead, or convert to UpdateNestedJoin."
-
--- UpdateJoin: only works if keyFn is provided
-renderNodeHelperKeyed parentSel (UpdateJoin joinSpec) = do
-  case joinSpec.keyFn of
-    Nothing ->
-      unsafeCrashWith $ "renderTreeKeyed: UpdateJoin '" <> joinSpec.name <> "' has keyFn: Nothing. Provide a keyFn or use renderTreeOrd for Eq-based matching."
-    Just keyFn -> do
-      -- Use keyed join - doesn't need Ord datum
-      JoinResult { enter: enterSel, update: updateSel, exit: exitSel } <-
-        joinDataWithKey joinSpec.joinData keyFn joinSpec.key parentSel
-
-      -- Log join results
-      let Selection enterImpl = enterSel
-      let Selection updateImpl = updateSel
-      let Selection exitImpl = exitSel
-      liftEffect $ do
-        let enterCount = case enterImpl of
-              PendingSelection rec -> Array.length rec.pendingData
-              _ -> 0
-        let updateCount = case updateImpl of
-              BoundSelection rec -> Array.length rec.data
-              _ -> 0
-        let exitCount = case exitImpl of
-              BoundSelection rec -> Array.length rec.data
-              ExitingSelection rec -> Array.length rec.data
-              _ -> 0
-        log $ "Tree API UpdateJoin (keyed) '" <> joinSpec.name <> "': enter=" <> show enterCount <> ", update=" <> show updateCount <> ", exit=" <> show exitCount
-
-      -- Handle EXIT with behavior
-      case joinSpec.behaviors.exit of
-        Just exitBehavior -> do
-          case exitBehavior.transition of
-            Just transConfig -> do
-              let pairs = getExitingElementDatumPairs exitSel
-              liftEffect $ applyExitTransitionAuto transConfig pairs exitBehavior.attrs
-            Nothing -> do
-              _ <- setAttrsExit exitBehavior.attrs exitSel
-              _ <- remove exitSel
-              pure unit
-        Nothing -> do
-          _ <- remove exitSel
-          pure unit
-
-      -- Handle ENTER with behavior
-      enterElementsAndMaps <- case joinSpec.behaviors.enter of
-        Just enterBehavior -> do
-          -- Modify template to include enter attrs
-          let modifiedTemplate d = case joinSpec.template d of
-                Node nodeSpec -> Node nodeSpec { attrs = nodeSpec.attrs <> enterBehavior.attrs }
-                other -> other
-          -- Render with modified template
-          rendered <- renderTemplatesForPendingSelectionKeyed modifiedTemplate enterSel
-          -- Apply enter transition if present
-          case enterBehavior.transition of
-            Just transConfig -> do
-              let enterElements = map fst rendered
-              let Selection pendImpl = enterSel
-              let pendingData = unsafePartial case pendImpl of
-                    PendingSelection rec -> rec.pendingData
-              let pairs = Array.zipWith Tuple enterElements pendingData
-              liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) -> do
-                let finalAttrs = case joinSpec.template datum of
-                      Node nodeSpec -> nodeSpec.attrs
-                      _ -> []
-                applyTransitionAuto transConfig index element datum finalAttrs
-            Nothing -> pure unit
-          pure rendered
-        Nothing ->
-          renderTemplatesForPendingSelectionKeyed joinSpec.template enterSel
-
-      -- Handle UPDATE with behavior (collect update elements like the original)
-      updateElements <- case joinSpec.behaviors.update of
-        Just updateBehavior -> do
-          case updateBehavior.transition of
-            Just transConfig -> do
-              let pairs = getBoundElementDatumPairs updateSel
-              liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-                applyTransitionAuto transConfig index element datum updateBehavior.attrs
-              -- Return existing elements, don't re-render
-              pure $ getElementsFromBoundSelection updateSel
-            Nothing -> do
-              _ <- setAttrs updateBehavior.attrs updateSel
-              -- Re-render with template
-              renderTemplatesForBoundSelectionKeyed joinSpec.template updateSel
-        Nothing ->
-          renderTemplatesForBoundSelectionKeyed joinSpec.template updateSel
-
-      -- Combine enter and update elements
-      let enterElements = map fst enterElementsAndMaps
-      let enterMaps = map snd enterElementsAndMaps
-      let allElements = enterElements <> updateElements
-      let combinedChildMap = Array.foldl Map.union Map.empty enterMaps
-
-      -- Get data and document from enter or update selection
-      let
-        doc = unsafePartial case enterImpl of
-          PendingSelection rec -> rec.document
-          _ -> case updateImpl of
-            BoundSelection rec -> rec.document
-
-      let
-        allData = unsafePartial case enterImpl of
-          PendingSelection rec -> rec.pendingData
-          _ -> []
-      let
-        updateData = unsafePartial case updateImpl of
-          BoundSelection rec -> rec.data
-          _ -> []
-
-      -- Create bound selection from all elements (enter + update)
-      let boundSel = Selection $ BoundSelection
-            { elements: allElements
-            , data: allData <> updateData
-            , indices: Just (Array.range 0 (Array.length allElements - 1))
-            , document: doc
-            }
-
-      -- Add the join's collection to the selections map
-      let selectionsMap = Map.insert joinSpec.name (unsafeCoerce boundSel) combinedChildMap
-
-      -- Get first element for return value (or dummy if DOM was removed during navigation)
-      firstElement <- case Array.head allElements of
-        Just el -> pure el
-        Nothing -> createElementWithNS Group doc
-
-      pure $ Tuple firstElement selectionsMap
-
--- UpdateNestedJoin: always uses keyed join (via jsonStringify_)
-renderNodeHelperKeyed parentSel (UpdateNestedJoin joinSpec) = do
-  -- Decompose outer data into inner data
-  let innerData = join $ map (unsafeCoerce joinSpec.decompose) joinSpec.joinData
-
-  -- Perform keyed data join on the inner data
-  JoinResult { enter: enterSel, update: updateSel, exit: exitSel } <-
-    joinDataWithKey innerData jsonStringify_ joinSpec.key parentSel
-
-  -- Capture selection impls for later use
-  let Selection enterImpl = enterSel
-  let Selection updateImpl = updateSel
-
-  -- Handle EXIT
-  case joinSpec.behaviors.exit of
-    Just exitBehavior -> do
-      case (unsafeCoerce exitBehavior).transition of
-        Just transConfig -> do
-          let pairs = getExitingElementDatumPairs exitSel
-          liftEffect $ applyExitTransitionAuto transConfig pairs (unsafeCoerce exitBehavior.attrs)
-        Nothing -> do
-          _ <- setAttrsExit (unsafeCoerce exitBehavior.attrs) exitSel
-          _ <- remove exitSel
-          pure unit
-    Nothing -> do
-      _ <- remove exitSel
-      pure unit
-
-  -- Handle ENTER
-  enterElementsAndMaps <- case joinSpec.behaviors.enter of
-    Just enterBehavior -> do
-      -- Modify template to include enter attrs
-      let modifiedTemplate d = case (unsafeCoerce joinSpec.template) d of
-            Node nodeSpec -> Node nodeSpec { attrs = nodeSpec.attrs <> (unsafeCoerce enterBehavior.attrs) }
-            other -> other
-      -- Render with modified template
-      rendered <- renderTemplatesForPendingSelectionKeyed modifiedTemplate enterSel
-      -- Apply enter transition if present
-      case (unsafeCoerce enterBehavior).transition of
-        Just transConfig -> do
-          let enterElements = map fst rendered
-          let Selection pendImpl = enterSel
-          let pendingData = unsafePartial case pendImpl of
-                PendingSelection rec -> rec.pendingData
-          let pairs = Array.zipWith Tuple enterElements pendingData
-          liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) -> do
-            let finalAttrs = case (unsafeCoerce joinSpec.template) datum of
-                  Node nodeSpec -> nodeSpec.attrs
-                  _ -> []
-            applyTransitionAuto transConfig index element datum finalAttrs
-        Nothing -> pure unit
-      pure rendered
-    Nothing ->
-      renderTemplatesForPendingSelectionKeyed (unsafeCoerce joinSpec.template) enterSel
-
-  -- Handle UPDATE (collect update elements like the original)
-  updateElements <- case joinSpec.behaviors.update of
-    Just updateBehavior -> do
-      case (unsafeCoerce updateBehavior).transition of
-        Just transConfig -> do
-          let pairs = getBoundElementDatumPairs updateSel
-          liftEffect $ pairs # traverseWithIndex_ \index (Tuple element datum) ->
-            applyTransitionAuto transConfig index element datum (unsafeCoerce updateBehavior.attrs)
-          -- Return existing elements, don't re-render
-          pure $ getElementsFromBoundSelection updateSel
-        Nothing -> do
-          _ <- setAttrs (unsafeCoerce updateBehavior.attrs) updateSel
-          -- Re-render with template
-          renderTemplatesForBoundSelectionKeyed (unsafeCoerce joinSpec.template) updateSel
-    Nothing ->
-      renderTemplatesForBoundSelectionKeyed (unsafeCoerce joinSpec.template) updateSel
-
-  -- Combine enter and update elements
-  let enterElements = map fst enterElementsAndMaps
-  let enterMaps = map snd enterElementsAndMaps
-  let allElements = enterElements <> updateElements
-  let combinedChildMap = Array.foldl Map.union Map.empty enterMaps
-
-  -- Get data and document from enter or update selection
-  let
-    doc = unsafePartial case enterImpl of
-      PendingSelection rec -> rec.document
-      _ -> case updateImpl of
-        BoundSelection rec -> rec.document
-
-  let
-    allData = unsafePartial case enterImpl of
-      PendingSelection rec -> rec.pendingData
-      _ -> []
-  let
-    updateData = unsafePartial case updateImpl of
-      BoundSelection rec -> rec.data
-      _ -> []
-
-  -- Create bound selection from all elements (enter + update)
-  let boundSel = Selection $ BoundSelection
-        { elements: allElements
-        , data: allData <> updateData
-        , indices: Just (Array.range 0 (Array.length allElements - 1))
-        , document: doc
-        }
-
-  -- Add the join's collection to the selections map
-  let selectionsMap = Map.insert joinSpec.name (unsafeCoerce boundSel) combinedChildMap
-
-  -- Get first element for return value (or dummy if DOM was removed during navigation)
-  firstElement <- case Array.head allElements of
-    Just el -> pure el
-    Nothing -> createElementWithNS Group doc
-
-  pure $ Tuple firstElement selectionsMap
-
--- LocalCoordSpace: recursive
-renderNodeHelperKeyed parentSel (LocalCoordSpace { child }) =
-  renderNodeHelperKeyed parentSel child
-
--- ConditionalRender: needs datum context to evaluate predicates
-renderNodeHelperKeyed parentSel (ConditionalRender { cases }) = do
-  -- Without datum context, can't evaluate predicates - render nothing
-  let Selection impl = parentSel
-  let dummyElement = case impl of
-        EmptySelection rec -> case Array.head rec.parentElements of
-          Just el -> el
-          Nothing -> unsafeCrashWith "renderNodeHelperKeyed ConditionalRender: no parent elements"
-        _ -> unsafeCrashWith "renderNodeHelperKeyed ConditionalRender: unexpected selection type"
-  pure $ Tuple dummyElement Map.empty
-
--- | Helper: Render a single node with an explicit datum (keyed version)
-renderNodeHelperWithDatumKeyed
-  :: forall p pd d
-   . Selection SEmpty p pd
-  -> Tree d
-  -> Maybe d
-  -> Int
-  -> Effect (Tuple Element (Map String (Selection SBoundOwns Element d)))
-renderNodeHelperWithDatumKeyed parentSel (Node node) datumOpt logicalIndex = do
-  -- Create this element with proper datum and index for attributes
-  childSel <- appendChildWithDatum node.elemType node.attrs datumOpt logicalIndex parentSel
-
-  -- Extract the element we just created
-  let element = case childSel of
-        Selection impl -> case impl of
-          EmptySelection rec -> case Array.head rec.parentElements of
-            Just el -> el
-            Nothing -> unsafeCrashWith "renderNodeHelperWithDatumKeyed: appendChild returned empty selection"
-          _ -> unsafeCrashWith "renderNodeHelperWithDatumKeyed: appendChild should return EmptySelection"
-
-  -- Attach behaviors to this element
-  traverse_ (\behavior -> applyBehaviorToElement behavior element) node.behaviors
-
-  -- Recursively render children
-  childMaps <- traverse (\child -> renderNodeHelperWithDatumKeyed childSel child datumOpt logicalIndex) node.children
-  let combinedChildMap = Array.foldl Map.union Map.empty (map snd childMaps)
-
-  -- Add this node to the map if it has a name
-  let selectionsMap = case node.name of
-        Just name -> Map.insert name (unsafeCoerce childSel) combinedChildMap
-        Nothing -> combinedChildMap
-
-  pure $ Tuple element selectionsMap
-
--- For non-Node cases, delegate to renderNodeHelperKeyed
-renderNodeHelperWithDatumKeyed parentSel tree@(Join _) _ _ = renderNodeHelperKeyed parentSel tree
-renderNodeHelperWithDatumKeyed parentSel tree@(NestedJoin _) _ _ = renderNodeHelperKeyed parentSel tree
-renderNodeHelperWithDatumKeyed parentSel tree@(UpdateJoin _) _ _ = renderNodeHelperKeyed parentSel tree
-renderNodeHelperWithDatumKeyed parentSel tree@(UpdateNestedJoin _) _ _ = renderNodeHelperKeyed parentSel tree
-renderNodeHelperWithDatumKeyed parentSel tree@(LocalCoordSpace _) _ _ = renderNodeHelperKeyed parentSel tree
-
--- ConditionalRender with datum context
-renderNodeHelperWithDatumKeyed parentSel (ConditionalRender { cases }) (Just datum) logicalIndex = do
-  case Array.find (\c -> c.predicate datum) cases of
-    Just matchingCase -> do
-      let chosenTree = matchingCase.spec datum
-      renderNodeHelperWithDatumKeyed parentSel chosenTree (Just datum) logicalIndex
-    Nothing -> do
-      let Selection impl = parentSel
-      let dummyElement = case impl of
-            EmptySelection rec -> case Array.head rec.parentElements of
-              Just el -> el
-              Nothing -> unsafeCrashWith "renderNodeHelperWithDatumKeyed ConditionalRender: no parent elements"
-            _ -> unsafeCrashWith "renderNodeHelperWithDatumKeyed ConditionalRender: unexpected selection type"
-      pure $ Tuple dummyElement Map.empty
-
-renderNodeHelperWithDatumKeyed parentSel (ConditionalRender _) Nothing _ =
-  renderNodeHelperKeyed parentSel (ConditionalRender { cases: [] })
-
--- | Render templates for pending selection (keyed version, no Ord constraint)
-renderTemplatesForPendingSelectionKeyed
-  :: forall datum parent
-   . (datum -> Tree datum)
-  -> Selection SPending parent datum
-  -> Effect (Array (Tuple Element (Map String (Selection SBoundOwns Element datum))))
-renderTemplatesForPendingSelectionKeyed templateFn pendingSel = do
-  let Selection impl = pendingSel
-  case impl of
-    PendingSelection rec -> do
-      let dataArray = rec.pendingData
-      traverseWithIndex
-        (\idx datum -> do
-          let tree = templateFn datum
-          -- Create a single-element selection for this datum
-          let singleParentSel = Selection $ EmptySelection
-                { parentElements: rec.parentElements
-                , document: rec.document
-                }
-          -- Render the tree with the datum and index
-          Tuple element childSelections <- renderNodeHelperWithDatumKeyed singleParentSel tree (Just datum) idx
-          -- Bind the datum to the root element
-          liftEffect $ setElementData_ datum element
-          pure $ Tuple element childSelections
-        )
-        dataArray
-    _ -> pure []
-
--- | Append children from template (keyed version, no Ord constraint)
-appendChildrenFromTemplateKeyed
-  :: forall datum
-   . (datum -> Tree datum)
-  -> Selection SBoundOwns Element datum
-  -> Effect (Map String (Selection SBoundOwns Element datum))
-appendChildrenFromTemplateKeyed templateFn boundSel = do
-  let Selection impl = boundSel
-  let { elements, data: dataArray, document: doc } = unsafePartial case impl of
-        BoundSelection rec -> rec
-  -- For each datum, render children
-  childMaps <- traverseWithIndex
-    (\idx datum -> do
-      -- Get the element for this datum
-      case Array.index elements idx of
-        Nothing -> pure Map.empty
-        Just element -> do
-          let childTree = templateFn datum
-          let singleParentSel = Selection $ EmptySelection
-                { parentElements: [element]
-                , document: doc
-                }
-          Tuple _ childSelections <- renderNodeHelperWithDatumKeyed singleParentSel childTree (Just datum) idx
-          pure childSelections
-    )
-    dataArray
-  pure $ Array.foldl Map.union Map.empty childMaps
+instance ordOrdWrapper :: Ord OrdWrapper where
+  compare _ _ = EQ
 
 -- | Extract a named selection from a renderTree result and convert to SEmpty
 -- |

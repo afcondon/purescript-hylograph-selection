@@ -5,12 +5,12 @@ module PSD3.Interpreter.D3
   , reselectD3v2
   , queryAllD3v2
   , getElementsD3v2
-  , renderTreeKeyedD3v2
+  , selectChildInheritingD3v2
   ) where
 
 import Prelude
 
-import Partial.Unsafe (unsafePartial, unsafeCrashWith)
+import Partial.Unsafe (unsafePartial)
 import Data.Array as Array
 import Data.FoldableWithIndex (traverseWithIndex_)
 import Data.Map as Map
@@ -20,19 +20,13 @@ import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
-import Data.Number as Number
-import PSD3.AST (Tree)
-import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AnimatedValue(..), EasingType(..))
+import PSD3.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..))
 import PSD3.Internal.Capabilities.Selection (class SelectionM)
 import PSD3.Internal.Capabilities.Transition (class TransitionM)
 import PSD3.Internal.Selection.Operations as Ops
-import PSD3.Internal.Selection.Operations (getTransitionContext)
 import PSD3.Internal.Selection.Query as Query
 import PSD3.Internal.Selection.Types (Selection(..), SelectionImpl(..), SBoundOwns, SEmpty, JoinResult(..))
 import PSD3.Internal.Transition.FFI as TransitionFFI
-import PSD3.Internal.Transition.Manager as Manager
-import PSD3.Internal.Transition.Types as TransitionTypes
-import PSD3.Transition.Coordinator as Coordinator
 import Web.DOM.Element (Element)
 
 -- | Selection type for D3v2 interpreter
@@ -82,10 +76,6 @@ instance SelectionM D3v2Selection_ D3v2M where
 
   selectAllWithData selector (D3v2Selection_ sel) = D3v2M do
     result <- Ops.selectAllWithData selector sel
-    pure $ D3v2Selection_ result
-
-  selectChildInheriting selector (D3v2Selection_ sel) = D3v2M do
-    result <- Ops.selectChildInheriting selector sel
     pure $ D3v2Selection_ result
 
   renderData elemType foldableData selector (D3v2Selection_ emptySelection) enterAttrs updateAttrs exitAttrs = D3v2M do
@@ -169,117 +159,40 @@ instance TransitionM D3v2Selection_ D3v2M where
     let { elements, data: datumArray, indices } = unsafePartial case selection of
           Selection (BoundSelection r) -> r
 
-    -- Check for pure transition context
-    maybeCtx <- getTransitionContext
+    -- Get transition configuration
+    let Milliseconds duration = config.duration
 
-    case maybeCtx of
-      -- Pure transition path using Manager
-      Just ctx -> do
-        let Milliseconds duration = config.duration
-        let Milliseconds delay = case config.delay of
-              Just d -> d
-              Nothing -> Milliseconds 0.0
-        let easing = case config.easing of
-              Just e -> transitionEasingToAnimEasing e
-              Nothing -> Linear
+    -- Apply transition to each element with its corresponding datum and index
+    let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+    paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+      -- Use logical index from indices array if present, otherwise use array index
+      let logicalIndex = case indices of
+            Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+            Nothing -> arrayIndex
 
-        -- Apply transition to each element
-        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-          let logicalIndex = case indices of
-                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-                Nothing -> arrayIndex
+      -- Create a D3 transition for this element
+      transition <- TransitionFFI.createTransition_
+        duration
+        (TransitionFFI.maybeMillisecondsToNullable config.delay)
+        (TransitionFFI.maybeEasingToNullable config.easing)
+        element
 
-          -- Register each attribute as a transition
-          attrs # traverse_ \attr -> case attr of
-            StaticAttr (AttributeName name) value -> do
-              let targetValue = attributeValueToNumber value
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing  -- Read from DOM
-                (StaticAnimValue targetValue)
-                { duration, easing, delay }
-                (pure unit)
-              pure unit
+      -- Apply each attribute to the transition
+      attrs # traverse_ \attr -> case attr of
+        StaticAttr (AttributeName name) value ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
 
-            DataAttr (AttributeName name) _src f -> do
-              let targetValue = attributeValueToNumber (f datum)
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing
-                (StaticAnimValue targetValue)
-                { duration, easing, delay }
-                (pure unit)
-              pure unit
+        DataAttr (AttributeName name) _src f ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
 
-            IndexedAttr (AttributeName name) _src f -> do
-              let targetValue = attributeValueToNumber (f datum logicalIndex)
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing
-                (StaticAnimValue targetValue)
-                { duration, easing, delay }
-                (pure unit)
-              pure unit
+        IndexedAttr (AttributeName name) _src f ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
 
-            AnimatedAttr rec -> do
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex
-                (let (AttributeName n) = rec.name in n)
-                rec.fromValue
-                rec.toValue
-                rec.config
-                (pure unit)
-              pure unit
+        AnimatedAttr _ ->
+          pure unit -- AnimatedAttr handled separately via animation system
 
-            AnimatedCompound rec -> do
-              _ <- Manager.registerAnimatedCompound ctx.manager element datum logicalIndex
-                (let (AttributeName n) = rec.name in n)
-                rec.fromValues
-                rec.toValues
-                rec.generator
-                rec.config
-                (pure unit)
-              pure unit
-
-        -- Ensure coordinator is running
-        _ <- Coordinator.register ctx.coordinator
-          { tick: Manager.toCoordinatorConsumer ctx.manager
-          , onComplete: pure unit
-          }
-        Coordinator.start ctx.coordinator
-
-      -- D3 transition path (legacy)
-      Nothing -> do
-        let Milliseconds duration = config.duration
-
-        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-          let logicalIndex = case indices of
-                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-                Nothing -> arrayIndex
-
-          -- Create a D3 transition for this element
-          transition <- TransitionFFI.createTransition_
-            duration
-            (TransitionFFI.maybeMillisecondsToNullable config.delay)
-            (TransitionFFI.maybeEasingToNullable config.easing)
-            element
-
-          -- Apply each attribute to the transition
-          attrs # traverse_ \attr -> case attr of
-            StaticAttr (AttributeName name) value ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
-
-            DataAttr (AttributeName name) _src f ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
-
-            IndexedAttr (AttributeName name) _src f ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
-
-            AnimatedAttr rec -> do
-              let (AttributeName name) = rec.name
-              let toValue = evalAnimValue rec.toValue datum logicalIndex
-              TransitionFFI.transitionSetAttribute_ name (show toValue) transition
-
-            AnimatedCompound _ ->
-              unsafeCrashWith "AnimatedCompound in D3 transition path - use pure transition path instead"
+        AnimatedCompound _ ->
+          pure unit -- AnimatedCompound handled separately via animation system
 
   withTransitionExit config (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
@@ -310,13 +223,11 @@ instance TransitionM D3v2Selection_ D3v2M where
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-        AnimatedAttr rec -> do
-          let (AttributeName name) = rec.name
-          let toValue = evalAnimValue rec.toValue datum index
-          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+        AnimatedAttr _ ->
+          pure unit -- AnimatedAttr handled separately via animation system
 
         AnimatedCompound _ ->
-          unsafeCrashWith "AnimatedCompound in D3 exit transition path - use pure transition path instead"
+          pure unit -- AnimatedCompound handled separately via animation system
 
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
@@ -326,119 +237,43 @@ instance TransitionM D3v2Selection_ D3v2M where
     let { elements, data: datumArray, indices } = unsafePartial case selection of
           Selection (BoundSelection r) -> r
 
-    -- Check for pure transition context
-    maybeCtx <- getTransitionContext
+    -- Get transition configuration
+    let Milliseconds duration = config.duration
 
-    case maybeCtx of
-      -- Pure transition path using Manager
-      Just ctx -> do
-        let Milliseconds duration = config.duration
-        let easing = case config.easing of
-              Just e -> transitionEasingToAnimEasing e
-              Nothing -> Linear
+    -- Apply transition to each element with its corresponding datum and index
+    let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
+    paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
+      -- Use logical index from indices array if present, otherwise use array index
+      let logicalIndex = case indices of
+            Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
+            Nothing -> arrayIndex
 
-        -- Apply transition to each element
-        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-          let logicalIndex = case indices of
-                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-                Nothing -> arrayIndex
+      -- Compute the delay for this element using the delay function
+      let Milliseconds elementDelay = delayFn datum logicalIndex
 
-          -- Compute the delay for this element using the delay function
-          let Milliseconds elementDelay = delayFn datum logicalIndex
+      -- Create a D3 transition for this element with computed delay
+      transition <- TransitionFFI.createTransition_
+        duration
+        (toNullable (Just elementDelay))
+        (TransitionFFI.maybeEasingToNullable config.easing)
+        element
 
-          -- Register each attribute as a transition with per-element delay
-          attrs # traverse_ \attr -> case attr of
-            StaticAttr (AttributeName name) value -> do
-              let targetValue = attributeValueToNumber value
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing
-                (StaticAnimValue targetValue)
-                { duration, easing, delay: elementDelay }
-                (pure unit)
-              pure unit
+      -- Apply each attribute to the transition
+      attrs # traverse_ \attr -> case attr of
+        StaticAttr (AttributeName name) value ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
 
-            DataAttr (AttributeName name) _src f -> do
-              let targetValue = attributeValueToNumber (f datum)
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing
-                (StaticAnimValue targetValue)
-                { duration, easing, delay: elementDelay }
-                (pure unit)
-              pure unit
+        DataAttr (AttributeName name) _src f ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
 
-            IndexedAttr (AttributeName name) _src f -> do
-              let targetValue = attributeValueToNumber (f datum logicalIndex)
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex name
-                Nothing
-                (StaticAnimValue targetValue)
-                { duration, easing, delay: elementDelay }
-                (pure unit)
-              pure unit
+        IndexedAttr (AttributeName name) _src f ->
+          TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
 
-            AnimatedAttr rec -> do
-              -- Override delay with per-element stagger
-              _ <- Manager.registerAnimatedAttr ctx.manager element datum logicalIndex
-                (let (AttributeName n) = rec.name in n)
-                rec.fromValue
-                rec.toValue
-                (rec.config { delay = elementDelay })
-                (pure unit)
-              pure unit
+        AnimatedAttr _ ->
+          pure unit -- AnimatedAttr handled separately via animation system
 
-            AnimatedCompound rec -> do
-              -- Override delay with per-element stagger
-              _ <- Manager.registerAnimatedCompound ctx.manager element datum logicalIndex
-                (let (AttributeName n) = rec.name in n)
-                rec.fromValues
-                rec.toValues
-                rec.generator
-                (rec.config { delay = elementDelay })
-                (pure unit)
-              pure unit
-
-        -- Ensure coordinator is running
-        _ <- Coordinator.register ctx.coordinator
-          { tick: Manager.toCoordinatorConsumer ctx.manager
-          , onComplete: pure unit
-          }
-        Coordinator.start ctx.coordinator
-
-      -- D3 transition path (legacy)
-      Nothing -> do
-        let Milliseconds duration = config.duration
-
-        let paired = Array.zipWith (\d e -> {datum: d, element: e}) datumArray elements
-        paired # traverseWithIndex_ \arrayIndex { datum, element } -> do
-          let logicalIndex = case indices of
-                Just indexArray -> unsafePartial $ Array.unsafeIndex indexArray arrayIndex
-                Nothing -> arrayIndex
-
-          let Milliseconds elementDelay = delayFn datum logicalIndex
-
-          transition <- TransitionFFI.createTransition_
-            duration
-            (toNullable (Just elementDelay))
-            (TransitionFFI.maybeEasingToNullable config.easing)
-            element
-
-          attrs # traverse_ \attr -> case attr of
-            StaticAttr (AttributeName name) value ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString value) transition
-
-            DataAttr (AttributeName name) _src f ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum)) transition
-
-            IndexedAttr (AttributeName name) _src f ->
-              TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum logicalIndex)) transition
-
-            AnimatedAttr rec -> do
-              let (AttributeName name) = rec.name
-              let toValue = evalAnimValue rec.toValue datum logicalIndex
-              TransitionFFI.transitionSetAttribute_ name (show toValue) transition
-
-            AnimatedCompound _ ->
-              unsafeCrashWith "AnimatedCompound in D3 staggered transition path - use pure transition path instead"
+        AnimatedCompound _ ->
+          pure unit -- AnimatedCompound handled separately via animation system
 
   withTransitionExitStaggered config delayFn (D3v2Selection_ selection) attrs = D3v2M do
     -- Extract elements and data from the exiting selection
@@ -472,62 +307,20 @@ instance TransitionM D3v2Selection_ D3v2M where
         IndexedAttr (AttributeName name) _src f ->
           TransitionFFI.transitionSetAttribute_ name (attributeValueToString (f datum index)) transition
 
-        AnimatedAttr rec -> do
-          let (AttributeName name) = rec.name
-          let toValue = evalAnimValue rec.toValue datum index
-          TransitionFFI.transitionSetAttribute_ name (show toValue) transition
+        AnimatedAttr _ ->
+          pure unit -- AnimatedAttr handled separately via animation system
 
         AnimatedCompound _ ->
-          unsafeCrashWith "AnimatedCompound in D3 exit staggered transition path - use pure transition path instead"
+          pure unit -- AnimatedCompound handled separately via animation system
 
       -- Remove element after transition completes (D3 pattern: transition.remove())
       TransitionFFI.transitionRemove_ transition
-
--- Helper function to evaluate AnimatedValue
-evalAnimValue :: forall datum. AnimatedValue datum -> datum -> Int -> Number
-evalAnimValue (StaticAnimValue n) _ _ = n
-evalAnimValue (DataAnimValue f) d _ = f d
-evalAnimValue (IndexedAnimValue f) d i = f d i
 
 -- Helper function to convert AttributeValue to String
 attributeValueToString :: AttributeValue -> String
 attributeValueToString (StringValue s) = s
 attributeValueToString (NumberValue n) = show n
 attributeValueToString (BooleanValue b) = show b
-
--- | Convert an AttributeValue to a Number (for pure transitions)
--- | Strings are parsed as numbers, booleans become 0.0/1.0
-attributeValueToNumber :: AttributeValue -> Number
-attributeValueToNumber (NumberValue n) = n
-attributeValueToNumber (StringValue s) = parseNumber s
-attributeValueToNumber (BooleanValue true) = 1.0
-attributeValueToNumber (BooleanValue false) = 0.0
-
--- | Parse a string to a number, returning 0.0 on failure
-parseNumber :: String -> Number
-parseNumber s = case Number.fromString s of
-  Just n -> n
-  Nothing -> 0.0
-
--- | Convert from Transition.Types Easing to Attribute EasingType
-transitionEasingToAnimEasing :: TransitionTypes.Easing -> EasingType
-transitionEasingToAnimEasing TransitionTypes.Linear = Linear
-transitionEasingToAnimEasing TransitionTypes.QuadIn = QuadIn
-transitionEasingToAnimEasing TransitionTypes.QuadOut = QuadOut
-transitionEasingToAnimEasing TransitionTypes.QuadInOut = QuadInOut
-transitionEasingToAnimEasing TransitionTypes.CubicIn = CubicIn
-transitionEasingToAnimEasing TransitionTypes.CubicOut = CubicOut
-transitionEasingToAnimEasing TransitionTypes.CubicInOut = CubicInOut
-transitionEasingToAnimEasing TransitionTypes.SinIn = SinIn
-transitionEasingToAnimEasing TransitionTypes.SinOut = SinOut
-transitionEasingToAnimEasing TransitionTypes.SinInOut = SinInOut
-transitionEasingToAnimEasing TransitionTypes.ExpIn = ExpIn
-transitionEasingToAnimEasing TransitionTypes.ExpOut = ExpOut
-transitionEasingToAnimEasing TransitionTypes.ExpInOut = ExpInOut
-transitionEasingToAnimEasing TransitionTypes.ElasticOut = ElasticOut
-transitionEasingToAnimEasing TransitionTypes.BounceOut = BounceOut
--- Fallback for other easing types (Quad, Cubic, Sin, Exp, Circle, Elastic, Bounce without In/Out suffix)
-transitionEasingToAnimEasing _ = Linear
 
 -- | Helper function for reselecting from D3v2 renderTree results
 -- |
@@ -569,19 +362,14 @@ queryAllD3v2 selector selectionsMap = do
 getElementsD3v2 :: forall state parent datum. D3v2Selection_ state parent datum -> Array Element
 getElementsD3v2 (D3v2Selection_ sel) = Query.toArray sel
 
--- | Render a tree using keyed matching (no Ord constraint on datum)
+-- | Select child elements, inheriting parent's data (D3v2 version)
 -- |
--- | Unlike the type class method `renderTree` which requires `Ord datum`,
--- | this uses key functions embedded in UpdateJoin/UpdateNestedJoin nodes.
--- | Useful for SimulationNode which has extensible records that can't have Ord derived.
--- |
--- | Note: Will crash at runtime if given Join/NestedJoin (which require Ord for computeJoin).
--- | Only use with UpdateJoin/UpdateNestedJoin trees that have keyFn specified.
-renderTreeKeyedD3v2
-  :: forall parent parentDatum datum
-   . D3v2Selection_ SEmpty parent parentDatum
-  -> Tree datum
-  -> D3v2M (Map.Map String (D3v2Selection_ SBoundOwns Element datum))
-renderTreeKeyedD3v2 (D3v2Selection_ parent) tree = D3v2M do
-  selectionsMap <- Ops.renderTreeKeyed parent tree
-  pure $ map D3v2Selection_ selectionsMap
+-- | Wrapper around Operations.selectChildInheriting that works with D3v2Selection_.
+selectChildInheritingD3v2
+  :: forall parent datum
+   . String
+  -> D3v2Selection_ SBoundOwns parent datum
+  -> D3v2M (D3v2Selection_ SBoundOwns Element datum)
+selectChildInheritingD3v2 selector (D3v2Selection_ sel) = D3v2M do
+  result <- Ops.selectChildInheriting selector sel
+  pure $ D3v2Selection_ result

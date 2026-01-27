@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Module Overview :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/reference/modules.html">
+    <meta name="description" content="Guide to PSD3 Selection modules">
+    <meta name="keywords" content="modules, API, reference">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Reference</li>
+    <li><a href="modules.html">Module Overview</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/reference/modules.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Module Overview</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This page provides an overview of the module structure. For complete API documentation, see <a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">Pursuit</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_core_modules"><a class="anchor" href="#_core_modules"></a>Core Modules</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3</code></dt>
+<dd>
+<p>Re-exports the essential API. Start here for most use cases.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.AST</code></dt>
+<dd>
+<p>Tree building: <code>elem</code>, <code>named</code>, <code>withChild</code>, <code>joinData</code>, etc.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Expr.Friendly</code></dt>
+<dd>
+<p>Attribute DSL: <code>num</code>, <code>text</code>, <code>width</code>, <code>cx</code>, <code>fill</code>, etc.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Render</code></dt>
+<dd>
+<p>DOM rendering: <code>runD3</code>, <code>select</code>, <code>renderTree</code>.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_interpreters"><a class="anchor" href="#_interpreters"></a>Interpreters</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3.Interpreter.D3</code></dt>
+<dd>
+<p>The primary DOM renderer.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Interpreter.English</code></dt>
+<dd>
+<p>Human-readable descriptions.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Interpreter.Mermaid</code></dt>
+<dd>
+<p>AST structure diagrams.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Interpreter.MetaAST</code></dt>
+<dd>
+<p>Untyped AST conversion.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_internal_modules"><a class="anchor" href="#_internal_modules"></a>Internal Modules</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>These are implementation details but useful for advanced use:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3.Internal.Behavior.Types</code></dt>
+<dd>
+<p>Behaviors: <code>Drag</code>, <code>Zoom</code>, <code>onCoordinatedHighlight</code>.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Internal.Selection.*</code></dt>
+<dd>
+<p>Low-level selection operations.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Internal.Transition.*</code></dt>
+<dd>
+<p>Animation primitives.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_data_modules"><a class="anchor" href="#_data_modules"></a>Data Modules</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3.Data.Node</code></dt>
+<dd>
+<p><code>SimulationNode</code> for force layouts.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Data.Tree</code></dt>
+<dd>
+<p>Tree data structures.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Data.Graph</code></dt>
+<dd>
+<p>Graph structures and algorithms.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_expression_system"><a class="anchor" href="#_expression_system"></a>Expression System</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3.Expr.Expr</code></dt>
+<dd>
+<p>Core expression types.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Expr.Attr</code></dt>
+<dd>
+<p>Attribute constructors.</p>
+</dd>
+<dt class="hdlist1"><code>PSD3.Expr.Interpreter.*</code></dt>
+<dd>
+<p>Expression interpreters (Eval, SVG, CodeGen).</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_scale_module"><a class="anchor" href="#_scale_module"></a>Scale Module</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>PSD3.Scale</code></dt>
+<dd>
+<p>D3 scale wrappers: <code>linear</code>, <code>ordinal</code>, <code>band</code>, color schemes.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_import_patterns"><a class="anchor" href="#_import_patterns"></a>Import Patterns</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_basic_visualization"><a class="anchor" href="#_basic_visualization"></a>Basic Visualization</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.AST as A
+import PSD3.AST (ElementType(..))
+import PSD3.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
+import PSD3.Render (runD3, select, renderTree)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_with_behaviors"><a class="anchor" href="#_with_behaviors"></a>With Behaviors</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Internal.Behavior.Types
+  (Behavior(..), defaultDrag, defaultZoom, onCoordinatedHighlight)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_with_scales"><a class="anchor" href="#_with_scales"></a>With Scales</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Scale (linear, domain, range, applyScale)</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

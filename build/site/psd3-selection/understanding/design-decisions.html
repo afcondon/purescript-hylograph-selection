@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Design Decisions :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/understanding/design-decisions.html">
+    <meta name="description" content="Key architectural decisions and their rationale">
+    <meta name="keywords" content="architecture, design, decisions, puresheet, data sources">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../how-to/transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>Understanding</li>
+    <li><a href="design-decisions.html">Design Decisions</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/understanding/design-decisions.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Design Decisions</h1>
+<div class="sect1">
+<h2 id="_analysis_of_puresheet"><a class="anchor" href="#_analysis_of_puresheet"></a>Analysis of puresheet</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We analyzed <a href="https://github.com/albertprz/puresheet">puresheet</a> (GPL v3) as architectural reference.</p>
+</div>
+<div class="sect2">
+<h3 id="_what_works_well"><a class="anchor" href="#_what_works_well"></a>What Works Well</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>AST Design</strong> - Clean recursive ADT for expressions:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FnApply</code>, <code>LambdaFn</code>, <code>InfixFnApply</code> - standard constructs</p>
+</li>
+<li>
+<p><code>WhereExpr</code>, <code>SwitchExpr</code>, <code>CondExpr</code> - bindings and control flow</p>
+</li>
+<li>
+<p>Pattern matching with guards</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Type Organization</strong> - Layered modules:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>SyntaxTree/</code> - Pure AST types</p>
+</li>
+<li>
+<p><code>Parser/</code> - Parsing to AST</p>
+</li>
+<li>
+<p><code>Evaluator/</code> - AST interpretation</p>
+</li>
+<li>
+<p><code>Printer/</code> - AST pretty-printing</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Halogen Architecture</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Halogen Store for global state</p>
+</li>
+<li>
+<p>Component-based UI</p>
+</li>
+<li>
+<p>Clean separation of concerns</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_coupling_to_avoid"><a class="anchor" href="#_coupling_to_avoid"></a>Coupling to Avoid</h3>
+<div class="paragraph">
+<p>puresheet&#8217;s AST is coupled to spreadsheet concepts:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- From puresheet SyntaxTree/FnDef.purs
+data FnBody
+  = ...
+  | Cell' Cell                    -- spreadsheet cell reference
+  | CellValue' CellValue          -- cell literal
+  | CellMatrixRange Cell Cell     -- A1:C3 ranges</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We generalize these to data source references:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Our approach
+data Expr
+  = ...
+  | DataRef DataSource Path       -- reference any data
+  | DataRange DataSource Selection -- select from any source</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_key_design_decisions"><a class="anchor" href="#_key_design_decisions"></a>Key Design Decisions</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_expression_language"><a class="anchor" href="#_1_expression_language"></a>1. Expression Language</h3>
+<div class="paragraph">
+<p>Keep the functional core from puresheet&#8217;s design:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>First-class functions, currying</p>
+</li>
+<li>
+<p>Pattern matching with guards</p>
+</li>
+<li>
+<p>Custom operators with precedence</p>
+</li>
+<li>
+<p>Local bindings (where/let)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>But parameterize over the "leaf" type - what expressions can reference.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_data_sources_as_first_class"><a class="anchor" href="#_2_data_sources_as_first_class"></a>2. Data Sources as First-Class</h3>
+<div class="paragraph">
+<p>Instead of cells, expressions reference abstract data sources:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">data DataSource
+  = TableSource TableId           -- in-memory table
+  | QuerySource QueryId           -- SQL query
+  | WebSource WebSourceId         -- scraped web data
+  | ComputedSource ExprId         -- result of another expr
+
+data Selection
+  = All                           -- entire source
+  | Column ColRef                 -- single column
+  | Row RowRef                    -- single row
+  | Range ColRef ColRef RowRef RowRef
+  | Filter Expr                   -- predicate</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_d3_style_data_joins"><a class="anchor" href="#_3_d3_style_data_joins"></a>3. D3-Style Data Joins</h3>
+<div class="paragraph">
+<p>Expressions don&#8217;t just <strong>read</strong> data - they <strong>bind</strong> to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">data Binding
+  = Enter DataSource Expr         -- new data → create
+  | Update DataSource Expr        -- changed data → transform
+  | Exit DataSource Expr          -- removed data → cleanup</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This connects naturally to visualization: the expression forest <strong>is</strong> the visualization pipeline.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_4_visualization_as_output"><a class="anchor" href="#_4_visualization_as_output"></a>4. Visualization as Output</h3>
+<div class="paragraph">
+<p>Each expression tree has an output type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">data OutputType
+  = DataOutput                    -- produces data (for chaining)
+  | ChartOutput ChartSpec         -- produces visualization
+  | TreeOutput                    -- self-visualizes as AST</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_implementation_phases"><a class="anchor" href="#_implementation_phases"></a>Implementation Phases</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_phase_1_core_language"><a class="anchor" href="#_phase_1_core_language"></a>Phase 1: Core Language</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Define <code>Expr</code> ADT (generalized from puresheet&#8217;s <code>FnBody</code>)</p>
+</li>
+<li>
+<p>Define <code>Pattern</code> for pattern matching</p>
+</li>
+<li>
+<p>Define <code>Literal</code> for primitive values</p>
+</li>
+<li>
+<p>Parser using bookhound or similar</p>
+</li>
+<li>
+<p>Evaluator (pure, no effects)</p>
+</li>
+<li>
+<p>Pretty printer</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_2_data_sources"><a class="anchor" href="#_phase_2_data_sources"></a>Phase 2: Data Sources</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><code>DataSource</code> ADT</p>
+</li>
+<li>
+<p><code>Table</code> - simple in-memory tables</p>
+</li>
+<li>
+<p>Selection/filtering</p>
+</li>
+<li>
+<p>Data change tracking (for joins)</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_3_charting_demo"><a class="anchor" href="#_phase_3_charting_demo"></a>Phase 3: Charting Demo</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Integrate PSD3 D3 wrapper</p>
+</li>
+<li>
+<p>Chart specification types</p>
+</li>
+<li>
+<p>Expression → Chart rendering</p>
+</li>
+<li>
+<p>Basic Halogen app</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_4_ast_visualization"><a class="anchor" href="#_phase_4_ast_visualization"></a>Phase 4: AST Visualization</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adapt PSD3 PatternTree</p>
+</li>
+<li>
+<p>Expression → Tree visualization</p>
+</li>
+<li>
+<p>Interactive exploration</p>
+</li>
+<li>
+<p>Link to evaluation steps</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_5_expression_forest"><a class="anchor" href="#_phase_5_expression_forest"></a>Phase 5: Expression Forest</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Multi-expression workspace</p>
+</li>
+<li>
+<p>Expression dependencies</p>
+</li>
+<li>
+<p>Data flow visualization</p>
+</li>
+<li>
+<p>Full data join semantics</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tech_stack"><a class="anchor" href="#_tech_stack"></a>Tech Stack</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Language</strong>: PureScript</p>
+</li>
+<li>
+<p><strong>UI</strong>: Halogen + Halogen Store</p>
+</li>
+<li>
+<p><strong>Parsing</strong>: Bookhound (or purescript-parsing)</p>
+</li>
+<li>
+<p><strong>Visualization</strong>: PSD3 D3 wrappers</p>
+</li>
+<li>
+<p><strong>Build</strong>: Spago + esbuild</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_relationship_to_psd3"><a class="anchor" href="#_relationship_to_psd3"></a>Relationship to PSD3</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Reuses:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>purescript-psd3-tree</code> - Tree visualization</p>
+</li>
+<li>
+<p><code>purescript-psd3-selection</code> - Selection model</p>
+</li>
+<li>
+<p><code>purescript-psd3-layout</code> - Layout algorithms</p>
+</li>
+<li>
+<p>D3 FFI bindings from psd3-demo-website</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>New:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Expression language and evaluator</p>
+</li>
+<li>
+<p>Data source abstraction</p>
+</li>
+<li>
+<p>Expression forest workspace</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also"><a class="anchor" href="#_see_also"></a>See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="unified-dsl.html" class="xref page">Unified Data DSL</a> - The unifying vision</p>
+</li>
+<li>
+<p><a href="finally-tagless.html" class="xref page">Finally Tagless Architecture</a> - The encoding</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

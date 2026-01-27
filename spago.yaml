@@ -4,6 +4,8 @@ workspace:
   extraPackages:
     psd3-graph:
       path: ../purescript-psd3-graph
+    psd3-layout:
+      path: ../purescript-psd3-layout
 
 package:
   name: psd3-selection
@@ -39,6 +41,7 @@ package:
     - prelude
     - profunctor
     - psd3-graph
+    - psd3-layout
     - tree-rose
     - strings
     - transformers

@@ -223,6 +223,88 @@ labelHighlight = onCoordinatedHighlight
   }
 ----
 
+== Pattern: Bidirectional Node-Edge Highlighting
+
+In graph visualizations, you often want hovering to work both ways:
+
+- Hover NODE → highlight connected edges
+- Hover EDGE → highlight connected nodes
+
+The key is using identity formats that encode relationship information:
+
+[source,purescript]
+----
+import Data.String as String
+import Data.String.Pattern (Pattern(..))
+
+-- Edges use "source->target" as identity
+edgeHighlight = onCoordinatedHighlight
+  { identify: \e -> e.sourceName <> "->" <> e.targetName
+  , classify: \hoveredId e ->
+      let myId = e.sourceName <> "->" <> e.targetName
+      in
+        -- I am the hovered edge
+        if hoveredId == myId then Primary
+        -- A node is hovered, check if I'm connected
+        else if hoveredId == e.sourceName || hoveredId == e.targetName then Related
+        -- Otherwise dim
+        else Dimmed
+  , group: Nothing
+  , tooltip: Nothing
+  }
+
+-- Nodes check if hovered identity is an edge connecting to them
+nodeHighlight = onCoordinatedHighlight
+  { identify: _.name
+  , classify: \hoveredId n ->
+      -- I am the hovered node
+      if hoveredId == n.name then Primary
+      -- An edge is hovered (contains "->"), check if I'm connected
+      else if String.contains (Pattern "->") hoveredId then
+        if String.contains (Pattern n.name) hoveredId
+          then Related
+          else Neutral
+      -- Another node is hovered, stay neutral
+      else Neutral
+  , group: Nothing
+  , tooltip: Nothing
+  }
+----
+
+This pattern enables intuitive exploration: hover a node to see its connections, or hover an edge to see which nodes it connects.
+
+== Important: Use Datum-Based Functions
+
+When using `T.joinData` with nested elements, always use the datum parameter in `identify` and `classify` functions rather than closures:
+
+[source,purescript]
+----
+-- WRONG: Closure captures stale values
+T.joinData "edges" "g" edges $ \edge ->
+  let sourceName = edge.source.name  -- Captured in closure
+  in T.elem Group [...]
+       `T.withBehaviors`
+         [ onCoordinatedHighlight
+             { identify: \_ -> sourceName  -- Ignores datum!
+             , classify: \hoveredId _ -> ... sourceName ...  -- Ignores datum!
+             ...
+             }
+         ]
+
+-- RIGHT: Use datum parameter
+T.joinData "edges" "g" edges $ \edge ->
+  T.elem Group [...]
+    `T.withBehaviors`
+      [ onCoordinatedHighlight
+          { identify: \d -> d.source.name  -- Uses datum
+          , classify: \hoveredId d -> ... d.source.name ...  -- Uses datum
+          ...
+          }
+      ]
+----
+
+The datum parameter ensures the functions work correctly regardless of element nesting.
+
 == Important: Datum Timing
 
 The library reads `__data__` fresh at event time, not at registration time. This means you can attach behaviors before D3 binds data to elements - a common pattern with the Tree API's `T.withBehaviors`.

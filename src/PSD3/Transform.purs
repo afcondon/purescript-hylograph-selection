@@ -23,15 +23,29 @@ module PSD3.Transform
   ( transformCircles
   , transformLines
   , transformPaths
+  , transformGroups
+  , transformGroupsById
+  , transformGroupsByName
+  , setGroupsOpacityById
+  , setViewBox
   , clearContainer
   , removeElement
   , CirclePosition
   , LinePosition
+  , Point
   ) where
 
 import Prelude
 
+import Data.Maybe (Maybe)
+import Data.Nullable (Nullable, toNullable)
 import Effect (Effect)
+
+-- | Point position for group transforms
+type Point =
+  { x :: Number
+  , y :: Number
+  }
 
 -- | Position for circle elements
 type CirclePosition =
@@ -123,3 +137,112 @@ foreign import removeElement_ :: String -> Effect Unit
 -- | Remove an element from the DOM entirely
 removeElement :: String -> Effect Unit
 removeElement = removeElement_
+
+-- | Transform group elements by updating transform attribute based on bound data
+-- |
+-- | Parameters:
+-- | - `containerSelector`: CSS selector for the container (e.g., "#viz")
+-- | - `groupSelector`: CSS selector for groups within container (e.g., ".node-group")
+-- | - `transformer`: Function from bound data to transform string (e.g., "translate(x, y)")
+foreign import transformGroups_
+  :: forall d
+   . String                    -- Container selector
+  -> String                    -- Group selector
+  -> (d -> String)             -- Transformer function returning transform string
+  -> Effect Unit
+
+-- | Transform group elements by updating transform attribute based on bound data
+transformGroups
+  :: forall d
+   . String                    -- Container selector
+  -> String                    -- Group selector
+  -> (d -> String)             -- Transformer function returning transform string
+  -> Effect Unit
+transformGroups = transformGroups_
+
+-- | Transform groups by ID lookup: update transform using a position lookup function
+-- |
+-- | Parameters:
+-- | - `containerSelector`: CSS selector for the container
+-- | - `groupSelector`: CSS selector for groups within container
+-- | - `idAttr`: Attribute name containing the ID (e.g., "data-id")
+-- | - `lookupFn`: Function from ID to Point or Nothing
+foreign import transformGroupsById_
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- ID attribute name
+  -> (Int -> Nullable Point)   -- Position lookup function
+  -> Effect Unit
+
+-- | Transform groups by ID lookup: update transform using a position lookup function
+transformGroupsById
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- ID attribute name
+  -> (Int -> Maybe Point)      -- Position lookup function
+  -> Effect Unit
+transformGroupsById container group idAttr lookupFn =
+  transformGroupsById_ container group idAttr (toNullable <<< lookupFn)
+
+-- | Transform groups by NAME lookup: update transform using a position lookup function
+-- |
+-- | This variant is useful when matching between different data sources by name.
+-- |
+-- | Parameters:
+-- | - `containerSelector`: CSS selector for the container
+-- | - `groupSelector`: CSS selector for groups within container
+-- | - `nameAttr`: Attribute name containing the name (e.g., "data-name")
+-- | - `lookupFn`: Function from name String to Point or Nothing
+foreign import transformGroupsByName_
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- Name attribute name
+  -> (String -> Nullable Point) -- Position lookup function
+  -> Effect Unit
+
+-- | Transform groups by NAME lookup: update transform using a position lookup function
+transformGroupsByName
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- Name attribute name
+  -> (String -> Maybe Point)   -- Position lookup function
+  -> Effect Unit
+transformGroupsByName container group nameAttr lookupFn =
+  transformGroupsByName_ container group nameAttr (toNullable <<< lookupFn)
+
+-- | Set opacity on groups by ID lookup
+-- |
+-- | Parameters:
+-- | - `containerSelector`: CSS selector for the container
+-- | - `groupSelector`: CSS selector for groups within container
+-- | - `idAttr`: Attribute name containing the ID
+-- | - `lookupFn`: Function from ID to opacity or Nothing
+foreign import setGroupsOpacityById_
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- ID attribute name
+  -> (Int -> Nullable Number)  -- Opacity lookup function
+  -> Effect Unit
+
+-- | Set opacity on groups by ID lookup
+setGroupsOpacityById
+  :: String                    -- Container selector
+  -> String                    -- Group selector
+  -> String                    -- ID attribute name
+  -> (Int -> Maybe Number)     -- Opacity lookup function
+  -> Effect Unit
+setGroupsOpacityById container group idAttr lookupFn =
+  setGroupsOpacityById_ container group idAttr (toNullable <<< lookupFn)
+
+-- | Set viewBox on an SVG element
+-- |
+-- | Parameters:
+-- | - `containerSelector`: CSS selector for container with SVG
+-- | - `minX`, `minY`: ViewBox origin
+-- | - `width`, `height`: ViewBox dimensions
+foreign import setViewBox_
+  :: String -> Number -> Number -> Number -> Number -> Effect Unit
+
+-- | Set viewBox on an SVG element
+setViewBox :: String -> Number -> Number -> Number -> Number -> Effect Unit
+setViewBox = setViewBox_

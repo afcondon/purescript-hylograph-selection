@@ -74,6 +74,7 @@ showElement Group = "g"
 showElement Circle = "circle"
 showElement Rect = "rect"
 showElement Line = "line"
+showElement Polygon = "polygon"
 showElement Path = "path"
 showElement Text = "text"
 showElement Div = "div"
@@ -96,6 +97,7 @@ formatAttribute = case _ of
   DataAttr (AttributeName name) src _ -> formatAttrSource name src
   IndexedAttr (AttributeName name) src _ -> formatAttrSource name src
   AnimatedAttr rec -> let (AttributeName name) = rec.name in name <> "(anim)"
+  AnimatedCompound rec -> let (AttributeName name) = rec.name in name <> "(compound-anim)"
 
 -- | Format attribute source for Mermaid display
 formatAttrSource :: String -> AttrSource -> String

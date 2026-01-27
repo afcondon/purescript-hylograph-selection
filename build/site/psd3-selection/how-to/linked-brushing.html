@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Linked Brushing :: PSD3 Documentation</title>
+    <link rel="canonical" href="https://psd3.github.io/psd3-selection/how-to/linked-brushing.html">
+    <meta name="description" content="How to implement linked brushing across multiple views">
+    <meta name="keywords" content="brushing, linked views, selection, cross-filtering">
+    <meta name="generator" content="Antora 3.1.14">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://psd3.github.io">PSD3 Documentation</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="psd3-selection" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">PSD3 Selection</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Getting Started</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/your-first-selection.html">Your First Selection</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/bar-chart.html">Building a Bar Chart</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/from-d3.html">From D3.js to PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getting-started/webapp-architecture.html">Web App Architecture</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-To Guides</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="simple-webpage.html">PSD3 in a Simple Web Page</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="halogen-events.html">Halogen Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-integration.html">PSD3 in a React App</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-events.html">React Events from PSD3</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="react-simulation.html">Force Simulations in React</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="css-hover.html">Simple CSS Hover Effects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="coordinated-highlighting.html">Coordinated Highlighting</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="tooltips.html">Tooltips</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="linked-brushing.html">Linked Brushing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="zoom.html">Zoomable Visualizations</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="data-joins.html">Data Joins Deep Dive</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="transitions.html">Animated Transitions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Understanding</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/finally-tagless.html">Finally Tagless Architecture</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/the-ast.html">The Selection AST</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/interpreters.html">Interpreters</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/functional-spreadsheets.html">Functional Spreadsheets</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/unified-dsl.html">Unified Data DSL</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/design-decisions.html">Design Decisions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/graph-algorithms.html">Graph Algorithms</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../understanding/future-directions.html">Future Directions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Reference</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../reference/modules.html">Module Overview</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-text"><a href="https://pursuit.purescript.org/packages/purescript-psd3-selection" target="_blank" rel="noopener">API Docs (Pursuit)</a></span>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">PSD3 Selection</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">PSD3 Selection</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">PSD3 Selection</a></li>
+    <li>How-To Guides</li>
+    <li><a href="linked-brushing.html">Linked Brushing</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///Users/afc/work/afc-work/PSD3-Repos/purescript-psd3-selection/docs/modules/ROOT/pages/how-to/linked-brushing.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Linked Brushing</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Linked brushing lets users select elements in one view and see corresponding elements highlighted in all other views. This is a powerful technique for exploring multi-dimensional data.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_is_linked_brushing"><a class="anchor" href="#_what_is_linked_brushing"></a>What is Linked Brushing?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you brush (drag to select) in one view:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Elements in the brushed region become "selected"</p>
+</li>
+<li>
+<p>Corresponding elements in other views are highlighted</p>
+</li>
+<li>
+<p>Non-corresponding elements are dimmed</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>This creates a coordinated multi-view exploration experience.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture_overview"><a class="anchor" href="#_architecture_overview"></a>Architecture Overview</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-haskell hljs" data-lang="haskell">┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Scatter Plot  │     │    Bar Chart    │     │   Parallel Coords│
+│                 │     │                 │     │                  │
+│  ┌───┐          │     │  ▓▓▓▓          │     │  ╱╲              │
+│  │   │ brush    │────►│  ░░░░          │     │ ╱  ╲             │
+│  └───┘          │     │  ░░░░          │     │╱    ╲            │
+│                 │     │                 │     │                  │
+└────────┬────────┘     └────────┬────────┘     └────────┬─────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │   Shared Selection Set   │
+                    │   (Effect.Ref or State)  │
+                    └─────────────────────────┘</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_implementation"><a class="anchor" href="#_implementation"></a>Implementation</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_define_selection_state"><a class="anchor" href="#_1_define_selection_state"></a>1. Define Selection State</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type SelectionState =
+  { selectedIds :: Set String
+  , brushExtent :: Maybe BrushExtent
+  }
+
+type BrushExtent =
+  { x0 :: Number, y0 :: Number
+  , x1 :: Number, y1 :: Number
+  }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_set_up_the_brush_behavior"><a class="anchor" href="#_2_set_up_the_brush_behavior"></a>2. Set Up the Brush Behavior</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">import PSD3.Brush (Brush, brush, brushX, brushY, onBrush, onBrushEnd)
+
+scatterPlot :: Array DataPoint -&gt; (Set String -&gt; Effect Unit) -&gt; A.AST DataPoint
+scatterPlot points onSelectionChange =
+  A.named SVG "scatter" [ width (num 400.0), height (num 400.0) ]
+    `A.withChildren`
+      [ -- Brush overlay (must be on top for events)
+        A.elem Group [ class_ (text "brush") ]
+          `A.withBehaviors`
+            [ brush
+                { extent: [[0.0, 0.0], [400.0, 400.0]]
+                , onBrush: \extent -&gt; do
+                    let selected = findPointsInExtent points extent
+                    onSelectionChange selected
+                , onBrushEnd: \mExtent -&gt;
+                    case mExtent of
+                      Nothing -&gt; onSelectionChange Set.empty  -- Brush cleared
+                      Just extent -&gt; pure unit  -- Keep current selection
+                }
+            ]
+
+      -- Data points
+      , A.joinData "points" "circle" points \d -&gt;
+          A.elem Circle
+            [ cx (from _.x), cy (from _.y), r (num 4.0)
+            , class_ (text "data-point")
+            ]
+      ]
+
+findPointsInExtent :: Array DataPoint -&gt; BrushExtent -&gt; Set String
+findPointsInExtent points { x0, y0, x1, y1 } =
+  Set.fromFoldable
+    $ map _.id
+    $ filter (\p -&gt; p.x &gt;= x0 &amp;&amp; p.x &lt;= x1 &amp;&amp; p.y &gt;= y0 &amp;&amp; p.y &lt;= y1) points</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_apply_selection_to_all_views"><a class="anchor" href="#_3_apply_selection_to_all_views"></a>3. Apply Selection to All Views</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">barChart :: Array DataPoint -&gt; Set String -&gt; A.AST DataPoint
+barChart points selectedIds =
+  A.elem SVG [ width (num 400.0), height (num 300.0) ]
+    `A.withChild`
+      A.joinData "bars" "rect" points \d -&gt;
+        A.elem Rect
+          [ x (from \p _ -&gt; toNumber (indexOf p points) * 20.0)
+          , y (from _.value &gt;&gt;&gt; negate &gt;&gt;&gt; (_ + 300.0))
+          , width (num 18.0)
+          , height (from _.value)
+          , class_ (text $ if Set.member d.id selectedIds
+                            then "bar selected"
+                            else "bar dimmed")
+          ]</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_4_style_selected_vs_dimmed"><a class="anchor" href="#_4_style_selected_vs_dimmed"></a>4. Style Selected vs Dimmed</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-css hljs" data-lang="css">.data-point, .bar {
+  transition: opacity 0.15s, fill 0.15s;
+}
+
+.selected {
+  opacity: 1;
+  fill: coral;
+}
+
+.dimmed {
+  opacity: 0.2;
+}
+
+/* When nothing is selected, show everything */
+.data-point:not(.selected):not(.dimmed),
+.bar:not(.selected):not(.dimmed) {
+  opacity: 1;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_integrating_with_halogen"><a class="anchor" href="#_integrating_with_halogen"></a>Integrating with Halogen</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">type State =
+  { data :: Array DataPoint
+  , selectedIds :: Set String
+  }
+
+data Action
+  = SelectionChanged (Set String)
+
+render :: State -&gt; H.ComponentHTML Action () m
+render state =
+  HH.div_
+    [ HH.div [ HP.ref scatterRef ] []  -- Scatter with brush
+    , HH.div [ HP.ref barRef ] []      -- Bar chart
+    , HH.div [ HP.ref parallelRef ] [] -- Parallel coordinates
+    ]
+
+handleAction = case _ of
+  SelectionChanged ids -&gt; do
+    H.modify_ _ { selectedIds = ids }
+    -- Re-render all views with new selection
+    state &lt;- H.get
+    renderAllViews state</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_brush_types"><a class="anchor" href="#_brush_types"></a>Brush Types</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>PSD3 supports several brush types:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- 2D rectangular brush
+brush { extent, onBrush, onBrushEnd }
+
+-- Horizontal brush only (for bar charts, timelines)
+brushX { extent, onBrush, onBrushEnd }
+
+-- Vertical brush only
+brushY { extent, onBrush, onBrushEnd }</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_performance_considerations"><a class="anchor" href="#_performance_considerations"></a>Performance Considerations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For large datasets:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Debounce brush events</strong> - Don&#8217;t update on every pixel</p>
+</li>
+<li>
+<p><strong>Use CSS classes</strong> instead of re-rendering for selection changes</p>
+</li>
+<li>
+<p><strong>Consider WebGL</strong> for 10k+ points</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-purescript hljs" data-lang="purescript">-- Debounced brush handler
+onBrush: debounce 50 \extent -&gt; do
+  let selected = findPointsInExtent points extent
+  onSelectionChange selected</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps"><a class="anchor" href="#_next_steps"></a>Next Steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="coordinated-highlighting.html" class="xref page">Coordinated Highlighting</a> - Hover-based coordination</p>
+</li>
+<li>
+<p><a href="zoom.html" class="xref page">Zoomable Visualizations</a> - Pan and zoom</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

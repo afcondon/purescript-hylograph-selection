@@ -28,6 +28,7 @@ module PSD3.Internal.Attribute
   ) where
 
 import Prelude
+import Data.Array (length)
 import Data.Functor.Contravariant (class Contravariant)
 import Data.Maybe (Maybe(..))
 
@@ -164,6 +165,22 @@ data Attribute datum
       , toValue :: AnimatedValue datum
       , config :: AnimationConfig
       }
+  -- | Animated compound attribute for paths and other generated strings
+  -- |
+  -- | Animates multiple numeric values and calls a generator function to produce
+  -- | the final string value. Used for:
+  -- | - linkVertical (4 numbers → path string)
+  -- | - sankeyLink (6 numbers → path string)
+  -- | - arc (4 numbers → arc path)
+  -- |
+  -- | The generator receives interpolated values in the same order as fromValues/toValues.
+  | AnimatedCompound
+      { name :: AttributeName               -- Output attribute (e.g., "d" for paths)
+      , fromValues :: Array (AnimatedValue datum)  -- From values for each component
+      , toValues :: Array (AnimatedValue datum)    -- To values for each component
+      , generator :: Array Number -> String        -- Combines interpolated values into final string
+      , config :: AnimationConfig
+      }
 
 -- We can't derive Show for function types, but we can show the structure
 instance Show (Attribute datum) where
@@ -171,6 +188,7 @@ instance Show (Attribute datum) where
   show (DataAttr name src _) = "(DataAttr " <> show name <> " " <> show src <> " <fn>)"
   show (IndexedAttr name src _) = "(IndexedAttr " <> show name <> " " <> show src <> " <fn>)"
   show (AnimatedAttr rec) = "(AnimatedAttr " <> show rec.name <> " from=" <> show rec.fromValue <> " to=" <> show rec.toValue <> ")"
+  show (AnimatedCompound rec) = "(AnimatedCompound " <> show rec.name <> " components=" <> show (length rec.toValues) <> ")"
 
 -- | Contravariant instance for Attribute
 -- |
@@ -199,6 +217,13 @@ instance Contravariant Attribute where
     { name: rec.name
     , fromValue: cmapAnimatedValue f <$> rec.fromValue
     , toValue: cmapAnimatedValue f rec.toValue
+    , config: rec.config
+    }
+  cmap f (AnimatedCompound rec) = AnimatedCompound
+    { name: rec.name
+    , fromValues: map (cmapAnimatedValue f) rec.fromValues
+    , toValues: map (cmapAnimatedValue f) rec.toValues
+    , generator: rec.generator  -- Generator doesn't depend on datum type
     , config: rec.config
     }
 

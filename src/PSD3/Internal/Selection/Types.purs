@@ -10,6 +10,7 @@ module PSD3.Internal.Selection.Types
   , Selection(..)
   , SelectionImpl(..)
   , elementContext
+  , mkBoundSelection
   ) where
 
 import Prelude
@@ -178,6 +179,7 @@ data ElementType
   | Rect
   | Path
   | Line
+  | Polygon
   | Text
   | Group
   | SVG
@@ -207,6 +209,7 @@ elementContext Circle = SVGContext
 elementContext Rect = SVGContext
 elementContext Path = SVGContext
 elementContext Line = SVGContext
+elementContext Polygon = SVGContext
 elementContext Text = SVGContext
 elementContext Group = SVGContext
 elementContext SVG = SVGContext
@@ -222,3 +225,20 @@ elementContext Td = HTMLContext
 elementContext Th = HTMLContext
 elementContext Tbody = HTMLContext
 elementContext Thead = HTMLContext
+
+-- | Smart constructor for creating bound selections
+-- |
+-- | Used internally to create selections with data bound to elements.
+mkBoundSelection
+  :: forall parent datum
+   . Array Element
+  -> Array datum
+  -> Maybe (Array Int)
+  -> Document
+  -> Selection SBoundOwns parent datum
+mkBoundSelection elements data_ indices doc = Selection $ BoundSelection
+  { elements
+  , data: data_
+  , indices
+  , document: doc
+  }

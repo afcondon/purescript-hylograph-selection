@@ -87,7 +87,7 @@ import PSD3.Unified.Attribute
 import PSD3.Unified.Join
   ( JoinSpec(..)
   , JoinConfig
-  , join, join'
+  , join
   , withDecompose, Decomposer
   , withGUP, GUPSpec, PhaseSpec
   , enterSpec, updateSpec, exitSpec, noTransition
