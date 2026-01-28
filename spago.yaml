@@ -6,6 +6,8 @@ workspace:
       path: ../purescript-psd3-graph
     psd3-layout:
       path: ../purescript-psd3-layout
+    psd3-transitions:
+      path: ../purescript-psd3-transitions
 
 package:
   name: psd3-selection
@@ -42,6 +44,7 @@ package:
     - profunctor
     - psd3-graph
     - psd3-layout
+    - psd3-transitions
     - tree-rose
     - strings
     - transformers

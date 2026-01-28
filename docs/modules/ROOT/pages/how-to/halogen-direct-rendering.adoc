@@ -1,0 +1,197 @@
+= Halogen-Direct Rendering with ForceEngine
+:description: How to use PSD3's force simulation while rendering directly with Halogen SVG
+:keywords: Halogen, SVG, force simulation, direct rendering, no AST
+
+Sometimes you want the mathematical power of PSD3's force simulation without using the AST or HATS rendering system. This guide shows how to let Halogen own all rendering while PSD3 handles just the physics.
+
+== When to Use This Pattern
+
+Use Halogen-direct rendering when:
+
+* You want full Halogen control over event handling (no bridging needed)
+* Your visualization is tightly coupled with Halogen component state
+* You prefer Halogen's `halogen-svg` over PSD3's element creation
+* The visualization is simple enough that the AST's composability isn't needed
+
+== Architecture Overview
+
+[source]
+----
+┌─────────────────────────────────────────────┐
+│           Halogen Component                 │
+│  ┌───────────────────────────────────────┐  │
+│  │  State: { nodes, links, simulation }  │  │
+│  └───────────────────────────────────────┘  │
+│                    │                        │
+│         ┌─────────┴─────────┐              │
+│         ▼                   ▼              │
+│  ┌─────────────┐    ┌──────────────────┐   │
+│  │  render     │    │  ForceEngine     │   │
+│  │  (Halogen)  │    │  (PSD3)          │   │
+│  └─────────────┘    └──────────────────┘   │
+│         │                   │              │
+│         ▼                   │              │
+│  ┌─────────────┐           │              │
+│  │  SE.svg     │◄──────────┘              │
+│  │  SE.circle  │   getNodes on tick       │
+│  │  SE.line    │                          │
+│  └─────────────┘                          │
+└─────────────────────────────────────────────┘
+----
+
+== Example: ConceptGraph Component
+
+The website's landing page uses this pattern for an interactive force-directed concept graph.
+
+=== State Structure
+
+[source,purescript]
+----
+type State =
+  { nodes :: Array ConceptNode
+  , links :: Array ConceptLink
+  , simulation :: Maybe (FE.Simulation ConceptNodeExtra ())
+  , dragging :: Maybe String
+  , lastMouse :: { x :: Number, y :: Number }
+  }
+----
+
+=== Rendering with Halogen SVG
+
+[source,purescript]
+----
+import Halogen.Svg.Elements as SE
+import Halogen.Svg.Attributes as SA
+
+render :: State -> H.ComponentHTML Action () Aff
+render state =
+  SE.svg
+    [ SA.viewBox 0.0 0.0 state.width state.height
+    , SA.classes [ HH.ClassName "concept-graph" ]
+    , HE.onMouseMove DragMove
+    , HE.onMouseUp \_ -> EndDrag
+    ]
+    [ -- Links (behind nodes)
+      SE.g [ SA.classes [ HH.ClassName "links" ] ]
+        (map renderLink state.links)
+    -- Nodes (on top)
+    , SE.g [ SA.classes [ HH.ClassName "nodes" ] ]
+        (map renderNode state.nodes)
+    ]
+
+renderNode :: ConceptNode -> H.ComponentHTML Action () Aff
+renderNode node =
+  SE.g
+    [ SA.transform [ SA.Translate node.x node.y ]
+    , HE.onMouseDown (StartDrag node.label)  -- Halogen event!
+    ]
+    [ SE.circle [ SA.r node.r ]
+    , SE.text [] [ HH.text node.label ]
+    ]
+----
+
+=== Simulation Setup
+
+[source,purescript]
+----
+import PSD3.ForceEngine as FE
+
+setupSimulation nodes links = do
+  sim <- liftEffect $ FE.createWithCallbacks FE.defaultConfig callbacks
+  liftEffect $ FE.setNodes nodes sim
+
+  -- Add forces
+  liftEffect $ FE.addForce (FE.ManyBody "charge" { strength: -40.0, ... }) sim
+  liftEffect $ FE.addForce (FE.Collide "collide" { radius: 8.0, ... }) sim
+  liftEffect $ FE.addForce (FE.Link "links" { distance: 30.0, ... }) sim
+
+  -- Subscribe to ticks
+  { emitter, listener } <- liftEffect HS.create
+  liftEffect $ FE.onTick (HS.notify listener unit) sim
+  void $ H.subscribe $ emitter <#> \_ -> SimTick
+
+  liftEffect $ FE.start sim
+----
+
+=== Handling Ticks
+
+[source,purescript]
+----
+handleAction = case _ of
+  SimTick -> do
+    state <- H.get
+    case state.simulation of
+      Nothing -> pure unit
+      Just sim -> do
+        -- Get updated positions from simulation
+        nodes <- liftEffect $ FE.getNodes sim
+        -- Update state, triggering Halogen re-render
+        H.modify_ _ { nodes = nodes }
+----
+
+=== Drag Handling (Pure Halogen)
+
+[source,purescript]
+----
+  StartDrag nodeLabel evt -> do
+    let mouseX = toNumber $ clientX evt
+        mouseY = toNumber $ clientY evt
+    H.modify_ _
+      { dragging = Just nodeLabel
+      , lastMouse = { x: mouseX, y: mouseY }
+      }
+    -- Pin node and reheat simulation
+    case state.simulation of
+      Just sim -> liftEffect $ FE.reheat sim
+      Nothing -> pure unit
+
+  DragMove evt -> do
+    state <- H.get
+    case state.dragging of
+      Nothing -> pure unit
+      Just nodeLabel -> do
+        let deltaX = mouseX - state.lastMouse.x
+            deltaY = mouseY - state.lastMouse.y
+        -- Update node position in state
+        H.modify_ \s -> s
+          { nodes = map (moveNode nodeLabel deltaX deltaY) s.nodes
+          , lastMouse = { x: mouseX, y: mouseY }
+          }
+        -- Sync back to simulation
+        case state.simulation of
+          Just sim -> do
+            nodes <- H.gets _.nodes
+            liftEffect $ FE.setNodes nodes sim
+          Nothing -> pure unit
+----
+
+== Trade-offs
+
+=== Advantages
+
+* **Full Halogen control**: Events use standard Halogen patterns (`HE.onClick`, etc.)
+* **No bridging**: No need to pass callbacks into PSD3 or convert between event systems
+* **Simpler debugging**: All rendering logic is visible in one place
+* **CSS integration**: Standard Halogen CSS classes work naturally
+
+=== Disadvantages
+
+* **No enter/exit transitions**: HATS's `forEach` with GUP handles transitions automatically
+* **No declarative behaviors**: Must manually wire up drag, zoom, etc.
+* **Less composable**: Can't combine visualization fragments with `<>`
+* **Re-renders entire SVG**: Halogen doesn't diff SVG efficiently like D3
+
+== When to Use HATS Instead
+
+Consider HATS when:
+
+* You need enter/update/exit transitions
+* The visualization combines multiple data-bound layers
+* You want to reuse visualization components across frameworks
+* Performance matters (HATS uses D3's efficient diffing)
+
+== See Also
+
+* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - The callback bridging approach
+* xref:understanding/hats.adoc[Understanding HATS] - The declarative alternative
+* `site/website/src/Component/Hero/ConceptGraph.purs` - Full working example

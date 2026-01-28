@@ -51,6 +51,11 @@ module PSD3.HATS
   -- Coordinated highlighting
   , module ReExportHighlight
   , onCoordinatedHighlight
+  -- Coordinated interaction (brush + highlight)
+  -- Note: Import InteractionTrigger, InteractionState, BoundingBox
+  -- from PSD3.Interaction.Coordinated if you need them for custom respond functions
+  , onCoordinatedInteraction
+  , onBrush
   ) where
 
 import Prelude
@@ -61,6 +66,7 @@ import Effect (Effect)
 import PSD3.Internal.Selection.Types (ElementType(..))
 import PSD3.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..)) as ReExportHighlight
 import PSD3.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..))
+import PSD3.Interaction.Coordinated (InteractionTrigger(..), InteractionState(..), BoundingBox)
 import PSD3.Internal.Transition.Types (TransitionConfig)
 
 -- ============================================================================
@@ -173,6 +179,16 @@ data ThunkedBehavior
       { identify :: Unit -> String           -- Thunked: captures datum, returns identity
       , classify :: String -> HighlightClass -- Curried: takes hoveredId, uses captured datum
       , group :: Maybe String                -- Optional group name for scoping
+      }
+  | ThunkedCoordinatedInteraction
+      { identify :: Unit -> String                         -- Thunked: element identity
+      , respond :: InteractionTrigger -> InteractionState  -- How to respond to any trigger
+      , position :: Maybe (Unit -> { x :: Number, y :: Number })  -- For brush hit-testing
+      , group :: Maybe String
+      }
+  | ThunkedBrush
+      { extent :: BoundingBox                -- Brushable area
+      , group :: Maybe String                -- Group to emit triggers to
       }
 
 -- ============================================================================
@@ -470,5 +486,64 @@ onCoordinatedHighlight
 onCoordinatedHighlight config = ThunkedCoordinatedHighlight
   { identify: \_ -> config.identify
   , classify: config.classify
+  , group: config.group
+  }
+
+-- | Full coordinated interaction behavior (supports brush, hover, focus, selection)
+-- |
+-- | Unlike `onCoordinatedHighlight` which only handles hover,
+-- | this behavior responds to ALL interaction triggers including brush regions.
+-- |
+-- | ```purescript
+-- | forEach "points" Circle points _.id \pt ->
+-- |   withBehaviors
+-- |     [ onCoordinatedInteraction
+-- |         { identify: pt.id
+-- |         , respond: \trigger -> case trigger of
+-- |             HoverTrigger id -> if pt.id == id then Primary else Dimmed
+-- |             BrushTrigger box -> if pointInBox pt.pos box then Selected else Dimmed
+-- |             ClearTrigger -> Neutral
+-- |             _ -> Neutral
+-- |         , position: Just pt.pos  -- For automatic brush hit-testing
+-- |         , group: Nothing
+-- |         }
+-- |     ] $
+-- |   elem Circle [...] []
+-- | ```
+onCoordinatedInteraction
+  :: { identify :: String
+     , respond :: InteractionTrigger -> InteractionState
+     , position :: Maybe { x :: Number, y :: Number }
+     , group :: Maybe String
+     }
+  -> ThunkedBehavior
+onCoordinatedInteraction config = ThunkedCoordinatedInteraction
+  { identify: \_ -> config.identify
+  , respond: config.respond
+  , position: (\pos -> \_ -> pos) <$> config.position  -- Thunk the position
+  , group: config.group
+  }
+
+-- | Attach a brush overlay to an element
+-- |
+-- | When users brush (drag) on this element, a `BrushTrigger` is emitted
+-- | to all elements registered with `onCoordinatedInteraction` in the same group.
+-- |
+-- | ```purescript
+-- | elem Group [ staticStr "class" "brush-overlay" ] []
+-- |   # withBehaviors
+-- |       [ onBrush
+-- |           { extent: { x0: 0.0, y0: 0.0, x1: 400.0, y1: 300.0 }
+-- |           , group: Just "scatter-plot"
+-- |           }
+-- |       ]
+-- | ```
+onBrush
+  :: { extent :: BoundingBox
+     , group :: Maybe String
+     }
+  -> ThunkedBehavior
+onBrush config = ThunkedBrush
+  { extent: config.extent
   , group: config.group
   }

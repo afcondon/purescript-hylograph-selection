@@ -316,3 +316,324 @@ export const clearAllHatsHighlights = () => {
   });
   hatsHighlightRegistry.clear();
 };
+
+// =============================================================================
+// Coordinated Interaction (supports brush + hover + selection)
+// =============================================================================
+
+// This integrates with the full Coordinated framework which handles:
+// - HoverTrigger: element identity hovered
+// - BrushTrigger: bounding box selection
+// - SelectionTrigger: discrete ID set
+// - FocusTrigger: single focused element
+// - ClearTrigger: reset all interaction state
+
+// Global registry for coordinated interaction elements
+// Key: group name (or "_global" for ungrouped)
+// Value: Array of { element, identifyThunk, respondFn, positionThunk }
+const coordInteractionRegistry = new Map();
+
+// InteractionState enum values (must match PureScript Coordinated module)
+const IS_PRIMARY = 0;
+const IS_RELATED = 1;
+const IS_SELECTED = 2;
+const IS_DIMMED = 3;
+const IS_NEUTRAL = 4;
+
+// CSS class names for coordinated interaction
+const COORD_PRIMARY = 'coord-primary';
+const COORD_RELATED = 'coord-related';
+const COORD_SELECTED = 'coord-selected';
+const COORD_DIMMED = 'coord-dimmed';
+const ALL_COORD_CLASSES = [COORD_PRIMARY, COORD_RELATED, COORD_SELECTED, COORD_DIMMED];
+
+function getCoordInteractionGroup(groupName) {
+  const key = groupName || '_global';
+  if (!coordInteractionRegistry.has(key)) {
+    coordInteractionRegistry.set(key, []);
+  }
+  return coordInteractionRegistry.get(key);
+}
+
+/**
+ * Apply state CSS class to an element based on InteractionState int value
+ */
+function applyStateClass(element, state) {
+  // Remove all coord classes first
+  ALL_COORD_CLASSES.forEach(cls => element.classList.remove(cls));
+
+  // Apply appropriate class
+  switch (state) {
+    case IS_PRIMARY:
+      element.classList.add(COORD_PRIMARY);
+      break;
+    case IS_RELATED:
+      element.classList.add(COORD_RELATED);
+      break;
+    case IS_SELECTED:
+      element.classList.add(COORD_SELECTED);
+      break;
+    case IS_DIMMED:
+      element.classList.add(COORD_DIMMED);
+      break;
+    case IS_NEUTRAL:
+    default:
+      // No class applied
+      break;
+  }
+}
+
+/**
+ * Apply hover interaction to all elements in a group
+ * @param {string|null} groupName - Group name
+ * @param {string} hoveredId - The ID of the hovered element
+ */
+function applyHoverInteraction(groupName, hoveredId) {
+  const group = getCoordInteractionGroup(groupName);
+  group.forEach(entry => {
+    const state = entry.respondToHover(hoveredId);
+    applyStateClass(entry.element, state);
+  });
+}
+
+/**
+ * Apply brush interaction to all elements in a group
+ * Uses semantic selection: identifies points in box, then highlights all points with same IDs
+ * @param {string|null} groupName - Group name
+ * @param {object} box - { x0, y0, x1, y1 } bounding box
+ * @param {Element} sourceCell - The cell where the brush originated (for position checking)
+ */
+function applyBrushInteraction(groupName, box, sourceCell) {
+  const group = getCoordInteractionGroup(groupName);
+
+  // First pass: collect IDs of elements whose positions are in the box
+  // Only check elements in the same cell (same parent)
+  const selectedIds = new Set();
+  group.forEach(entry => {
+    if (entry.getPosition) {
+      const pos = entry.getPosition();
+      // Check if this element is in the source cell
+      const elementCell = entry.element.closest('g[id^="cell-"]');
+      if (elementCell === sourceCell) {
+        // Check if position is in box
+        if (pos.x >= box.x0 && pos.x <= box.x1 && pos.y >= box.y0 && pos.y <= box.y1) {
+          const id = entry.identifyThunk();
+          selectedIds.add(id);
+        }
+      }
+    }
+  });
+
+  // Second pass: highlight elements based on whether their ID is in the selected set
+  group.forEach(entry => {
+    const id = entry.identifyThunk();
+    let state;
+    if (selectedIds.size === 0) {
+      state = IS_NEUTRAL;
+    } else if (selectedIds.has(id)) {
+      state = IS_SELECTED;
+    } else {
+      state = IS_DIMMED;
+    }
+    applyStateClass(entry.element, state);
+  });
+}
+
+/**
+ * Apply clear interaction to all elements in a group
+ * @param {string|null} groupName - Group name
+ */
+function applyClearInteraction(groupName) {
+  const group = getCoordInteractionGroup(groupName);
+  group.forEach(entry => {
+    const state = entry.respondToClear();
+    applyStateClass(entry.element, state);
+  });
+}
+
+/**
+ * Attach coordinated interaction behavior to an element
+ *
+ * This registers the element to respond to interaction triggers.
+ * Each trigger type has its own respond function that takes raw data
+ * and returns an InteractionState (as Int).
+ *
+ * @param {Element} element - The DOM element
+ * @param {Function} identifyThunk - (Unit -> String), returns element identity
+ * @param {Function} respondToHover - (String -> Int), hoveredId -> state
+ * @param {Function} respondToBrush - (BoundingBox -> Int), box -> state
+ * @param {Function} respondToClear - (Unit -> Int), _ -> state
+ * @param {object|null} positionThunk - Maybe (Unit -> {x, y}), for brush hit-testing
+ * @param {string|null} groupName - Group name
+ */
+export const attachCoordinatedInteractionThunked = element => identifyThunk => respondToHover => respondToBrush => respondToClear => positionThunk => groupName => () => {
+  const group = groupName; // null means global
+
+  // Extract position thunk if present (Maybe is encoded as { value0: fn } or null/undefined)
+  const getPosition = positionThunk && positionThunk.value0 ? positionThunk.value0 : null;
+
+  // Register this element with separate respond functions
+  const entry = { element, identifyThunk, respondToHover, respondToBrush, respondToClear, getPosition };
+  getCoordInteractionGroup(group).push(entry);
+
+  // Attach mouseenter handler
+  element.addEventListener('mouseenter', function(event) {
+    const hoveredId = identifyThunk();
+    applyHoverInteraction(group, hoveredId);
+  });
+
+  // Attach mouseleave handler
+  element.addEventListener('mouseleave', function(event) {
+    applyClearInteraction(group);
+  });
+};
+
+// =============================================================================
+// Coordinated Brush (emits triggers to coordinated interaction elements)
+// =============================================================================
+
+// Store active brush handles for cleanup
+const activeBrushes = new Map();
+
+/**
+ * Attach a coordinated brush to an element
+ *
+ * When the user brushes on this element, BrushTrigger is emitted to all
+ * elements registered with attachCoordinatedInteractionThunked in the same group.
+ *
+ * @param {Element} element - The SVG element to attach brush to
+ * @param {object} extent - { x0, y0, x1, y1 } brushable area
+ * @param {string|null} groupName - Group name
+ */
+export const attachCoordinatedBrushThunked = element => extent => groupName => () => {
+  const group = groupName;
+
+  // Find the brush-background rect after HATS creates it
+  // Use a MutationObserver to wait for it, or find it lazily on first interaction
+  let brushRect = null;
+
+  function getBrushRect() {
+    if (!brushRect) {
+      brushRect = element.querySelector('.brush-background');
+      if (brushRect) {
+        // Style it for brush selection feedback
+        brushRect.style.fill = 'transparent';
+        brushRect.style.stroke = 'transparent';
+        brushRect.style.strokeWidth = '1';
+      }
+    }
+    return brushRect;
+  }
+
+  // Create a separate overlay rect for the selection visualization
+  // Append it to the PARENT (cell group) to avoid index collision
+  const ns = 'http://www.w3.org/2000/svg';
+  const selectionRect = document.createElementNS(ns, 'rect');
+  selectionRect.setAttribute('class', 'brush-selection-overlay');
+  selectionRect.setAttribute('fill', 'rgba(100, 100, 200, 0.2)');
+  selectionRect.setAttribute('stroke', '#6666cc');
+  selectionRect.setAttribute('stroke-width', '1');
+  selectionRect.setAttribute('visibility', 'hidden');
+  selectionRect.setAttribute('pointer-events', 'none');
+  // Append to parent (cell group) so it's on top of circles
+  const cellGroup = element.parentElement;
+  if (cellGroup) {
+    cellGroup.appendChild(selectionRect);
+  }
+
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+
+  // Get element-local coordinates from event
+  // Uses the parent's CTM to account for transforms (important for SPLOM cells)
+  function getLocalCoords(event) {
+    const svg = element.closest('svg');
+    if (!svg) return { x: event.clientX, y: event.clientY };
+
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+
+    // Use parent's CTM (the cell group with transform) instead of root SVG
+    // This gives us coordinates in the local cell space
+    const parent = element.parentElement;
+    const ctm = parent && parent.getScreenCTM ? parent.getScreenCTM() : svg.getScreenCTM();
+    if (!ctm) return { x: event.clientX, y: event.clientY };
+
+    const localP = pt.matrixTransform(ctm.inverse());
+    return { x: localP.x, y: localP.y };
+  }
+
+  element.addEventListener('pointerdown', function(event) {
+    // Only respond to primary button
+    if (event.button !== 0) return;
+
+    // Check if clicking on brush-background or the group itself
+    const rect = getBrushRect();
+    if (event.target !== element && event.target !== rect) return;
+
+    isDragging = true;
+    const coords = getLocalCoords(event);
+    startX = Math.max(extent.x0, Math.min(extent.x1, coords.x));
+    startY = Math.max(extent.y0, Math.min(extent.y1, coords.y));
+
+    selectionRect.setAttribute('x', startX);
+    selectionRect.setAttribute('y', startY);
+    selectionRect.setAttribute('width', 0);
+    selectionRect.setAttribute('height', 0);
+    selectionRect.setAttribute('visibility', 'visible');
+
+    element.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  element.addEventListener('pointermove', function(event) {
+    if (!isDragging) return;
+
+    const coords = getLocalCoords(event);
+    const currentX = Math.max(extent.x0, Math.min(extent.x1, coords.x));
+    const currentY = Math.max(extent.y0, Math.min(extent.y1, coords.y));
+
+    const x = Math.min(startX, currentX);
+    const y = Math.min(startY, currentY);
+    const width = Math.abs(currentX - startX);
+    const height = Math.abs(currentY - startY);
+
+    selectionRect.setAttribute('x', x);
+    selectionRect.setAttribute('y', y);
+    selectionRect.setAttribute('width', width);
+    selectionRect.setAttribute('height', height);
+
+    // Emit brush interaction with the box
+    // Pass the source cell so we only check positions within that cell
+    const box = { x0: x, y0: y, x1: x + width, y1: y + height };
+    const sourceCell = element.closest('g[id^="cell-"]');
+    applyBrushInteraction(group, box, sourceCell);
+  });
+
+  element.addEventListener('pointerup', function(event) {
+    if (!isDragging) return;
+    isDragging = false;
+    element.releasePointerCapture(event.pointerId);
+  });
+
+  // Click to clear (when not dragging)
+  element.addEventListener('click', function(event) {
+    const rect = getBrushRect();
+    if (event.target !== element && event.target !== rect) return;
+
+    // Hide selection rect
+    selectionRect.setAttribute('visibility', 'hidden');
+
+    // Emit clear interaction
+    applyClearInteraction(group);
+  });
+
+  // Store handle for potential cleanup
+  const handle = { element, selectionRect, group };
+  if (!activeBrushes.has(group)) {
+    activeBrushes.set(group, []);
+  }
+  activeBrushes.get(group).push(handle);
+};

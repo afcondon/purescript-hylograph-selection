@@ -24,6 +24,11 @@ function createNativeBrush(svg, extent, mode, onStart, onBrush, onEnd) {
   let isDragging = false;
   let currentSelection = null;
 
+  // Throttle state for brush callbacks (50ms = 20fps max for expensive operations)
+  let lastBrushCallTime = 0;
+  let pendingBrushCall = null;
+  const BRUSH_THROTTLE_MS = 50;
+
   // Create brush rectangle (hidden initially)
   brushRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   brushRect.setAttribute('class', 'brush-rect');
@@ -140,8 +145,28 @@ function createNativeBrush(svg, extent, mode, onStart, onBrush, onEnd) {
       currentSelection = { x0, y0, x1, y1 };
     }
 
+    // Always update visual rect immediately for smooth feedback
     updateRect(currentSelection);
-    if (onBrush) onBrush(currentSelection)();
+
+    // Throttle the expensive callback
+    if (onBrush) {
+      const now = performance.now();
+      if (now - lastBrushCallTime >= BRUSH_THROTTLE_MS) {
+        lastBrushCallTime = now;
+        if (pendingBrushCall) {
+          cancelAnimationFrame(pendingBrushCall);
+          pendingBrushCall = null;
+        }
+        onBrush(currentSelection)();
+      } else if (!pendingBrushCall) {
+        // Schedule a trailing call to ensure final position is processed
+        pendingBrushCall = requestAnimationFrame(() => {
+          pendingBrushCall = null;
+          lastBrushCallTime = performance.now();
+          onBrush(currentSelection)();
+        });
+      }
+    }
   }
 
   function handlePointerUp(event) {
@@ -149,6 +174,12 @@ function createNativeBrush(svg, extent, mode, onStart, onBrush, onEnd) {
 
     isDragging = false;
     svg.releasePointerCapture(event.pointerId);
+
+    // Cancel any pending throttled brush call
+    if (pendingBrushCall) {
+      cancelAnimationFrame(pendingBrushCall);
+      pendingBrushCall = null;
+    }
 
     // If brush is too small, treat as click to clear
     const width = parseFloat(brushRect.getAttribute('width')) || 0;
@@ -182,6 +213,10 @@ function createNativeBrush(svg, extent, mode, onStart, onBrush, onEnd) {
     },
     getSelection: () => currentSelection,
     destroy: () => {
+      if (pendingBrushCall) {
+        cancelAnimationFrame(pendingBrushCall);
+        pendingBrushCall = null;
+      }
       svg.removeEventListener('pointerdown', handlePointerDown);
       svg.removeEventListener('pointermove', handlePointerMove);
       svg.removeEventListener('pointerup', handlePointerUp);

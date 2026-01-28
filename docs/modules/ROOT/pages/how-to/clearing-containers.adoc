@@ -1,0 +1,116 @@
+= Clearing Containers vs GUP Reconciliation
+:description: When to use clearContainer vs letting GUP handle element lifecycle
+:keywords: HATS, GUP, clear, container, reconciliation
+
+HATS provides two different mechanisms for managing element lifecycle. Understanding when to use each is important for correct behavior.
+
+== The Two Mechanisms
+
+=== 1. GUP (General Update Pattern) - Within a Fold
+
+When using `forEachWithGUP`, the interpreter automatically handles:
+
+- **Enter**: New data items create new elements
+- **Update**: Existing items have their elements updated
+- **Exit**: Removed items have their elements removed (with optional transitions)
+
+This works by *key matching* - elements are identified by their key function, and the interpreter diffs old vs new keys to determine what enters, updates, or exits.
+
+[source,purescript]
+----
+-- GUP handles element lifecycle WITHIN this fold
+forEachWithGUP "circles" Circle data keyFn template gupSpec
+----
+
+=== 2. clearContainer - Between Different Tree Structures
+
+When the *entire tree structure changes* (not just the data within a fold), GUP cannot help because:
+
+- Different folds have different names
+- The interpreter reuses elements by position, not by semantic meaning
+- Orphaned elements from the old structure remain in the DOM
+
+Use `clearContainer` when switching between fundamentally different visualizations:
+
+[source,purescript]
+----
+import PSD3.HATS.InterpreterTick (clearContainer, rerender)
+
+-- Switching from circles to letters - completely different structure
+clearContainer "#viz-container"
+rerender "#viz-container" lettersTree
+----
+
+== When to Use Each
+
+[cols="1,1,2"]
+|===
+| Scenario | Mechanism | Why
+
+| Data changes within same visualization
+| GUP (automatic)
+| Keys identify elements, diff handles lifecycle
+
+| Same visualization, different data count
+| GUP (automatic)
+| Enter/exit handle additions/removals
+
+| Switching to different visualization type
+| `clearContainer`
+| Tree structure incompatible, must start fresh
+
+| Animation step changes (scrollytelling)
+| `clearContainer`
+| Each step may have completely different DOM structure
+|===
+
+== Example: Scrollytelling Steps
+
+In a scrollytelling tour where each step shows a different visualization:
+
+[source,purescript]
+----
+StepBecameVisible newStep -> do
+  -- Clear before switching - each step has different structure
+  liftEffect $ clearContainer "#viz-container"
+
+  case newStep of
+    1 -> renderSingleCircle
+    2 -> renderMultipleCircles  -- Different fold name, different structure
+    3 -> renderLetters          -- Completely different element types
+    4 -> renderForceGraph       -- Complex nested structure
+----
+
+Without `clearContainer`, elements from step 1 would persist when viewing step 2, because:
+
+1. Step 1 renders: `forEachWithGUP "circle" Circle [singleCircle] ...`
+2. Step 2 renders: `forEachWithGUP "circles" Circle [multiCircles] ...`
+3. The "circle" fold elements aren't part of the "circles" fold
+4. GUP only manages elements *within its own fold*
+5. The orphaned "circle" elements remain visible
+
+== Common Mistake
+
+[source,purescript]
+----
+-- WRONG: This doesn't clear anything!
+clearViz selector = rerender selector (elem Group [] [])
+----
+
+This renders an empty Group, but the interpreter *reuses* the existing container's children - it doesn't remove them. The empty Group just means "no new children to add", not "remove existing children".
+
+== API Reference
+
+[source,purescript]
+----
+-- Remove all children from a container element
+clearContainer :: String -> Effect Unit
+
+-- Re-render a tree into a container (reconciles with existing elements)
+rerender :: String -> Tree -> Effect RerenderResult
+----
+
+== See Also
+
+* xref:understanding/hats.adoc[Understanding HATS]
+* xref:understanding/gup.adoc[Understanding GUP]

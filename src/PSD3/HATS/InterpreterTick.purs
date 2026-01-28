@@ -32,6 +32,9 @@ import Effect.Console (log)
 import PSD3.HATS (Tree(..), SomeFold, runSomeFold, Enumeration(..), Assembly(..), TraversalOrder(..), Attr(..), ThunkedBehavior(..), GUPSpec, PhaseSpec)
 import PSD3.HATS.Transitions (HATSTransitions(..), ElementTransitions, AttrTransition, toTickEasing)
 import PSD3.Internal.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..))
+import PSD3.Internal.Behavior.Types (HighlightClass(..)) as HC
+import PSD3.Interaction.Coordinated (InteractionState(..), InteractionTrigger(..), BoundingBox)
+import PSD3.Interaction.Coordinated (InteractionState(..)) as IS
 import PSD3.Internal.Selection.Types (ElementType(..))
 import PSD3.Internal.Selection.Operations (createElementWithNS)
 import Web.DOM.Element (Element)
@@ -131,6 +134,7 @@ rerenderTree doc parent tree = do
       el <- case Array.index existingChildren childIdx of
         Just existing -> do
           applyAttrs existing spec.attrs
+          applyBehaviors existing spec.behaviors
           pure existing
         Nothing -> do
           el <- createElementWithNS spec.elemType doc
@@ -168,8 +172,10 @@ rerenderTree doc parent tree = do
           then case spec.gup of
             Just gupSpec -> case gupSpec.exit of
               Just phaseSpec -> do
-                applyAttrs element phaseSpec.attrs
+                -- Create transitions FIRST (reads current values as "from")
                 transitions <- createExitTransitions element phaseSpec exitIdx
+                -- Apply only non-numeric attrs (colors etc. - can't animate anyway)
+                applyNonNumericAttrs element phaseSpec.attrs
                 pure $ Just { element, attrs: transitions }
               Nothing -> do
                 removeElement element
@@ -368,6 +374,21 @@ rerenderTree doc parent tree = do
         classifyAsInt :: String -> Int
         classifyAsInt hoveredId = highlightClassToInt (config.classify hoveredId)
       in attachCoordinatedHighlightThunked el config.identify classifyAsInt (toNullable config.group)
+    ThunkedCoordinatedInteraction config ->
+      let
+        -- Separate respond functions for each trigger type
+        -- JS calls these with raw data, PureScript constructs the ADT
+        respondToHover :: String -> Int
+        respondToHover hoveredId = interactionStateToInt (config.respond (HoverTrigger hoveredId))
+
+        respondToBrush :: BoundingBox -> Int
+        respondToBrush box = interactionStateToInt (config.respond (BrushTrigger box))
+
+        respondToClear :: Unit -> Int
+        respondToClear _ = interactionStateToInt (config.respond ClearTrigger)
+      in attachCoordinatedInteractionThunked el config.identify respondToHover respondToBrush respondToClear config.position (toNullable config.group)
+    ThunkedBrush config ->
+      void $ attachCoordinatedBrushThunked el config.extent (toNullable config.group)
 
   -- ==========================================================================
   -- Transition Creation
@@ -591,11 +612,36 @@ foreign import attachCoordinatedHighlightThunked
   -> Nullable String        -- groupName
   -> Effect Unit
 
+foreign import attachCoordinatedInteractionThunked
+  :: Element
+  -> (Unit -> String)                                   -- identifyThunk
+  -> (String -> Int)                                    -- respondToHover (hoveredId -> state)
+  -> (BoundingBox -> Int)                               -- respondToBrush (box -> state)
+  -> (Unit -> Int)                                      -- respondToClear (_ -> state)
+  -> Maybe (Unit -> { x :: Number, y :: Number })       -- positionThunk (optional)
+  -> Nullable String                                    -- groupName
+  -> Effect Unit
+
+foreign import attachCoordinatedBrushThunked
+  :: Element
+  -> BoundingBox                                        -- extent
+  -> Nullable String                                    -- groupName
+  -> Effect Unit
+
 -- | Convert HighlightClass to Int for FFI
 -- | Must match the constants in InterpreterTick.js
 highlightClassToInt :: HighlightClass -> Int
 highlightClassToInt = case _ of
-  Primary -> 0
-  Related -> 1
-  Dimmed -> 2
-  Neutral -> 3
+  HC.Primary -> 0
+  HC.Related -> 1
+  HC.Dimmed -> 2
+  HC.Neutral -> 3
+
+-- | Convert InteractionState to Int for FFI (matches Coordinated.stateToInt)
+interactionStateToInt :: InteractionState -> Int
+interactionStateToInt = case _ of
+  IS.Primary -> 0
+  IS.Related -> 1
+  IS.Selected -> 2
+  IS.Dimmed -> 3
+  IS.Neutral -> 4
