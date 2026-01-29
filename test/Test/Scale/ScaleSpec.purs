@@ -17,8 +17,8 @@ import Effect.Console (log)
 import Test.Assert (assert')
 
 -- Scale imports
-import PSD3.Scale (linear, pow, sqrt, domain, range, applyScale, invert, ticks, clamp, nice, exponent, andThen, contramap, map)
-import PSD3.Scale.FP (sample, sampleRange, tickPositions, niceModifier, clampModifier, combineModifiers, normalize, scaleExtent, scaleMidpoint, scaleInRange)
+import Hylograph.Scale (linear, pow, sqrt, domain, range, applyScale, invert, ticks, clamp, nice, exponent, andThen, contramap, map)
+import Hylograph.Scale.FP (sample, sampleRange, tickPositions, niceModifier, clampModifier, combineModifiers, normalize, scaleExtent, scaleMidpoint, scaleInRange)
 
 -- =============================================================================
 -- Tests

@@ -12,16 +12,16 @@ import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 -- DSL imports
-import PSD3.Expr.Expr (class NumExpr, lit, add, mul, class TrigExpr, sin, cos, pi)
-import PSD3.Expr.Units (class UnitExpr, class UnitArith, Pixels, Em, px, em, addU, scaleU)
-import PSD3.Expr.Datum (class DatumExpr, field)
-import PSD3.Expr.Sugar ((*:), (+:), (-:), (*~), (+~), n)
+import Hylograph.Expr.Expr (class NumExpr, lit, add, mul, class TrigExpr, sin, cos, pi)
+import Hylograph.Expr.Units (class UnitExpr, class UnitArith, Pixels, Em, px, em, addU, scaleU)
+import Hylograph.Expr.Datum (class DatumExpr, field)
+import Hylograph.Expr.Sugar ((*:), (+:), (-:), (*~), (+~), n)
 import Data.Number (pi) as Math
 
 -- Interpreter imports
-import PSD3.Expr.Interpreter.Eval (Eval, runEval, EvalD, runEvalD)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
-import PSD3.Expr.Interpreter.SVG (SVG, runSVG, SVGD, runSVGD)
+import Hylograph.Expr.Interpreter.Eval (Eval, runEval, EvalD, runEvalD)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.SVG (SVG, runSVG, SVGD, runSVGD)
 
 -- =============================================================================
 -- Sample datum type (parabola point)

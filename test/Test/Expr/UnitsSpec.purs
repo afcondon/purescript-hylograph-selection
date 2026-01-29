@@ -17,12 +17,12 @@ import Test.Assert (assert')
 import Unsafe.Coerce (unsafeCoerce)
 
 -- DSL imports
-import PSD3.Expr.Units (class UnitExpr, class UnitArith, Pixels, Em, Rem, Percent, px, em, rem, percent, addU, subU, scaleU)
+import Hylograph.Expr.Units (class UnitExpr, class UnitArith, Pixels, Em, Rem, Percent, px, em, rem, percent, addU, subU, scaleU)
 
 -- Interpreter imports
-import PSD3.Expr.Interpreter.Eval (Eval, runEval)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
-import PSD3.Expr.Interpreter.SVG (SVG, runSVG)
+import Hylograph.Expr.Interpreter.Eval (Eval, runEval)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.SVG (SVG, runSVG)
 
 -- =============================================================================
 -- Polymorphic Unit Expressions

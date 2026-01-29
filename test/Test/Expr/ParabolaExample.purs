@@ -13,16 +13,16 @@ import Effect.Console (log)
 import Type.Proxy (Proxy(..))
 
 -- DSL
-import PSD3.Expr.Expr (class NumExpr, lit, add, mul)
-import PSD3.Expr.Units (class UnitExpr, class UnitArith, Pixels, px)
-import PSD3.Expr.Datum (class DatumExpr, field, index)
-import PSD3.Expr.Sugar ((*:), (+:), (-:), n)
+import Hylograph.Expr.Expr (class NumExpr, lit, add, mul)
+import Hylograph.Expr.Units (class UnitExpr, class UnitArith, Pixels, px)
+import Hylograph.Expr.Datum (class DatumExpr, field, index)
+import Hylograph.Expr.Sugar ((*:), (+:), (-:), n)
 
 -- Interpreters
-import PSD3.Expr.Interpreter.Eval (EvalD, runEvalD)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
-import PSD3.Expr.Interpreter.SVG (SVGD, runSVGD)
-import PSD3.Expr.Interpreter.PureSVG as Pure
+import Hylograph.Expr.Interpreter.Eval (EvalD, runEvalD)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.SVG (SVGD, runSVGD)
+import Hylograph.Expr.Interpreter.PureSVG as Pure
 
 -- =============================================================================
 -- Data Types

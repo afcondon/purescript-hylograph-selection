@@ -12,19 +12,19 @@ import Effect (Effect)
 import Effect.Console (log)
 
 -- AST and Elements
-import PSD3.AST (Tree, elem)
-import PSD3.Internal.Selection.Types (ElementType(..))
+import Hylograph.AST (Tree, elem)
+import Hylograph.Internal.Selection.Types (ElementType(..))
 
 -- New Join Combinators
-import PSD3.Unified.Join as J
+import Hylograph.Unified.Join as J
 
 -- Display and Attributes
-import PSD3.Unified.Display as D
-import PSD3.Unified.Display ((>>>))
-import PSD3.Unified.Attribute (attr, attrStatic)
+import Hylograph.Unified.Display as D
+import Hylograph.Unified.Display ((>>>))
+import Hylograph.Unified.Attribute (attr, attrStatic)
 
 -- Mermaid interpreter for structure verification
-import PSD3.Interpreter.Mermaid (runMermaidTree)
+import Hylograph.Interpreter.Mermaid (runMermaidTree)
 
 -- =============================================================================
 -- Test Data Types

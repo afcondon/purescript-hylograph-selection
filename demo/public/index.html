@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hylograph - Interactive HATS Explorer</title>
+  <!-- Google Fonts: Josefin Sans for Art Deco headers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Prism.js for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      /* Art Deco palette inspired by logo */
+      --black: #000000;
+      --near-black: #0a0a0a;
+      --charcoal: #1a1a1a;
+      --gold: #C9A962;
+      --gold-dim: #8B7355;
+      --gold-bright: #E8D5A3;
+      --cream: #FAF8F5;
+      --warm-white: #FFFEF9;
+      --text-dark: #2a2a2a;
+      --text-light: #e8e8e8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Josefin Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--black);
+      color: var(--text-light);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header - Deco style */
+    .app-header {
+      padding: 28px 40px 24px;
+      background: var(--black);
+      border-bottom: 1px solid var(--gold-dim);
+      position: relative;
+    }
+
+    /* Gold dot terminals on header border */
+    .app-header::before,
+    .app-header::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      width: 7px;
+      height: 7px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+    .app-header::before { left: 40px; }
+    .app-header::after { right: 40px; }
+
+    .app-header h1 {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .app-header h1 img {
+      height: 48px;
+      width: auto;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 24px;
+    }
+
+    /* Selector - Deco tabs */
+    .selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .option {
+      padding: 10px 20px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--gold-dim);
+      font-family: "Josefin Sans", sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .option:hover {
+      color: var(--gold);
+    }
+
+    .option.selected {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    /* Main content */
+    .app-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 33% 6px 67%;
+      gap: 0;
+      background: var(--black);
+    }
+
+    .app-main.dragging {
+      cursor: col-resize;
+      user-select: none;
+    }
+
+    /* Divider - gold Deco rule */
+    .divider {
+      background: var(--gold-dim);
+      cursor: col-resize;
+      transition: background 0.2s ease;
+      position: relative;
+    }
+
+    .divider:hover {
+      background: var(--gold);
+    }
+
+    .app-main.dragging .divider {
+      background: var(--gold-bright);
+    }
+
+    /* Dot terminals on divider */
+    .divider::before,
+    .divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .divider::before { top: 20px; }
+    .divider::after { bottom: 20px; }
+    .divider:hover::before,
+    .divider:hover::after {
+      opacity: 1;
+    }
+
+    .panel {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    /* Left panel - light/cream for visualizations */
+    .viz-panel {
+      background: var(--cream);
+    }
+
+    .viz-panel h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+    }
+
+    /* Right panel - dark Deco style */
+    .overlay-panel {
+      background: var(--near-black);
+    }
+
+    .overlay-panel h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--gold-dim);
+    }
+
+    /* Visualization container */
+    .viz-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px;
+      background: var(--warm-white);
+      border: 1px solid var(--gold-dim);
+    }
+
+    .viz-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Overlay container - AST code background with meta diagram on top */
+    .overlay-container {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--gold-dim);
+      background: var(--charcoal);
+    }
+
+    .overlay-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* AST code layer - full background, syntax highlighted */
+    .ast-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      overflow: auto;
+      background: var(--charcoal);
+    }
+
+    .ast-layer pre {
+      margin: 0;
+      background: transparent !important;
+    }
+
+    .ast-layer code {
+      font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      white-space: pre;
+      color: var(--gold-dim);
+    }
+
+    /* HATS syntax highlighting - Deco gold theme */
+    .ast-layer .token.keyword { color: var(--gold); }
+    .ast-layer .token.keyword.important { color: #E8D5A3; font-weight: 600; }
+    .ast-layer .token.class-name { color: #7ec699; }
+    .ast-layer .token.function { color: var(--gold-bright); }
+    .ast-layer .token.function.important { color: #ff9e64; }
+    .ast-layer .token.string { color: #8B7355; }
+    .ast-layer .token.number { color: #f08d49; }
+    .ast-layer .token.number.important { color: #ff6b6b; font-weight: 600; }
+    .ast-layer .token.variable { color: #9d7cd8; }
+    .ast-layer .token.operator { color: var(--gold-dim); }
+    .ast-layer .token.punctuation { color: #555; }
+    .ast-layer .token.comment { color: #555; font-style: italic; }
+
+    /* Meta layer - on top for diagram, but allows code scrolling */
+    .meta-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 20px;
+      pointer-events: none;  /* Let events pass through to code layer */
+    }
+
+    .meta-layer svg {
+      max-width: 100%;
+      height: auto;
+      pointer-events: auto;  /* But SVG itself catches events */
+      cursor: grab;
+      overflow: visible;  /* Don't clip when panning */
+    }
+
+    .meta-layer svg:active {
+      cursor: grabbing;
+    }
+
+    /* Footer - Deco style */
+    .app-footer {
+      padding: 20px 40px;
+      background: var(--black);
+      border-top: 1px solid var(--gold-dim);
+      position: relative;
+    }
+
+    /* Gold dot terminals on footer border */
+    .app-footer::before,
+    .app-footer::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      width: 7px;
+      height: 7px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+    .app-footer::before { left: 40px; }
+    .app-footer::after { right: 40px; }
+
+    .app-footer p {
+      color: var(--gold-dim);
+      font-size: 13px;
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+
+    .app-footer code {
+      background: var(--charcoal);
+      padding: 3px 8px;
+      border: 1px solid var(--gold-dim);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-main {
+        grid-template-columns: 1fr !important;
+      }
+
+      .divider {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Prism.js core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-haskell.min.js"></script>
+
+  <!-- Custom HATS language for Prism -->
+  <script>
+    Prism.languages.hats = {
+      'comment': /--.*$/m,
+      'fold-keyword': {
+        pattern: /\bforEach\b/,
+        alias: 'keyword important'
+      },
+      'elem-keyword': {
+        pattern: /\belem\b/,
+        alias: 'keyword'
+      },
+      'element-type': {
+        pattern: /\b(SVG|G|Rect|Circle|Path|Line|Text|Polygon|Defs|LinearGradient|Stop|Pattern|Div|Span|Table|Tr|Td|Th|Tbody|Thead)\b/,
+        alias: 'class-name'
+      },
+      'friendly-attr': {
+        pattern: /F\.\w+/,
+        alias: 'function'
+      },
+      'thunked': {
+        pattern: /\bthunked\w*\b/,
+        alias: 'function important'
+      },
+      'static-attr': {
+        pattern: /\b(staticNum|staticStr)\b/,
+        alias: 'function'
+      },
+      'string': {
+        pattern: /"(?:[^"\\]|\\.)*"/,
+        greedy: true
+      },
+      'number': /\b-?\d+(?:\.\d+)?\b/,
+      'datum': {
+        pattern: /\bdatum\.\w+/,
+        alias: 'variable'
+      },
+      'multiplier': {
+        pattern: /×\d+/,
+        alias: 'number important'
+      },
+      'punctuation': /[[\](),]/,
+      'operator': /\\|->|<>/
+    };
+  </script>
+
+  <script src="bundle.js"></script>
+</body>
+</html>

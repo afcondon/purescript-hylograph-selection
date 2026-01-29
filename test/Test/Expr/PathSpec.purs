@@ -10,12 +10,12 @@ import Effect.Console (log)
 import Data.Number (pi)
 
 -- DSL
-import PSD3.Expr.Expr (class NumExpr, lit)
-import PSD3.Expr.Path (class PathExpr, linePath, linkHorizontal, linkVertical, sankeyLink, arc)
+import Hylograph.Expr.Expr (class NumExpr, lit)
+import Hylograph.Expr.Path (class PathExpr, linePath, linkHorizontal, linkVertical, sankeyLink, arc)
 
 -- Interpreters
-import PSD3.Expr.Interpreter.Eval (Eval, runEval)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.Eval (Eval, runEval)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
 
 -- =============================================================================
 -- Path Examples (polymorphic!)

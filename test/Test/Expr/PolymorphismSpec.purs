@@ -12,13 +12,13 @@ import Effect.Console (log)
 import Test.Assert (assert')
 
 -- DSL imports
-import PSD3.Expr.Expr (class NumExpr, class TrigExpr, class StringExpr, class BoolExpr, class CompareExpr, lit, add, mul, sub, div, sin, cos, pi, str, concat, ifThenElse, lt)
-import PSD3.Expr.Path (class PathExpr, linePath, linkHorizontal)
+import Hylograph.Expr.Expr (class NumExpr, class TrigExpr, class StringExpr, class BoolExpr, class CompareExpr, lit, add, mul, sub, div, sin, cos, pi, str, concat, ifThenElse, lt)
+import Hylograph.Expr.Path (class PathExpr, linePath, linkHorizontal)
 
 -- Interpreter imports
-import PSD3.Expr.Interpreter.Eval (Eval, runEval)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
-import PSD3.Expr.Interpreter.SVG (SVG, runSVG)
+import Hylograph.Expr.Interpreter.Eval (Eval, runEval)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.SVG (SVG, runSVG)
 
 -- =============================================================================
 -- Polymorphic Expressions (same expression, multiple interpreters!)

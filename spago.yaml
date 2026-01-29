@@ -2,22 +2,22 @@ workspace:
   packageSet:
     registry: 67.0.1
   extraPackages:
-    psd3-graph:
-      path: ../purescript-psd3-graph
-    psd3-layout:
-      path: ../purescript-psd3-layout
-    psd3-transitions:
-      path: ../purescript-psd3-transitions
+    hylograph-graph:
+      path: ../purescript-hylograph-graph
+    hylograph-layout:
+      path: ../purescript-hylograph-layout
+    hylograph-transitions:
+      path: ../purescript-hylograph-transitions
 
 package:
-  name: psd3-selection
+  name: hylograph-selection
   description: Type-safe D3 selection and attribute library for PureScript
   publish:
     version: 0.1.0
     license: MIT
     location:
       githubOwner: afcondon
-      githubRepo: purescript-psd3-selection
+      githubRepo: purescript-hylograph-selection
   dependencies:
     - aff
     - arrays
@@ -42,9 +42,9 @@ package:
     - partial
     - prelude
     - profunctor
-    - psd3-graph
-    - psd3-layout
-    - psd3-transitions
+    - hylograph-graph
+    - hylograph-layout
+    - hylograph-transitions
     - tree-rose
     - strings
     - transformers

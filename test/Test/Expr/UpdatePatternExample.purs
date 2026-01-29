@@ -15,14 +15,14 @@ import Effect.Console (log)
 import Type.Proxy (Proxy(..))
 
 -- v3 DSL
-import PSD3.Expr.Expr (class NumExpr, class BoolExpr, class CompareExpr, class StringExpr, ifThenElse)
-import PSD3.Expr.Expr as E
-import PSD3.Expr.Datum (class DatumExpr, field, index)
-import PSD3.Expr.Sugar ((*:), (<.), n, s)
+import Hylograph.Expr.Expr (class NumExpr, class BoolExpr, class CompareExpr, class StringExpr, ifThenElse)
+import Hylograph.Expr.Expr as E
+import Hylograph.Expr.Datum (class DatumExpr, field, index)
+import Hylograph.Expr.Sugar ((*:), (<.), n, s)
 
 -- Interpreters
-import PSD3.Expr.Interpreter.Eval (EvalD, runEvalD)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.Eval (EvalD, runEvalD)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
 
 -- =============================================================================
 -- Data Types

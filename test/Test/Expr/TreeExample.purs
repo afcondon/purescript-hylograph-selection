@@ -16,15 +16,15 @@ import Effect.Console (log)
 import Type.Proxy (Proxy(..))
 
 -- DSL
-import PSD3.Expr.Expr (class NumExpr, class BoolExpr, class CompareExpr, class StringExpr, ifThenElse)
-import PSD3.Expr.Expr as E
-import PSD3.Expr.Datum (class DatumExpr, field)
-import PSD3.Expr.Path (class PathExpr, linkVertical)
-import PSD3.Expr.Sugar ((+:), (<.), n, s)
+import Hylograph.Expr.Expr (class NumExpr, class BoolExpr, class CompareExpr, class StringExpr, ifThenElse)
+import Hylograph.Expr.Expr as E
+import Hylograph.Expr.Datum (class DatumExpr, field)
+import Hylograph.Expr.Path (class PathExpr, linkVertical)
+import Hylograph.Expr.Sugar ((+:), (<.), n, s)
 
 -- Interpreters
-import PSD3.Expr.Interpreter.Eval (EvalD, runEvalD)
-import PSD3.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
+import Hylograph.Expr.Interpreter.Eval (EvalD, runEvalD)
+import Hylograph.Expr.Interpreter.CodeGen (CodeGen, runCodeGen)
 
 -- =============================================================================
 -- Tree Data Types (matching typical d3-hierarchy output)

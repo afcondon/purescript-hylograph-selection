@@ -5,11 +5,11 @@ import Prelude
 import Data.String (contains, Pattern(..))
 import Effect (Effect)
 import Effect.Console (log)
-import PSD3.Expr.Friendly (computed, num, static, staticStr)
-import PSD3.Interpreter.SemiQuine.TreeToCode (treeToCode)
-import PSD3.Internal.Selection.Types (ElementType(..))
-import PSD3.AST (Tree)
-import PSD3.AST as T
+import Hylograph.Expr.Friendly (computed, num, static, staticStr)
+import Hylograph.Interpreter.SemiQuine.TreeToCode (treeToCode)
+import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.AST (Tree)
+import Hylograph.AST as T
 import Test.Assert (assert')
 
 -- | Sample data type for parabola example

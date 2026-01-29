@@ -1,0 +1,26 @@
+package:
+  name: hylograph-selection-demo
+  description: Hylograph Explorer - Interactive HATS tree visualization demo
+  dependencies:
+    - aff
+    - arrays
+    - effect
+    - foldable-traversable
+    - halogen
+    - halogen-subscriptions
+    - integers
+    - maybe
+    - prelude
+    - hylograph-selection
+    - transformers
+    - web-events
+    - web-html
+    - web-dom
+    - web-uievents
+  build:
+    strict: true
+
+  bundle:
+    module: Main
+    outfile: public/bundle.js
+    platform: browser
