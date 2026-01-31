@@ -205,6 +205,8 @@ rerenderTree doc parent tree = do
         if Set.member key updateKeys
           then case Array.find (\d -> spec.keyFn d == key) items of
             Just datum -> do
+              -- Bind updated datum for behaviors that read __data__
+              bindDatum element datum
               -- Get the template tree for this datum (captures datum in closures)
               let templateTree = spec.template datum
               let templateAttrs = case templateTree of
@@ -291,6 +293,7 @@ rerenderTree doc parent tree = do
         appendTo p el
         setKey el key
         setFoldName el foldName
+        bindDatum el datum  -- Bind datum for behaviors that read __data__
         applyAttrs el spec.attrs
 
         transitions <- case gupSpec of
@@ -592,6 +595,7 @@ foreign import setFoldName :: Element -> String -> Effect Unit
 foreign import getChildElements :: Element -> Effect (Array Element)
 foreign import getChildElementsForFold :: Element -> String -> String -> Effect (Array Element)
 foreign import removeElement :: Element -> Effect Unit
+foreign import bindDatum :: forall a. Element -> a -> Effect Unit
 
 -- | Convert ElementType to tag name (lowercase)
 elementTypeToTagName :: ElementType -> String
