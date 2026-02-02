@@ -660,6 +660,8 @@ highlightClassToInt = case _ of
   HC.Related -> 1
   HC.Dimmed -> 2
   HC.Neutral -> 3
+  HC.Upstream -> 4
+  HC.Downstream -> 5
 
 -- | Convert InteractionState to Int for FFI (matches Coordinated.stateToInt)
 interactionStateToInt :: InteractionState -> Int

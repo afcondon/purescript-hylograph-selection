@@ -83,19 +83,25 @@ type MouseEventInfo datum =
 -- |
 -- | - `Primary`: The hovered element itself
 -- | - `Related`: Connected/related to the hovered element
+-- | - `Upstream`: Dependencies (things this element depends on)
+-- | - `Downstream`: Dependents (things that depend on this element)
 -- | - `Dimmed`: Not related (de-emphasized)
 -- | - `Neutral`: No highlight state change (default appearance)
 data HighlightClass
-  = Primary   -- The hovered element (receives .highlight-primary)
-  | Related   -- Related elements (receives .highlight-related)
-  | Dimmed    -- Unrelated elements (receives .highlight-dimmed)
-  | Neutral   -- No change (no class added)
+  = Primary     -- The hovered element (receives .highlight-primary)
+  | Related     -- Related elements (receives .highlight-related)
+  | Upstream    -- Dependencies (receives .highlight-upstream)
+  | Downstream  -- Dependents (receives .highlight-downstream)
+  | Dimmed      -- Unrelated elements (receives .highlight-dimmed)
+  | Neutral     -- No change (no class added)
 
 derive instance Eq HighlightClass
 
 instance Show HighlightClass where
   show Primary = "Primary"
   show Related = "Related"
+  show Upstream = "Upstream"
+  show Downstream = "Downstream"
   show Dimmed = "Dimmed"
   show Neutral = "Neutral"
 

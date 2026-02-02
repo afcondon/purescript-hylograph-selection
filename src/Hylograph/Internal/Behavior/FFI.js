@@ -575,7 +575,9 @@ const highlightRegistry = new Map();
 const HIGHLIGHT_PRIMARY = 'highlight-primary';
 const HIGHLIGHT_RELATED = 'highlight-related';
 const HIGHLIGHT_DIMMED = 'highlight-dimmed';
-const ALL_HIGHLIGHT_CLASSES = [HIGHLIGHT_PRIMARY, HIGHLIGHT_RELATED, HIGHLIGHT_DIMMED];
+const HIGHLIGHT_UPSTREAM = 'highlight-upstream';
+const HIGHLIGHT_DOWNSTREAM = 'highlight-downstream';
+const ALL_HIGHLIGHT_CLASSES = [HIGHLIGHT_PRIMARY, HIGHLIGHT_RELATED, HIGHLIGHT_DIMMED, HIGHLIGHT_UPSTREAM, HIGHLIGHT_DOWNSTREAM];
 
 // TODO: TECH DEBT - These enum mappings assume specific Int representation from PureScript
 // highlightClassToInt and tooltipTriggerToInt. This is fragile. A safer approach would be
@@ -586,6 +588,8 @@ const HC_PRIMARY = 0;
 const HC_RELATED = 1;
 const HC_DIMMED = 2;
 const HC_NEUTRAL = 3;
+const HC_UPSTREAM = 4;
+const HC_DOWNSTREAM = 5;
 
 const TT_ON_HOVER = 0;
 const TT_WHEN_PRIMARY = 1;
@@ -759,6 +763,12 @@ function applyHighlights(groupName, hoveredId, triggerElement, event) {
         break;
       case HC_DIMMED:
         element.classList.add(HIGHLIGHT_DIMMED);
+        break;
+      case HC_UPSTREAM:
+        element.classList.add(HIGHLIGHT_UPSTREAM);
+        break;
+      case HC_DOWNSTREAM:
+        element.classList.add(HIGHLIGHT_DOWNSTREAM);
         break;
       case HC_NEUTRAL:
       default:

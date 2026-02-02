@@ -957,12 +957,14 @@ querySelectorAllElements selector parents = do
   pure $ Array.concat nodeArrays
 
 -- | Convert HighlightClass to Int for FFI
--- | Must match the constants in FFI.js: HC_PRIMARY=0, HC_RELATED=1, HC_DIMMED=2, HC_NEUTRAL=3
+-- | Must match the constants in FFI.js: HC_PRIMARY=0, HC_RELATED=1, HC_DIMMED=2, HC_NEUTRAL=3, HC_UPSTREAM=4, HC_DOWNSTREAM=5
 highlightClassToInt :: HighlightClass -> Int
 highlightClassToInt Primary = 0
 highlightClassToInt Related = 1
 highlightClassToInt Dimmed = 2
 highlightClassToInt Neutral = 3
+highlightClassToInt Upstream = 4
+highlightClassToInt Downstream = 5
 
 -- | Convert TooltipTrigger to Int for FFI
 -- | Must match the constants in FFI.js: TT_ON_HOVER=0, TT_WHEN_PRIMARY=1, TT_WHEN_RELATED=2
