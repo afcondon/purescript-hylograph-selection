@@ -42,7 +42,17 @@ Output: `build/site/`
 
 ## Project Context
 
-- PSD3 is a PureScript D3 visualization library
+- Hylograph is a PureScript visualization library (formerly PSD3)
 - Uses finally-tagless encoding for expressions
-- Tree AST with multiple interpreters (D3, String, Mermaid)
-- Part of ecosystem: psd3-selection, psd3-graph, psd3-tree, psd3-sheetless
+- HATS (Hylomorphic Abstract Tree Syntax) for declarative SVG
+- Multiple interpreters (D3, String, Mermaid)
+- Part of ecosystem: hylograph-selection, hylograph-graph, hylograph-layout, hylograph-simulation
+
+## Skills
+
+```yaml
+skills:
+  hylograph-spa:
+    description: "Scaffold or guide building a Halogen + Hylograph SPA"
+    path: ".claude/skills/hylograph-spa.md"
+```
