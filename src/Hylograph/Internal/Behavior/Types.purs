@@ -1,3 +1,13 @@
+-- | Internal: Types for declarative behavior configuration.
+-- |
+-- | Provides ADTs for configuring user interactions:
+-- | - `Behavior`: Sum type for all supported behaviors
+-- | - `ZoomConfig` / `DragConfig`: Configuration records
+-- | - `ScaleExtent`: Zoom level bounds
+-- | - Mouse event handlers with info/datum access
+-- | - Coordinated highlighting configuration
+-- |
+-- | **Internal module** - these types are re-exported by `Hylograph.Behavior`.
 module Hylograph.Internal.Behavior.Types
   ( Behavior(..)
   , ZoomConfig(..)

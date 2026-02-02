@@ -1,3 +1,16 @@
+-- | Internal: Type class defining selection operations.
+-- |
+-- | The `SelectionM` class abstracts over different selection interpreters,
+-- | enabling the same visualization code to run with:
+-- | - D3 rendering (DOM manipulation)
+-- | - String output (for testing/SSR)
+-- | - Mermaid diagrams
+-- | - Accessibility descriptions
+-- |
+-- | Phantom types (`SEmpty`, `SBoundOwns`, etc.) enforce valid operation sequences
+-- | at compile time.
+-- |
+-- | **Internal module** - see `Hylograph.Selection` for the public API.
 module Hylograph.Internal.Capabilities.Selection
   ( class SelectionM
   , select

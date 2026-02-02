@@ -1,3 +1,14 @@
+-- | Internal: Transition configuration types.
+-- |
+-- | Defines `TransitionConfig` for specifying animation timing:
+-- | - `duration`: Total animation time
+-- | - `delay`: Wait before starting
+-- | - `staggerDelay`: Per-element incremental delay (for cascading effects)
+-- | - `easing`: Rate-of-change function (Linear, Cubic, Bounce, etc.)
+-- |
+-- | Also provides the `Easing` ADT based on D3's easing functions.
+-- |
+-- | **Internal module** - use `Hylograph.Transition` for the public API.
 module Hylograph.Internal.Transition.Types
   ( TransitionConfig
   , Easing(..)

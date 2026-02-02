@@ -203,6 +203,7 @@ export function attachSimulationDrag_(element) {
 export function attachClick_(element) {
   return handler => () => {
     element.addEventListener('click', function(event) {
+      event.stopPropagation();  // Prevent bubbling to parent handlers
       // Call PureScript handler (it's already an Effect, so invoke it)
       handler();
     });
@@ -223,6 +224,7 @@ export function attachClick_(element) {
 export function attachClickWithDatum_(element) {
   return handler => () => {
     element.addEventListener('click', function(event) {
+      event.stopPropagation();  // Prevent bubbling to parent handlers
       // Get datum from element's __data__ property (D3 convention)
       const d = this.__data__;
       // Call PureScript handler with datum (it returns an Effect, so invoke it)

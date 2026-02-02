@@ -1,3 +1,14 @@
+-- | Internal: FFI bindings for D3 transitions.
+-- |
+-- | Provides JavaScript FFI for D3's transition API:
+-- | - `createTransition_`: Create a transition with duration, delay, easing
+-- | - `transitionSetAttribute_`: Animate an attribute to a target value
+-- | - `transitionRemove_`: Remove element after transition completes
+-- |
+-- | D3 transitions interpolate attribute values over time, providing smooth
+-- | animations without manual requestAnimationFrame management.
+-- |
+-- | **Internal module** - use `Hylograph.Transition` for the public API.
 module Hylograph.Internal.Transition.FFI
   ( D3Transition
   , createTransition_

@@ -104,6 +104,7 @@ export const removeElementDelayed = el => delayMs => () => {
 
 export const attachClick = el => handler => () => {
   el.addEventListener('click', function(event) {
+    event.stopPropagation();  // Prevent bubbling to parent handlers
     handler();
   });
   el.style.cursor = 'pointer';
@@ -111,6 +112,7 @@ export const attachClick = el => handler => () => {
 
 export const attachClickWithDatum = el => handler => () => {
   el.addEventListener('click', function(event) {
+    event.stopPropagation();  // Prevent bubbling to parent handlers
     const d = this.__data__;
     handler(d)();
   });

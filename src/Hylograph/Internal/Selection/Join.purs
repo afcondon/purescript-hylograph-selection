@@ -1,3 +1,17 @@
+-- | Internal: Data join algorithm implementation.
+-- |
+-- | Computes the enter/update/exit sets when binding new data to existing elements.
+-- | This is the core of D3's data join pattern, implemented in pure PureScript.
+-- |
+-- | - `computeJoin`: Index-based matching (by position)
+-- | - `computeJoinWithKey`: Key-based matching (by identity function)
+-- |
+-- | Returns `JoinSets` containing:
+-- | - `enter`: New data without existing elements
+-- | - `update`: Data matched to existing elements
+-- | - `exit`: Existing elements without matching data
+-- |
+-- | **Internal module** - use `joinData` / `joinDataWithKey` from `Hylograph.Selection`.
 module Hylograph.Internal.Selection.Join
   ( computeJoin
   , computeJoinWithKey

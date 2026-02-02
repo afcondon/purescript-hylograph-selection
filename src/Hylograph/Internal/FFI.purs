@@ -1,3 +1,13 @@
+-- | Internal: Low-level FFI bindings for D3 selection and simulation.
+-- |
+-- | This module contains the JavaScript FFI declarations for:
+-- | - Selection operations (events, key functions)
+-- | - Simulation lifecycle (init, start, stop, tick)
+-- | - Force configuration (center, collide, many-body, link, radial, x, y)
+-- | - Node/link manipulation (pin, unpin, swizzle)
+-- |
+-- | **Internal module** - prefer the high-level APIs in `Hylograph.Selection`
+-- | and `Hylograph.Simulation`.
 module Hylograph.Internal.FFI
   ( -- Selection FFI (legacy - most selection ops now use web-dom)
     getIndexFromDatum_

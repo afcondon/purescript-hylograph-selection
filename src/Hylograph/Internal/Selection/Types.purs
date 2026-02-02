@@ -1,3 +1,14 @@
+-- | Internal: Selection type and phantom state types.
+-- |
+-- | Defines the core `Selection` type with phantom type parameters that track:
+-- | - **state**: What operations are legal (`SEmpty`, `SBoundOwns`, `SBoundInherits`, `SPending`, `SExiting`)
+-- | - **parent**: The parent element type
+-- | - **datum**: The data type bound to each element
+-- |
+-- | This enables compile-time enforcement of valid selection operation sequences,
+-- | preventing runtime errors from invalid D3-style operations.
+-- |
+-- | **Internal module** - use `Hylograph.Selection` for the public API.
 module Hylograph.Internal.Selection.Types
   ( ElementType(..)
   , JoinResult(..)

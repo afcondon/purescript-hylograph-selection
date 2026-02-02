@@ -1,3 +1,15 @@
+-- | Internal: Type class for animated transitions.
+-- |
+-- | The `TransitionM` class is separate from `SelectionM` to allow interpreters
+-- | to opt-in to animation support. This enables:
+-- | - D3: Full animated transitions via D3's transition engine
+-- | - String: Could output CSS transitions or ignore them
+-- | - Testing: Instant transitions for deterministic tests
+-- |
+-- | Only bound selections (`SBoundOwns`, `SExiting`) can be transitioned,
+-- | enforced by phantom types.
+-- |
+-- | **Internal module** - see `Hylograph.Transition` for the public API.
 module Hylograph.Internal.Capabilities.Transition
   ( class TransitionM
   , withTransition

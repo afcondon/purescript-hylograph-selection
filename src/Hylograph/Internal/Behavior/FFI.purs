@@ -1,3 +1,13 @@
+-- | Internal: FFI bindings for D3 behaviors (zoom, drag, mouse events).
+-- |
+-- | Provides JavaScript bindings for:
+-- | - Zoom: `attachZoom_`, `attachZoomWithTransform_`, `getZoomTransform_`
+-- | - Drag: `attachSimpleDrag_`, `attachSimulationDrag_`
+-- | - Mouse events: click, mouseenter, mouseleave, mousemove, mousedown
+-- | - Coordinated highlighting across linked elements
+-- | - Simulation registry for drag-to-reheat behavior
+-- |
+-- | **Internal module** - use `Hylograph.Behavior` for the public API.
 module Hylograph.Internal.Behavior.FFI
   ( attachZoom_
   , attachZoomWithTransform_

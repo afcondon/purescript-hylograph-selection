@@ -1,3 +1,14 @@
+-- | Internal: Declarative transition specification types.
+-- |
+-- | Provides ADTs for describing HOW visualizations should animate:
+-- | - `EnterBehavior`: How new elements appear (FadeIn, ScaleUp, Instant)
+-- | - `ExitBehavior`: How removed elements disappear (FadeOut, ScaleDown, Instant)
+-- | - `UpdateBehavior`: How existing elements move (TransitionMove, InstantMove)
+-- |
+-- | By making transitions declarative, users describe the desired end state
+-- | and the library handles all sequencing automatically.
+-- |
+-- | **Internal module** - these types are used by `Hylograph.Simulation.Scene`.
 module Hylograph.Internal.Transition.Scene
   ( EnterBehavior(..)
   , ExitBehavior(..)

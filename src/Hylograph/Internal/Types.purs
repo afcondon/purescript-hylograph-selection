@@ -1,3 +1,11 @@
+-- | Internal: Core opaque types for D3 FFI boundary.
+-- |
+-- | Provides type-safe wrappers for D3's dynamic JavaScript types:
+-- | - `Datum_` / `Index_`: Erased types for D3 callbacks
+-- | - `D3Selection_` / `D3Simulation_`: Opaque D3 object handles
+-- | - `Selector` / `PointXY`: Common type aliases
+-- |
+-- | **Internal module** - use the public API in `Hylograph.Selection`.
 module Hylograph.Internal.Types
   ( -- Datum and Index types
     Datum_

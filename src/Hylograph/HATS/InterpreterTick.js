@@ -93,6 +93,7 @@ export const removeElement = el => () => {
 
 export const attachClick = el => handler => () => {
   el.addEventListener('click', function(event) {
+    event.stopPropagation();  // Prevent bubbling to parent handlers
     handler();
   });
   el.style.cursor = 'pointer';
@@ -100,6 +101,7 @@ export const attachClick = el => handler => () => {
 
 export const attachClickWithDatum = el => handler => () => {
   el.addEventListener('click', function(event) {
+    event.stopPropagation();  // Prevent bubbling to parent handlers
     const d = this.__data__;
     handler(d)();
   });
@@ -149,6 +151,7 @@ export const attachMouseLeaveThunked = el => handler => () => {
 
 export const attachClickThunked = el => handler => () => {
   el.addEventListener('click', function(event) {
+    event.stopPropagation();  // Prevent bubbling to parent handlers
     handler()();
   });
   el.style.cursor = 'pointer';
@@ -555,6 +558,11 @@ export const attachCoordinatedBrushThunked = element => extent => groupName => (
   let startX = 0;
   let startY = 0;
 
+  // Throttle state for brush callbacks (150ms = ~7fps - necessary for large datasets)
+  let lastBrushTime = 0;
+  let pendingBrushFrame = null;
+  const BRUSH_THROTTLE_MS = 150;
+
   // Get element-local coordinates from event
   // Uses the parent's CTM to account for transforms (important for SPLOM cells)
   function getLocalCoords(event) {
@@ -615,11 +623,27 @@ export const attachCoordinatedBrushThunked = element => extent => groupName => (
     selectionRect.setAttribute('width', width);
     selectionRect.setAttribute('height', height);
 
-    // Emit brush interaction with the box
+    // Emit brush interaction with the box (THROTTLED to prevent runaway)
     // Pass the source cell so we only check positions within that cell
     const box = { x0: x, y0: y, x1: x + width, y1: y + height };
     const sourceCell = element.closest('g[id^="cell-"]');
-    applyBrushInteraction(group, box, sourceCell);
+
+    const now = performance.now();
+    if (now - lastBrushTime >= BRUSH_THROTTLE_MS) {
+      lastBrushTime = now;
+      if (pendingBrushFrame) {
+        cancelAnimationFrame(pendingBrushFrame);
+        pendingBrushFrame = null;
+      }
+      applyBrushInteraction(group, box, sourceCell);
+    } else if (!pendingBrushFrame) {
+      // Schedule trailing call to ensure final position is processed
+      pendingBrushFrame = requestAnimationFrame(() => {
+        pendingBrushFrame = null;
+        lastBrushTime = performance.now();
+        applyBrushInteraction(group, box, sourceCell);
+      });
+    }
   });
 
   element.addEventListener('pointerup', function(event) {

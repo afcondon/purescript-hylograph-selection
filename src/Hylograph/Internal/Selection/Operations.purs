@@ -1,3 +1,16 @@
+-- | Internal: Implementation of selection operations using web-dom.
+-- |
+-- | Provides the concrete implementations for `SelectionM` operations:
+-- | - Selecting: `select`, `selectAll`, `selectElement`
+-- | - Appending: `append`, `appendChild`, `appendChildInheriting`
+-- | - Data binding: `joinData`, `joinDataWithKey`, `renderData`
+-- | - Attributes: `setAttrs`, `setAttrsExit`
+-- | - Lifecycle: `remove`, `clear`, `merge`
+-- | - HATS rendering: `renderTree`, `renderTreeKeyed`
+-- |
+-- | Uses `web-dom` for DOM manipulation, not D3's selection API.
+-- |
+-- | **Internal module** - use `Hylograph.Selection` for the public API.
 module Hylograph.Internal.Selection.Operations
   ( select
   , selectElement
