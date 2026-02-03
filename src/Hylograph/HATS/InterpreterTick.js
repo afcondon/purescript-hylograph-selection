@@ -287,6 +287,76 @@ function clearHatsHighlightsInGroup(groupName) {
   });
 }
 
+// =============================================================================
+// HATS Tooltip Support
+// =============================================================================
+
+// TooltipTrigger enum values (must match PureScript TooltipTrigger in Behavior.Types)
+const TT_ON_HOVER = 0;
+const TT_WHEN_PRIMARY = 1;
+const TT_WHEN_RELATED = 2;
+
+// Container for HATS tooltips
+let hatsTooltipContainer = null;
+// Map of element -> tooltip div
+const hatsElementTooltips = new Map();
+
+function getHatsTooltipContainer() {
+  if (!hatsTooltipContainer) {
+    hatsTooltipContainer = document.createElement('div');
+    hatsTooltipContainer.className = 'hats-tooltip-container';
+    hatsTooltipContainer.style.cssText = 'position: fixed; top: 0; left: 0; pointer-events: none; z-index: 10000;';
+    document.body.appendChild(hatsTooltipContainer);
+  }
+  return hatsTooltipContainer;
+}
+
+function createHatsTooltip() {
+  const tooltip = document.createElement('div');
+  tooltip.className = 'hats-tooltip';
+  tooltip.style.cssText = `
+    position: absolute;
+    background: rgba(45, 45, 45, 0.85);
+    color: #f0f0f0;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-line;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: none;
+    border-radius: 4px;
+    min-width: 280px;
+    max-width: 480px;
+    line-height: 1.6;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  `;
+  getHatsTooltipContainer().appendChild(tooltip);
+  return tooltip;
+}
+
+function positionHatsTooltip(tooltip, event) {
+  const x = event.clientX + 15;
+  const y = event.clientY - 10;
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+}
+
+function showHatsTooltip(tooltip, content) {
+  tooltip.textContent = content;
+  tooltip.style.opacity = '1';
+}
+
+function hideHatsTooltip(tooltip) {
+  if (tooltip) {
+    tooltip.style.opacity = '0';
+  }
+}
+
 /**
  * Attach HATS coordinated highlight behavior to an element
  *
@@ -296,27 +366,115 @@ function clearHatsHighlightsInGroup(groupName) {
  * @param {Function} identifyThunk - PureScript (Unit -> String), returns this element's identity
  * @param {Function} classifyFn - PureScript (String -> Int), takes hoveredId, returns HighlightClass
  * @param {string|null} groupName - Optional group name (null for global)
+ * @param {Function|null} tooltipContentThunk - Optional PureScript (Unit -> String), returns tooltip content
+ * @param {number} tooltipTrigger - When to show tooltip (0=OnHover, 1=WhenPrimary, 2=WhenRelated)
  * @returns {Effect Unit}
  */
-export const attachCoordinatedHighlightThunked = element => identifyThunk => classifyFn => groupName => () => {
+export const attachCoordinatedHighlightThunked = element => identifyThunk => classifyFn => groupName => tooltipContentThunk => tooltipTrigger => () => {
   const group = groupName; // null means global
 
-  // Register this element
-  const entry = { element, identifyThunk, classifyFn };
+  // Register this element with tooltip info
+  const entry = { element, identifyThunk, classifyFn, tooltipContentThunk, tooltipTrigger };
   getHatsHighlightGroup(group).push(entry);
 
   // Attach mouseenter handler
   element.addEventListener('mouseenter', function(event) {
     // Get identity by invoking the thunk (datum is captured in closure)
     const hoveredId = identifyThunk();
-    applyHatsHighlights(group, hoveredId);
+    applyHatsHighlightsWithTooltips(group, hoveredId, element, event);
   });
 
   // Attach mouseleave handler
   element.addEventListener('mouseleave', function(event) {
-    clearHatsHighlightsInGroup(group);
+    clearHatsHighlightsInGroupWithTooltips(group);
   });
 };
+
+/**
+ * Apply highlights and tooltips to all elements in a group
+ */
+function applyHatsHighlightsWithTooltips(groupName, hoveredId, triggerElement, event) {
+  const group = getHatsHighlightGroup(groupName);
+
+  group.forEach(entry => {
+    const { element, classifyFn, tooltipContentThunk, tooltipTrigger } = entry;
+
+    // Remove all highlight classes first
+    ALL_HIGHLIGHT_CLASSES.forEach(cls => element.classList.remove(cls));
+
+    // Apply classification
+    const classification = classifyFn(hoveredId);
+    switch (classification) {
+      case HC_PRIMARY:
+        element.classList.add('highlight-primary');
+        break;
+      case HC_RELATED:
+        element.classList.add('highlight-related');
+        break;
+      case HC_UPSTREAM:
+        element.classList.add('highlight-upstream');
+        break;
+      case HC_DOWNSTREAM:
+        element.classList.add('highlight-downstream');
+        break;
+      case HC_DIMMED:
+        element.classList.add('highlight-dimmed');
+        break;
+      case HC_NEUTRAL:
+      default:
+        // No class applied
+        break;
+    }
+
+    // Handle tooltips if configured
+    if (tooltipContentThunk) {
+      const shouldShow =
+        (tooltipTrigger === TT_ON_HOVER && element === triggerElement) ||
+        (tooltipTrigger === TT_WHEN_PRIMARY && classification === HC_PRIMARY) ||
+        (tooltipTrigger === TT_WHEN_RELATED && (classification === HC_PRIMARY || classification === HC_RELATED));
+
+      if (shouldShow) {
+        // Get or create tooltip for this element
+        let tooltip = hatsElementTooltips.get(element);
+        if (!tooltip) {
+          tooltip = createHatsTooltip();
+          hatsElementTooltips.set(element, tooltip);
+        }
+
+        // Get content by invoking the thunk
+        const content = tooltipContentThunk();
+        showHatsTooltip(tooltip, content);
+
+        // Position at mouse for OnHover
+        if (tooltipTrigger === TT_ON_HOVER && event) {
+          positionHatsTooltip(tooltip, event);
+        }
+      } else {
+        // Hide tooltip if it exists
+        const tooltip = hatsElementTooltips.get(element);
+        if (tooltip) {
+          hideHatsTooltip(tooltip);
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Clear highlights and tooltips from a group
+ */
+function clearHatsHighlightsInGroupWithTooltips(groupName) {
+  const group = getHatsHighlightGroup(groupName);
+  group.forEach(entry => {
+    ALL_HIGHLIGHT_CLASSES.forEach(cls => entry.element.classList.remove(cls));
+
+    // Hide tooltip if it exists
+    const tooltip = hatsElementTooltips.get(entry.element);
+    if (tooltip) {
+      hideHatsTooltip(tooltip);
+    }
+  });
+}
 
 /**
  * Clear all HATS coordinated highlights (useful before re-rendering)

@@ -31,7 +31,7 @@ import Effect.Console (log)
 
 import Hylograph.HATS (Tree(..), SomeFold, runSomeFold, Enumeration(..), Assembly(..), TraversalOrder(..), Attr(..), ThunkedBehavior(..), GUPSpec, PhaseSpec)
 import Hylograph.HATS.Transitions (HATSTransitions(..), ElementTransitions, AttrTransition, toTickEasing)
-import Hylograph.Internal.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..))
+import Hylograph.Internal.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
 import Hylograph.Internal.Behavior.Types (HighlightClass(..)) as HC
 import Hylograph.Interaction.Coordinated (InteractionState(..), InteractionTrigger(..), BoundingBox)
 import Hylograph.Interaction.Coordinated (InteractionState(..)) as IS
@@ -396,7 +396,10 @@ rerenderTree doc parent tree = do
         -- Wrap classify to convert HighlightClass to Int for FFI
         classifyAsInt :: String -> Int
         classifyAsInt hoveredId = highlightClassToInt (config.classify hoveredId)
-      in attachCoordinatedHighlightThunked el config.identify classifyAsInt (toNullable config.group)
+
+        -- Convert TooltipTrigger to Int for FFI
+        triggerAsInt = tooltipTriggerToInt config.tooltipTrigger
+      in attachCoordinatedHighlightThunked el config.identify classifyAsInt (toNullable config.group) (toNullable config.tooltipContent) triggerAsInt
     ThunkedCoordinatedInteraction config ->
       let
         -- Separate respond functions for each trigger type
@@ -634,6 +637,8 @@ foreign import attachCoordinatedHighlightThunked
   -> (Unit -> String)       -- identifyThunk
   -> (String -> Int)        -- classifyFn (returns HighlightClass as Int)
   -> Nullable String        -- groupName
+  -> Nullable (Unit -> String)  -- tooltipContentThunk (optional)
+  -> Int                    -- tooltipTrigger (OnHover=0, WhenPrimary=1, WhenRelated=2)
   -> Effect Unit
 
 foreign import attachCoordinatedInteractionThunked
@@ -662,6 +667,14 @@ highlightClassToInt = case _ of
   HC.Neutral -> 3
   HC.Upstream -> 4
   HC.Downstream -> 5
+
+-- | Convert TooltipTrigger to Int for FFI
+-- | Must match TT_* constants in InterpreterTick.js
+tooltipTriggerToInt :: TooltipTrigger -> Int
+tooltipTriggerToInt = case _ of
+  OnHover -> 0
+  WhenPrimary -> 1
+  WhenRelated -> 2
 
 -- | Convert InteractionState to Int for FFI (matches Coordinated.stateToInt)
 interactionStateToInt :: InteractionState -> Int

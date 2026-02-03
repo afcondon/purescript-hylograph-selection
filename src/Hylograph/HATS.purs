@@ -58,6 +58,7 @@ module Hylograph.HATS
   -- Coordinated highlighting
   , module ReExportHighlight
   , onCoordinatedHighlight
+  , onCoordinatedHighlightWithTooltip
   -- Coordinated interaction (brush + highlight)
   -- Note: Import InteractionTrigger, InteractionState, BoundingBox
   -- from Hylograph.Interaction.Coordinated if you need them for custom respond functions
@@ -75,8 +76,8 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Effect (Effect)
 import Hylograph.Internal.Selection.Types (ElementType(..))
-import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..)) as ReExportHighlight
-import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..))
+import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..)) as ReExportHighlight
+import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..))
 import Hylograph.Interaction.Coordinated (InteractionTrigger(..), InteractionState(..), BoundingBox)
 import Hylograph.Internal.Transition.Types (TransitionConfig)
 
@@ -190,6 +191,8 @@ data ThunkedBehavior
       { identify :: Unit -> String           -- Thunked: captures datum, returns identity
       , classify :: String -> HighlightClass -- Curried: takes hoveredId, uses captured datum
       , group :: Maybe String                -- Optional group name for scoping
+      , tooltipContent :: Maybe (Unit -> String)  -- Thunked tooltip content generator
+      , tooltipTrigger :: TooltipTrigger          -- When to show tooltip
       }
   | ThunkedCoordinatedInteraction
       { identify :: Unit -> String                         -- Thunked: element identity
@@ -568,6 +571,7 @@ onZoom = ThunkedZoom
 -- |             else if hoveredId `elem` node.connections then Related
 -- |             else Dimmed
 -- |         , group: Nothing  -- global coordination
+-- |         , tooltip: Nothing  -- or Just { content: "...", showWhen: OnHover }
 -- |         }
 -- |     ] $
 -- |   elem Circle [...] []
@@ -582,6 +586,42 @@ onCoordinatedHighlight config = ThunkedCoordinatedHighlight
   { identify: \_ -> config.identify
   , classify: config.classify
   , group: config.group
+  , tooltipContent: Nothing
+  , tooltipTrigger: OnHover  -- Default, unused since tooltipContent is Nothing
+  }
+
+-- | Coordinated highlight with tooltip support
+-- |
+-- | Same as `onCoordinatedHighlight` but with optional tooltip configuration.
+-- | When tooltip is provided, it will show on hover (or based on showWhen trigger).
+-- |
+-- | ```purescript
+-- | forEach "nodes" Circle nodes _.id \node ->
+-- |   withBehaviors
+-- |     [ onCoordinatedHighlightWithTooltip
+-- |         { identify: node.name
+-- |         , classify: \hoveredId -> if node.name == hoveredId then Primary else Dimmed
+-- |         , group: Nothing
+-- |         , tooltip: Just { content: node.description, showWhen: OnHover }
+-- |         }
+-- |     ] $
+-- |   elem Circle [...] []
+-- | ```
+onCoordinatedHighlightWithTooltip
+  :: { identify :: String
+     , classify :: String -> HighlightClass
+     , group :: Maybe String
+     , tooltip :: Maybe { content :: String, showWhen :: TooltipTrigger }
+     }
+  -> ThunkedBehavior
+onCoordinatedHighlightWithTooltip config = ThunkedCoordinatedHighlight
+  { identify: \_ -> config.identify
+  , classify: config.classify
+  , group: config.group
+  , tooltipContent: (\t -> \_ -> t.content) <$> config.tooltip
+  , tooltipTrigger: case config.tooltip of
+      Just t -> t.showWhen
+      Nothing -> OnHover  -- Default, but won't be used since tooltipContent is Nothing
   }
 
 -- | Full coordinated interaction behavior (supports brush, hover, focus, selection)
