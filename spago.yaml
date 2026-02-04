@@ -6,7 +6,7 @@ package:
   description: Type-safe D3 selection and attribute library for PureScript
   publish:
     version: 0.1.0
-    license: MIT
+    license: MIT AND ISC
     location:
       githubOwner: afcondon
       githubRepo: purescript-hylograph-selection
