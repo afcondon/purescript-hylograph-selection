@@ -94,18 +94,10 @@ export function swizzledLinkKey_(d) {
   // After swizzling, source/target are node objects with 'id' field
   const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
   const targetId = typeof d.target === 'object' ? d.target.id : d.target;
-  const key = `${sourceId}->${targetId}`;
-  // Debug: log first few keys
-  if (!window._linkKeyDebugCount) window._linkKeyDebugCount = 0;
-  if (window._linkKeyDebugCount < 5) {
-    console.log(`swizzledLinkKey_: ${key} (source type: ${typeof d.source}, target type: ${typeof d.target})`);
-    window._linkKeyDebugCount++;
-  }
-  return key;
+  return `${sourceId}->${targetId}`;
 }
 export function setAlpha_(simulation) {
   return alpha => {
-    console.log(`FFI: setting simulation.alpha to ${alpha}`);
     simulation.alpha(alpha)
   }
 }
@@ -127,10 +119,8 @@ export function setForceY_(force) { return attr => force.y(attr) }
 export function setLinksKeyFunction_(force) { return attr => force.id(attr) }
 export function setVelocityDecay_(simulation) { return velocityDecay => simulation.velocityDecay(velocityDecay) }
 export function startSimulation_(simulation) {
-  console.log(`FFI: restarting the simulation, alpha before: ${simulation.alpha()}`);
   // IMPORTANT: restart() alone doesn't reset alpha - we need to set it to 1.0 first
   simulation.alpha(1.0).restart();
-  console.log(`FFI: restarted simulation, alpha after: ${simulation.alpha()}`);
 }
 export function stopSimulation_(simulation) { return simulation.stop() }
 export function initSimulation_(config) {
@@ -142,9 +132,6 @@ export function initSimulation_(config) {
       .alphaMin(config.alphaMin) // default is 0.0001
       .alphaDecay(config.alphaDecay) // default is 0.0228
       .velocityDecay(config.velocityDecay) // default is 0.4
-    if (true) {
-      console.log(`FFI: initSimulation${simulation}`)
-    }
     // Expose simulation to window for force control panel
     window._psd3_simulation = simulation;
     return simulation
@@ -235,21 +222,6 @@ export function getIDsFromNodes_(nodes) {
 
 export function setNodes_(simulation) {
   return nodes => {
-    console.log(`FFI: setting nodes in simulation, there are ${nodes.length} nodes`);
-
-    // DEBUG: Check incoming node x/y values
-    if (nodes.length > 0) {
-      const first5 = nodes.slice(0, 5);
-      console.log('FFI setNodes_ INCOMING - first 5 nodes x/y:', first5.map(n => ({ id: n.id, name: n.name, x: n.x, y: n.y, gridXY: n.gridXY })));
-
-      // Check for any NaN or undefined values
-      const badNodes = nodes.filter(n => isNaN(n.x) || isNaN(n.y) || n.x === undefined || n.y === undefined);
-      if (badNodes.length > 0) {
-        console.error(`FFI setNodes_ INCOMING: ${badNodes.length} nodes have NaN/undefined x or y!`);
-        console.error('First bad node:', badNodes[0]);
-      }
-    }
-
     // Get old nodes from simulation to preserve their positions
     const oldNodes = simulation.nodes();
 
@@ -275,50 +247,16 @@ export function setNodes_(simulation) {
       return newNode; // New node, no position to preserve
     });
 
-    // DEBUG: Check outgoing node x/y values
-    if (nodesWithPositions.length > 0) {
-      const first5 = nodesWithPositions.slice(0, 5);
-      console.log('FFI setNodes_ OUTGOING - first 5 nodes x/y:', first5.map(n => ({ id: n.id, name: n.name, x: n.x, y: n.y })));
-
-      const badNodes = nodesWithPositions.filter(n => isNaN(n.x) || isNaN(n.y) || n.x === undefined || n.y === undefined);
-      if (badNodes.length > 0) {
-        console.error(`FFI setNodes_ OUTGOING: ${badNodes.length} nodes have NaN/undefined x or y!`);
-        console.error('First bad node:', badNodes[0]);
-      }
-    }
-
     simulation.nodes(nodesWithPositions);
-
-    // DEBUG: Check nodes immediately after setting
-    const afterNodes = simulation.nodes();
-    if (afterNodes.length > 0) {
-      const first = afterNodes[0];
-      console.log('FFI setNodes_ AFTER simulation.nodes() - first node:', {
-        id: first.id,
-        name: first.name,
-        x: first.x,
-        y: first.y,
-        vx: first.vx,
-        vy: first.vy,
-        gridXY: first.gridXY
-      });
-      if (isNaN(first.x) || isNaN(first.y)) {
-        console.error('FFI setNodes_: NaN detected IMMEDIATELY after simulation.nodes()!');
-      }
-    }
-
-    return afterNodes;
+    return simulation.nodes();
   }
 }
 // we're going to always use the same name for the links force denominated by the linksForceName string
 export function setLinks_(simulation) {
   return links => {
-    console.log(`FFI: setting links in simulation, there are ${links.length} links`);
     const linkForce = simulation.force(linksForceName_);
     if (linkForce) {
       linkForce.links(links);
-    } else {
-      console.log(`FFI: links force not found (may be disabled), skipping setLinks`);
     }
   }
 }
@@ -326,7 +264,6 @@ export function setLinks_(simulation) {
 // Creates copies of links to avoid mutating the original array
 export function swizzleLinks_(links) {
   return simNodes => keyFn => {
-    console.log(`FFI: swizzling links in simulation, there are ${links.length} links`);
     const nodeById = new Map(simNodes.map(d => [keyFn(d), d])); // creates a map from our chosen id to the old obj reference
 
     // Map to copies first, then filter - this prevents mutation of original links
@@ -364,7 +301,6 @@ export function unsetLinks_(simulation) {
   // Set link force to null - this is now only called when links shouldn't be displayed at all
   // Scenes that need links displayed should keep the link force in their activeForces
   simulation.force(linksForceName_, null)
-  console.log('FFI: disabled link force (set to null)');
   return simulation
 }
 // this will work on both swizzled and unswizzled links
@@ -393,21 +329,7 @@ export function getLinksFromSimulation_(simulation) {
 }
 export function onTick_(simulation) {
   return name => tickFn => {
-    let tickCount = 0;
     var result = simulation.on('tick.' + name, () => {
-      tickCount++;
-      // Debug: log simulation node state on first few ticks
-      if (tickCount <= 3) {
-        const simNodes = simulation.nodes();
-        if (simNodes.length > 0) {
-          const first = simNodes[0];
-          console.log(`TICK ${tickCount} (${name}): first sim node x=${first.x}, y=${first.y}, vx=${first.vx}, vy=${first.vy}`);
-          // Check for NaN
-          if (isNaN(first.x) || isNaN(first.y)) {
-            console.error(`TICK ${tickCount}: NaN detected in simulation nodes!`);
-          }
-        }
-      }
       tickFn()
     })
     return result;

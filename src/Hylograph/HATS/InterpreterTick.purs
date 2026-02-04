@@ -27,7 +27,6 @@ import Data.Foldable (traverse_)
 import Data.Traversable (traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Effect (Effect)
-import Effect.Console (log)
 
 import Hylograph.HATS (Tree(..), SomeFold, runSomeFold, Enumeration(..), Assembly(..), TraversalOrder(..), Attr(..), ThunkedBehavior(..), GUPSpec, PhaseSpec)
 import Hylograph.HATS.Transitions (HATSTransitions(..), ElementTransitions, AttrTransition, toTickEasing)
@@ -88,22 +87,11 @@ clearContainer selector = do
 rerenderInto :: SelectionMap -> String -> Tree -> Effect RerenderResult
 rerenderInto selections name tree = do
   doc <- window >>= document >>= pure <<< HTMLDocument.toDocument
-  log $ "rerenderInto: looking for '" <> name <> "' in " <> show (Array.fromFoldable $ Map.keys selections)
   case Map.lookup name selections of
-    Nothing -> do
-      log $ "rerenderInto: '" <> name <> "' not found!"
-      pure { selections: Map.empty, transitions: Nothing }
-    Just elements -> do
-      log $ "rerenderInto: found " <> show (Array.length elements) <> " elements for '" <> name <> "'"
-      case Array.head elements of
-        Nothing -> do
-          log $ "rerenderInto: elements array was empty!"
-          pure { selections: Map.empty, transitions: Nothing }
-        Just container -> do
-          log $ "rerenderInto: rendering tree into container element"
-          result <- rerenderTree doc container tree
-          log $ "rerenderInto: rendered, selections keys = " <> show (Array.fromFoldable $ Map.keys result.selections)
-          pure result
+    Nothing -> pure { selections: Map.empty, transitions: Nothing }
+    Just elements -> case Array.head elements of
+      Nothing -> pure { selections: Map.empty, transitions: Nothing }
+      Just container -> rerenderTree doc container tree
 
 -- | The GUP-aware interpreter with tick-driven transitions
 rerenderTree :: Document -> Element -> Tree -> Effect RerenderResult
@@ -163,13 +151,10 @@ rerenderTree doc parent tree = do
     MkFold someFold -> runSomeFold someFold \spec -> do
       -- Process Fold inline to avoid skolem escape from captured variables
       let items = runEnumeration spec.enumerate
-      log $ "Fold '" <> spec.name <> "': " <> show (Array.length items) <> " items"
       let newKeys = Set.fromFoldable (map spec.keyFn items)
 
       let tagName = elementTypeToTagName spec.elementType
-      log $ "Fold '" <> spec.name <> "': looking for existing '" <> tagName <> "' elements with fold='" <> spec.name <> "'"
       existingEls <- getChildElementsForFold p tagName spec.name
-      log $ "Fold '" <> spec.name <> "': found " <> show (Array.length existingEls) <> " existing elements"
       existingKeysAndEls <- traverse (\el -> do
         k <- getKey el
         pure { key: k, element: el }
@@ -242,15 +227,12 @@ rerenderTree doc parent tree = do
 
       -- Process ENTER
       let enterItems = Array.filter (\d -> Set.member (spec.keyFn d) enterKeys) items
-      log $ "Fold '" <> spec.name <> "': entering " <> show (Array.length enterItems) <> " items"
       enterResults <- traverseWithIndex (renderEnteringItem p spec.name spec.keyFn spec.template spec.gup) enterItems
-      log $ "Fold '" <> spec.name <> "': created " <> show (Array.length enterResults) <> " enter elements"
 
       let updateElements = map _.element (Array.filter (\{ key } -> Set.member key updateKeys) existingKeysAndEls)
       let enterElements = map _.element enterResults
       let childMaps = Array.foldl Map.union Map.empty (map _.childSelections enterResults)
       let selections = Map.insert spec.name (updateElements <> enterElements) childMaps
-      log $ "Fold '" <> spec.name <> "': total " <> show (Array.length (updateElements <> enterElements)) <> " elements in selection"
 
       -- Count total elements: updated + entered (exited are removed)
       let totalElements = Array.length updateElements + Array.length enterElements

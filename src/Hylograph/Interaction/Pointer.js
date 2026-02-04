@@ -361,7 +361,6 @@ export function attachSimpleDrag_(element) {
       }
 
       element.style.cursor = 'grabbing';
-      console.log('[SimpleDrag] pointerdown, isDragging=true');
     }
 
     function handlePointerMove(event) {
@@ -394,17 +393,14 @@ export function attachSimpleDrag_(element) {
     }
 
     function handlePointerUp(event) {
-      console.log('[SimpleDrag] pointerup, isDragging was:', isDragging);
       if (!isDragging) return;
 
       isDragging = false;
       element.releasePointerCapture(event.pointerId);
       element.style.cursor = 'grab';
-      console.log('[SimpleDrag] drag ended');
     }
 
     function handlePointerCancel(event) {
-      console.log('[SimpleDrag] pointercancel');
       if (!isDragging) return;
       isDragging = false;
       element.releasePointerCapture(event.pointerId);

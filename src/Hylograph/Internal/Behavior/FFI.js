@@ -44,7 +44,6 @@ export function registerSimulation_(simId) {
   return reheatFn => () => {
     // Delegate to Pointer module's registry
     registerSimulationForPointer_(simId)(reheatFn)();
-    console.log(`[SimRegistry] Registered simulation: ${simId}`);
   };
 }
 
@@ -56,7 +55,6 @@ export function unregisterSimulation_(simId) {
   return () => {
     // Delegate to Pointer module's registry
     unregisterSimulationForPointer_(simId)();
-    console.log(`[SimRegistry] Unregistered simulation: ${simId}`);
   };
 }
 
@@ -747,7 +745,6 @@ function applyHighlights(groupName, hoveredId, triggerElement, event) {
 
     // Skip if no datum bound to element
     if (!datum) {
-      console.warn('[CoordHighlight] applyHighlights: No datum on element', element);
       return;
     }
 
@@ -858,10 +855,7 @@ export function attachCoordinatedHighlight_(element) {
     // Attach mouseenter handler
     element.addEventListener('mouseenter', function(event) {
       const d = this.__data__;
-      if (!d) {
-        console.warn('[CoordHighlight] mouseenter: No datum on element');
-        return;
-      }
+      if (!d) return;
       const id = identifyFn(d);
       applyHighlights(group, id, element, event);
     });

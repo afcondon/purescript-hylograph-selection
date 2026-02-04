@@ -8,18 +8,12 @@
 
 export function loadCSVImpl(url) {
   return function(onError, onSuccess) {
-    console.log('[PSD3.Data.Loaders] Loading CSV from:', url);
-
     // Create the promise
     const loadPromise = (async () => {
       // Use native d3.csv if available, otherwise use fetch + d3.csvParse
       if (typeof d3 !== 'undefined' && d3.csv) {
-        console.log('[PSD3.Data.Loaders] Using d3.csv');
-        const data = await d3.csv(url);
-        console.log('[PSD3.Data.Loaders] Loaded', data.length, 'rows via d3.csv');
-        return data;
+        return await d3.csv(url);
       } else {
-        console.log('[PSD3.Data.Loaders] Using fetch fallback');
         // Fallback: manual CSV parsing (basic implementation)
         const response = await fetch(url);
         if (!response.ok) {
@@ -39,7 +33,6 @@ export function loadCSVImpl(url) {
           });
           return obj;
         });
-        console.log('[PSD3.Data.Loaders] Loaded', data.length, 'rows via fetch');
         return data;
       }
     })();
@@ -47,11 +40,9 @@ export function loadCSVImpl(url) {
     // Convert to callback style for EffectFnAff
     loadPromise
       .then(data => {
-        console.log('[PSD3.Data.Loaders] Calling onSuccess with', data.length, 'rows');
         onSuccess(data);
       })
       .catch(error => {
-        console.error('[PSD3.Data.Loaders] Error loading CSV:', error);
         onError(error);
       });
 
