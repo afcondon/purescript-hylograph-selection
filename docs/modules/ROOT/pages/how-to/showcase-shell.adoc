@@ -1,8 +1,8 @@
 = Creating a Showcase App Layout
-:description: How to use the psd3-showcase-shell library to create full-viewport visualizations with panels
+:description: How to use the hylograph-showcase-shell library to create full-viewport visualizations with panels
 :keywords: showcase, shell, layout, panels, zoom, halogen
 
-The `psd3-showcase-shell` library provides a reusable layout framework for data visualization "showcase" applications—full-viewport zoomable SVG with floating panels and a header overlay.
+The `hylograph-showcase-shell` library provides a reusable layout framework for data visualization "showcase" applications—full-viewport zoomable SVG with floating panels and a header overlay.
 
 == What You Get
 
@@ -29,16 +29,16 @@ Add the dependency to your `spago.yaml`:
 [source,yaml]
 ----
 dependencies:
-  - psd3-showcase-shell
-  - psd3-selection
+  - hylograph-showcase-shell
+  - hylograph-selection
   # ... other deps
 
 workspace:
   extraPackages:
-    psd3-showcase-shell:
-      path: ../../visualisation libraries/purescript-psd3-showcase-shell
-    psd3-selection:
-      path: ../../visualisation libraries/purescript-psd3-selection
+    hylograph-showcase-shell:
+      path: ../../visualisation libraries/purescript-hylograph-showcase-shell
+    hylograph-selection:
+      path: ../../visualisation libraries/purescript-hylograph-selection
 ----
 
 Include the CSS in your HTML:
@@ -144,7 +144,7 @@ Attach D3 zoom after the component mounts:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (attachZoomWithCallback_)
+import Hylograph.Internal.Behavior.FFI (attachZoomWithCallback_)
 
 handleAction = case _ of
   Initialize -> do
@@ -201,11 +201,11 @@ HH.header
 
 == Demo
 
-A working demo is available in the `psd3-showcase-shell` library:
+A working demo is available in the `hylograph-showcase-shell` library:
 
 [source,bash]
 ----
-cd "visualisation libraries/purescript-psd3-showcase-shell"
+cd "visualisation libraries/purescript-hylograph-showcase-shell"
 cd demo && spago bundle
 python3 -m http.server 8095
 # Open http://localhost:8095/demo/
@@ -214,4 +214,4 @@ python3 -m http.server 8095
 == Next Steps
 
 * xref:how-to/zoom.adoc[Zoomable Visualizations] - More zoom options
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Integrate with app state
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Integrate with app state

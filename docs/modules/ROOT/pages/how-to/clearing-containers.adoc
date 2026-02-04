@@ -34,7 +34,7 @@ Use `clearContainer` when switching between fundamentally different visualizatio
 
 [source,purescript]
 ----
-import PSD3.HATS.InterpreterTick (clearContainer, rerender)
+import Hylograph.HATS.InterpreterTick (clearContainer, rerender)
 
 -- Switching from circles to letters - completely different structure
 clearContainer "#viz-container"

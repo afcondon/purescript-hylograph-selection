@@ -56,7 +56,7 @@ type BrushExtent =
 
 [source,purescript]
 ----
-import PSD3.Brush (Brush, brush, brushX, brushY, onBrush, onBrushEnd)
+import Hylograph.Brush (Brush, brush, brushX, brushY, onBrush, onBrushEnd)
 
 scatterPlot :: Array DataPoint -> (Set String -> Effect Unit) -> A.AST DataPoint
 scatterPlot points onSelectionChange =
@@ -166,7 +166,7 @@ handleAction = case _ of
 
 == Brush Types
 
-PSD3 supports several brush types:
+Hylograph supports several brush types:
 
 [source,purescript]
 ----

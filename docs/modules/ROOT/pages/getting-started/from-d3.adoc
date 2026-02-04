@@ -1,5 +1,5 @@
-= From D3.js to PSD3
-:description: Guide for D3.js developers transitioning to PSD3
+= From D3.js to Hylograph
+:description: Guide for D3.js developers transitioning to Hylograph
 :keywords: D3, migration, comparison
 
 [NOTE]
@@ -7,7 +7,7 @@
 This guide is coming soon. It will cover:
 
 * Key conceptual differences
-* Mapping D3 patterns to PSD3
+* Mapping D3 patterns to Hylograph
 * Common gotchas
 * When to use the escape hatches
 ====
@@ -15,7 +15,7 @@ This guide is coming soon. It will cover:
 == Quick Comparison
 
 |===
-| D3.js | PSD3
+| D3.js | Hylograph
 
 | Imperative method chaining
 | Declarative tree building
@@ -39,7 +39,7 @@ In D3, you *do* things to the DOM:
 d3.select("body").append("svg").attr("width", 400)...
 ----
 
-In PSD3, you *describe* what you want:
+In Hylograph, you *describe* what you want:
 
 [source,purescript]
 ----

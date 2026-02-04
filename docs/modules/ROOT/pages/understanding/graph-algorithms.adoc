@@ -1,8 +1,8 @@
 = Graph Algorithms Library Design
-:description: Comprehensive design for purescript-psd3-graph
+:description: Comprehensive design for purescript-hylograph-graph
 :keywords: graph, algorithms, pathfinding, centrality, community detection
 
-A companion library to `psd3-simulation` for graph algorithms, analysis, and layout.
+A companion library to `hylograph-simulation` for graph algorithms, analysis, and layout.
 
 == Core Types
 
@@ -171,7 +171,7 @@ findPathTraced :: NodeId -> NodeId -> Graph -> TracedResult PathResult
 Users who just want algorithms import `Data.Graph.Pathfinding`.
 Users building visualizations also import `Data.Graph.Pathfinding.Traced`.
 
-== Integration with PSD3
+== Integration with Hylograph
 
 [source,purescript]
 ----
@@ -184,10 +184,10 @@ setNodeSizes sizeFromRank simulation
 == Phased Implementation
 
 === Phase 1: Consolidation
-* Create psd3-graph repo
-* Move `Data.Graph.Algorithms` from psd3-selection
-* Move tree utilities from psd3-tree
-* Add A* from psd3-astar-demo
+* Create hylograph-graph repo
+* Move `Data.Graph.Algorithms` from hylograph-selection
+* Move tree utilities from hylograph-graph
+* Add A* from hylograph-astar-demo
 
 === Phase 2: Pathfinding Suite
 * Dijkstra (A* without heuristic)

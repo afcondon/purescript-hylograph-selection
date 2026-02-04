@@ -1,15 +1,15 @@
 .Getting Started
 * xref:getting-started/your-first-selection.adoc[Your First Selection]
 * xref:getting-started/bar-chart.adoc[Building a Bar Chart]
-* xref:getting-started/from-d3.adoc[From D3.js to PSD3]
+* xref:getting-started/from-d3.adoc[From D3.js to Hylograph]
 * xref:getting-started/webapp-architecture.adoc[Web App Architecture]
 
 .How-To Guides
 * xref:how-to/showcase-shell.adoc[Creating a Showcase App Layout]
-* xref:how-to/simple-webpage.adoc[PSD3 in a Simple Web Page]
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3]
-* xref:how-to/react-integration.adoc[PSD3 in a React App]
-* xref:how-to/react-events.adoc[React Events from PSD3]
+* xref:how-to/simple-webpage.adoc[Hylograph in a Simple Web Page]
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph]
+* xref:how-to/react-integration.adoc[Hylograph in a React App]
+* xref:how-to/react-events.adoc[React Events from Hylograph]
 * xref:how-to/react-simulation.adoc[Force Simulations in React]
 * xref:how-to/css-hover.adoc[Simple CSS Hover Effects]
 * xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting]
@@ -32,4 +32,4 @@
 
 .Reference
 * xref:reference/modules.adoc[Module Overview]
-* https://pursuit.purescript.org/packages/purescript-psd3-selection[API Docs (Pursuit)^]
+* https://pursuit.purescript.org/packages/purescript-hylograph-selection[API Docs (Pursuit)^]

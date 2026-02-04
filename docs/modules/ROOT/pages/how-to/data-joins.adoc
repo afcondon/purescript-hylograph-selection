@@ -1,5 +1,5 @@
 = Data Joins Deep Dive
-:description: Advanced patterns for data binding in PSD3
+:description: Advanced patterns for data binding in Hylograph
 :keywords: data joins, enter, update, exit, GUP
 
 [NOTE]

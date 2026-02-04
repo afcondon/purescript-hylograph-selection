@@ -1,17 +1,17 @@
-= PSD3 in a React Application
-:description: How to integrate PSD3 visualizations into purescript-react-basic-hooks applications
+= Hylograph in a React Application
+:description: How to integrate Hylograph visualizations into purescript-react-basic-hooks applications
 :keywords: React, react-basic-hooks, integration, framework-agnostic
 
-PSD3 is framework-agnostic: the same visualization code works whether you're using React, Halogen, or vanilla JavaScript. This guide shows how to integrate PSD3 with `purescript-react-basic-hooks`.
+Hylograph is framework-agnostic: the same visualization code works whether you're using React, Halogen, or vanilla JavaScript. This guide shows how to integrate Hylograph with `purescript-react-basic-hooks`.
 
 == The Key Insight
 
-PSD3 doesn't care about your UI framework. It just needs:
+Hylograph doesn't care about your UI framework. It just needs:
 
 1. A DOM element to render into
 2. A trigger to render (mount, prop change, etc.)
 
-The framework provides the container and lifecycle; PSD3 handles the visualization.
+The framework provides the container and lifecycle; Hylograph handles the visualization.
 
 == The Pattern
 
@@ -43,10 +43,10 @@ mkMyVisualization = do
 
 Each component instance needs a unique container ID to avoid conflicts when multiple visualizations are on the same page.
 
-.src/PSD3/React/Hooks.purs
+.src/Hylograph/React/Hooks.purs
 [source,purescript]
 ----
-module PSD3.React.Hooks (useContainerId) where
+module Hylograph.React.Hooks (useContainerId) where
 
 import Effect (Effect)
 
@@ -56,7 +56,7 @@ useContainerId :: Effect String
 useContainerId = generateContainerIdImpl
 ----
 
-.src/PSD3/React/Hooks.js
+.src/Hylograph/React/Hooks.js
 [source,javascript]
 ----
 let counter = 0;
@@ -70,17 +70,17 @@ Here's a complete example showing a data-bound bar chart:
 
 [source,purescript]
 ----
-module PSD3.React.Example where
+module Hylograph.React.Example where
 
 import Prelude
 
 import Data.Int (toNumber)
 import Effect (Effect)
-import PSD3.AST as A
-import PSD3.AST (ElementType(..))
-import PSD3.Expr.Friendly (num, text, computed, computedStr, fromWithIndex, fromStrWithIndex)
-import PSD3.React.Hooks (useContainerId)
-import PSD3.Render (runD3, select, renderTree, clear)
+import Hylograph.AST as A
+import Hylograph.AST (ElementType(..))
+import Hylograph.Expr.Friendly (num, text, computed, computedStr, fromWithIndex, fromStrWithIndex)
+import Hylograph.React.Hooks (useContainerId)
+import Hylograph.Render (runD3, select, renderTree, clear)
 import React.Basic.DOM as R
 import React.Basic.Hooks (Component, component, useEffectOnce)
 import React.Basic.Hooks as React
@@ -133,11 +133,11 @@ barChartAST dataset =
 
 == Using DOM Elements Directly
 
-If you prefer using React refs instead of CSS selectors, PSD3 provides `selectElement`:
+If you prefer using React refs instead of CSS selectors, Hylograph provides `selectElement`:
 
 [source,purescript]
 ----
-import PSD3.Render (runD3, selectElement, renderTree)
+import Hylograph.Render (runD3, selectElement, renderTree)
 import React.Basic.Hooks (useRef)
 import Web.HTML.HTMLElement (toElement)
 import Data.Nullable (toMaybe)
@@ -189,24 +189,24 @@ Add these dependencies to your `spago.yaml`:
 ----
 package:
   dependencies:
-    - psd3-selection
+    - hylograph-selection
     - react-basic
     - react-basic-dom
     - react-basic-hooks
 ----
 
-If using local PSD3 packages:
+If using local Hylograph packages:
 
 [source,yaml]
 ----
 workspace:
   extraPackages:
-    psd3-selection:
-      path: ../purescript-psd3-selection
-    psd3-tree:
-      path: ../purescript-psd3-tree
-    psd3-graph:
-      path: ../purescript-psd3-graph
+    hylograph-selection:
+      path: ../purescript-hylograph-selection
+    hylograph-graph:
+      path: ../purescript-hylograph-graph
+    hylograph-graph:
+      path: ../purescript-hylograph-graph
 ----
 
 == Why Framework-Agnostic Matters
@@ -219,7 +219,7 @@ The visualization code (`barChartAST`) is completely decoupled from React. This 
 
 == Next Steps
 
-* xref:how-to/react-events.adoc[React Events from PSD3] - Click handlers and state updates
+* xref:how-to/react-events.adoc[React Events from Hylograph] - Click handlers and state updates
 * xref:how-to/react-simulation.adoc[Force Simulations in React] - Tick callbacks and drag
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Compare with Halogen
-* xref:how-to/simple-webpage.adoc[PSD3 in a Simple Web Page] - No framework at all
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Compare with Halogen
+* xref:how-to/simple-webpage.adoc[Hylograph in a Simple Web Page] - No framework at all

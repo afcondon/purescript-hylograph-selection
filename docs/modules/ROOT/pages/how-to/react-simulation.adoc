@@ -1,8 +1,8 @@
 = Force Simulations in React
-:description: How to run PSD3 force simulations in React with tick callbacks and drag
+:description: How to run Hylograph force simulations in React with tick callbacks and drag
 :keywords: React, simulation, force, drag, animation
 
-Force-directed layouts require continuous animation during simulation. This guide shows how to integrate PSD3's force engine with React components.
+Force-directed layouts require continuous animation during simulation. This guide shows how to integrate Hylograph's force engine with React components.
 
 == The Challenge
 
@@ -17,8 +17,8 @@ Force simulations run at ~60fps, updating node positions each tick. You need to:
 
 [source,purescript]
 ----
-import PSD3.ForceEngine.Simulation as Sim
-import PSD3.ForceEngine.Types (ForceSpec(..))
+import Hylograph.ForceEngine.Simulation as Sim
+import Hylograph.ForceEngine.Types (ForceSpec(..))
 
 mkForceGraph :: Component {}
 mkForceGraph = do
@@ -171,6 +171,6 @@ This cancels the animation frame loop and prevents memory leaks.
 
 == Next Steps
 
-* xref:how-to/react-events.adoc[React Events from PSD3] - Click handlers
-* xref:how-to/react-integration.adoc[PSD3 in a React App] - Basic integration
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Compare approaches
+* xref:how-to/react-events.adoc[React Events from Hylograph] - Click handlers
+* xref:how-to/react-integration.adoc[Hylograph in a React App] - Basic integration
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Compare approaches

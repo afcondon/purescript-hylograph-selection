@@ -155,11 +155,11 @@ runAsStats :: Statistics
 runAsStats = evalStats (quarterlyAnalysis quarterlyData)
 ----
 
-== Part 5: Decomposing PSD3's Join Variants
+== Part 5: Decomposing Hylograph's Join Variants
 
-=== Current PSD3 Structure (Problematic)
+=== Current Hylograph Structure (Problematic)
 
-PSD3 currently has four join constructors:
+Hylograph currently has four join constructors:
 
 [source,purescript]
 ----

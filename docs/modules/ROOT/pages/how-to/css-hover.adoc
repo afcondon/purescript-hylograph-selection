@@ -2,7 +2,7 @@
 :description: How to implement lightweight hover effects using CSS
 :keywords: CSS, hover, effects, simple, performance
 
-For simple hover effects that only affect the hovered element, CSS is faster and simpler than JavaScript. This guide shows how to implement CSS-based hover effects with PSD3.
+For simple hover effects that only affect the hovered element, CSS is faster and simpler than JavaScript. This guide shows how to implement CSS-based hover effects with Hylograph.
 
 == When to Use CSS Hover
 
@@ -24,7 +24,7 @@ Use JavaScript hover (see xref:how-to/coordinated-highlighting.adoc[Coordinated 
 
 [source,purescript]
 ----
-import PSD3.Expr.Friendly (class_)
+import Hylograph.Expr.Friendly (class_)
 
 myVisualization =
   A.joinData "circles" "circle" myData \d ->
@@ -114,9 +114,9 @@ myVisualization =
 }
 ----
 
-== Combining with PSD3 Behaviors
+== Combining with Hylograph Behaviors
 
-You can use CSS for visual feedback while using PSD3 behaviors for logic:
+You can use CSS for visual feedback while using Hylograph behaviors for logic:
 
 [source,purescript]
 ----

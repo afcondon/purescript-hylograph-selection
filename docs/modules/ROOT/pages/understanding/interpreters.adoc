@@ -1,8 +1,8 @@
 = Interpreters
-:description: The multiple backends that bring PSD3 visualizations to life
+:description: The multiple backends that bring Hylograph visualizations to life
 :keywords: interpreters, D3, rendering, testing
 
-The same PSD3 visualization can be interpreted multiple ways. This page covers the available interpreters and when to use each.
+The same Hylograph visualization can be interpreted multiple ways. This page covers the available interpreters and when to use each.
 
 == Available Interpreters
 
@@ -12,7 +12,7 @@ Renders your visualization to the DOM via D3.js.
 
 [source,purescript]
 ----
-import PSD3.Render (runD3, select, renderTree)
+import Hylograph.Render (runD3, select, renderTree)
 
 main = void $ runD3 do
   container <- select "#chart"
@@ -27,7 +27,7 @@ Produces a human-readable description of what the visualization will do.
 
 [source,purescript]
 ----
-import PSD3.Interpreter.English (toEnglish)
+import Hylograph.Interpreter.English (toEnglish)
 
 description = toEnglish myViz
 -- "Create an SVG element with width 400 and height 300,
@@ -42,7 +42,7 @@ Generates a Mermaid diagram showing the AST structure.
 
 [source,purescript]
 ----
-import PSD3.Interpreter.Mermaid (toMermaid)
+import Hylograph.Interpreter.Mermaid (toMermaid)
 
 diagram = toMermaid myViz
 -- "graph TD\n  A[SVG] --> B[Circle]\n  ..."
@@ -56,7 +56,7 @@ Converts the typed AST to a simpler untyped representation.
 
 [source,purescript]
 ----
-import PSD3.Interpreter.MetaAST (toMetaAST)
+import Hylograph.Interpreter.MetaAST (toMetaAST)
 
 meta = toMetaAST myViz
 ----

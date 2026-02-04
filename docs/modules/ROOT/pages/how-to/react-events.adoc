@@ -1,14 +1,14 @@
-= React Events from PSD3 Visualizations
-:description: How to surface click and interaction events from PSD3 to React state
+= React Events from Hylograph Visualizations
+:description: How to surface click and interaction events from Hylograph to React state
 :keywords: React, events, clicks, callbacks, useState
 
-When building a React application with PSD3 visualizations, you need to bridge events from the D3 world back to React's state system. This guide shows you how.
+When building a React application with Hylograph visualizations, you need to bridge events from the D3 world back to React's state system. This guide shows you how.
 
 == The Challenge
 
-PSD3 visualizations live in the DOM, managed by D3. React manages your component state. When a user clicks something in the visualization, you need to:
+Hylograph visualizations live in the DOM, managed by D3. React manages your component state. When a user clicks something in the visualization, you need to:
 
-1. Capture the event in PSD3 via behaviors
+1. Capture the event in Hylograph via behaviors
 2. Extract relevant data (which element was clicked, its datum)
 3. Call a React state setter
 4. React re-renders to reflect the new state
@@ -19,7 +19,7 @@ Pass React's state setter into your visualization AST:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (onClickWithDatum)
+import Hylograph.Internal.Behavior.Types (onClickWithDatum)
 import React.Basic.Hooks (useState, (/\))
 
 mkInteractiveBarChart :: Component { chartData :: Array Number }
@@ -88,11 +88,11 @@ barChartAST dataset setSelectedBar =
 
 == Available Event Behaviors
 
-PSD3 provides several event behaviors:
+Hylograph provides several event behaviors:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types
+import Hylograph.Internal.Behavior.Types
   ( onClick           -- Effect Unit (no datum)
   , onClickWithDatum  -- (datum -> Effect Unit)
   , onMouseEnter      -- (datum -> Effect Unit)
@@ -131,5 +131,5 @@ A.elem Circle [...]
 == Next Steps
 
 * xref:how-to/react-simulation.adoc[Force Simulations in React] - Tick-driven updates
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Compare with Halogen
-* xref:how-to/react-integration.adoc[PSD3 in a React App] - Basic integration
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Compare with Halogen
+* xref:how-to/react-integration.adoc[Hylograph in a React App] - Basic integration

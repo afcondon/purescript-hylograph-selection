@@ -1,12 +1,12 @@
-= Halogen Events from PSD3 Visualizations
+= Halogen Events from Hylograph Visualizations
 :description: How to trigger Halogen actions from clicks and drags in visualizations
 :keywords: Halogen, events, clicks, drags, callbacks
 
-When building a Halogen application with PSD3 visualizations, you need to bridge events from the D3 world back to Halogen's action system. This guide shows you how.
+When building a Halogen application with Hylograph visualizations, you need to bridge events from the D3 world back to Halogen's action system. This guide shows you how.
 
 == The Challenge
 
-PSD3 visualizations live in the DOM, managed by D3. Halogen manages your application state. When a user clicks or drags something in the visualization, you need to:
+Hylograph visualizations live in the DOM, managed by D3. Halogen manages your application state. When a user clicks or drags something in the visualization, you need to:
 
 1. Capture the event in the D3 world
 2. Extract relevant data (which element, position, etc.)
@@ -44,7 +44,7 @@ handleAction = case _ of
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (onClick, onClickWithDatum)
+import Hylograph.Internal.Behavior.Types (onClick, onClickWithDatum)
 
 -- Simple click (no datum needed)
 P.elem Circle [...]
@@ -62,7 +62,7 @@ P.joinData "nodes" "g" nodes \node ->
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (Behavior(..), DragBehavior(..))
+import Hylograph.Internal.Behavior.Types (Behavior(..), DragBehavior(..))
 
 -- Full drag with start/drag/end
 P.elem Circle [...]
@@ -131,10 +131,10 @@ mkDebouncedEmitter delayMs emit = do
 
 == Complete Example
 
-See the Force Explorer showcase for a complete working example of Halogen + PSD3 integration with drag, zoom, and click events.
+See the Force Explorer showcase for a complete working example of Halogen + Hylograph integration with drag, zoom, and click events.
 
 == Next Steps
 
 * xref:getting-started/webapp-architecture.adoc[Web App Architecture] - The big picture
 * xref:how-to/zoom.adoc[Making Visualizations Zoomable] - Zoom behavior
-* xref:how-to/simple-webpage.adoc[PSD3 without Halogen] - Simpler alternative
+* xref:how-to/simple-webpage.adoc[Hylograph without Halogen] - Simpler alternative

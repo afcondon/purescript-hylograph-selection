@@ -2,7 +2,7 @@
 :description: Implement tooltips integrated with coordinated highlighting
 :keywords: tooltips, hover, labels, interaction
 
-Tooltips in PSD3 are integrated with the coordinated highlighting system. This enables three distinct tooltip behaviors, from traditional mouse-following tooltips to direct labels that appear on elements across views.
+Tooltips in Hylograph are integrated with the coordinated highlighting system. This enables three distinct tooltip behaviors, from traditional mouse-following tooltips to direct labels that appear on elements across views.
 
 == Quick Start
 
@@ -10,7 +10,7 @@ Add a tooltip to any element with coordinated highlighting:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (HighlightClass(..), TooltipTrigger(..), onCoordinatedHighlight)
+import Hylograph.Internal.Behavior.Types (HighlightClass(..), TooltipTrigger(..), onCoordinatedHighlight)
 import Data.Maybe (Maybe(..))
 
 T.elem Circle [...]

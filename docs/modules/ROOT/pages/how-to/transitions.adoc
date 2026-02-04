@@ -16,7 +16,7 @@ This guide is coming soon. It will cover:
 
 [source,purescript]
 ----
-import PSD3.Internal.Transition.Types (TransitionConfig)
+import Hylograph.Internal.Transition.Types (TransitionConfig)
 
 fadeIn :: TransitionConfig
 fadeIn = { duration: 500, delay: 0, ease: "easeCubicOut" }

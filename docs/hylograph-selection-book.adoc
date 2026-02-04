@@ -1,4 +1,4 @@
-= PSD3 Selection
+= Hylograph Selection
 :description: Type-safe D3-style visualization for PureScript
 :doctype: book
 :toc: left
@@ -13,7 +13,7 @@
 [preface]
 == About This Documentation
 
-PSD3 Selection is a type-safe, finally tagless D3-style visualization library for PureScript. This documentation covers the core concepts, how-to guides, and reference material.
+Hylograph Selection is a type-safe, finally tagless D3-style visualization library for PureScript. This documentation covers the core concepts, how-to guides, and reference material.
 
 // Part I: Getting Started
 = Getting Started

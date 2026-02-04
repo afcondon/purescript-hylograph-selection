@@ -2,7 +2,7 @@
 :description: Exploring spreadsheets through comonads, recursion schemes, and lenses
 :keywords: comonad, recursion schemes, lenses, spreadsheet, functional programming
 
-_A design exploration for psd3-sheetless_
+_A design exploration for hylograph-sheetless_
 
 == The Insight
 

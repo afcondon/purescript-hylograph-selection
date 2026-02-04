@@ -6,7 +6,7 @@ Coordinated highlighting synchronizes visual emphasis across multiple views. Whe
 
 == The Two-Tier Hover System
 
-PSD3 provides two tiers of hover behavior:
+Hylograph provides two tiers of hover behavior:
 
 === Tier 1: Element-Local Hover (Simple)
 
@@ -14,7 +14,7 @@ For basic hover effects that only affect the element itself:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (onHover)
+import Hylograph.Internal.Behavior.Types (onHover)
 
 -- Simple style change on hover
 T.elem Circle [...]
@@ -34,7 +34,7 @@ For synchronized highlighting across multiple visualizations:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (HighlightClass(..), onCoordinatedHighlight)
+import Hylograph.Internal.Behavior.Types (HighlightClass(..), onCoordinatedHighlight)
 import Data.Maybe (Maybe(..))
 
 T.elem Circle [...]
@@ -315,7 +315,7 @@ When re-rendering visualizations, call `clearAllHighlights_` to reset state:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (clearAllHighlights_)
+import Hylograph.Internal.Behavior.FFI (clearAllHighlights_)
 
 -- Before re-rendering
 liftEffect clearAllHighlights_

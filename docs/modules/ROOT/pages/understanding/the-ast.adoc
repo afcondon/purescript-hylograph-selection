@@ -1,8 +1,8 @@
 = The Selection AST
-:description: Understanding PSD3's tree-based visualization model
+:description: Understanding Hylograph's tree-based visualization model
 :keywords: AST, tree, declarative, structure
 
-PSD3 visualizations are built as *trees*. This page explains the structure and why it matters.
+Hylograph visualizations are built as *trees*. This page explains the structure and why it matters.
 
 == Trees, Not Chains
 
@@ -13,7 +13,7 @@ D3.js uses method chaining - each call returns a selection you continue to opera
 selection.append("g").attr("class", "group").append("circle")...
 ----
 
-PSD3 builds a tree data structure:
+Hylograph builds a tree data structure:
 
 [source,purescript]
 ----
@@ -68,7 +68,7 @@ The Mermaid interpreter can show your tree structure:
 
 [source,purescript]
 ----
-import PSD3.Interpreter.Mermaid (toMermaid)
+import Hylograph.Interpreter.Mermaid (toMermaid)
 
 -- Generates a Mermaid diagram of the AST structure
 diagram = toMermaid myVisualization

@@ -2,13 +2,13 @@
 :description: How to add pan and zoom functionality to visualizations
 :keywords: zoom, pan, interactive, navigation
 
-Zoom and pan allow users to explore large or detailed visualizations. This guide shows how to add zoom behavior to your PSD3 visualizations.
+Zoom and pan allow users to explore large or detailed visualizations. This guide shows how to add zoom behavior to your Hylograph visualizations.
 
 == Basic Zoom Setup
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (Behavior(..), ZoomBehavior(..), ScaleExtent(..))
+import Hylograph.Internal.Behavior.Types (Behavior(..), ZoomBehavior(..), ScaleExtent(..))
 
 zoomableViz :: A.AST Unit
 zoomableViz =
@@ -131,7 +131,7 @@ Programmatically zoom to show all content:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (zoomTo, zoomIdentity)
+import Hylograph.Internal.Behavior.FFI (zoomTo, zoomIdentity)
 
 -- Zoom to show a specific bounding box
 zoomToFit :: D3Selection -> BoundingBox -> Effect Unit
@@ -185,5 +185,5 @@ No additional configuration needed.
 
 == Next Steps
 
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Integrate zoom with app state
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Integrate zoom with app state
 * xref:how-to/linked-brushing.adoc[Linked Brushing] - Another interaction pattern

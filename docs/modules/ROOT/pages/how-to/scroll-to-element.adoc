@@ -8,7 +8,7 @@ When visualization elements correspond to UI components elsewhere on the page (l
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (scrollToElement)
+import Hylograph.Internal.Behavior.FFI (scrollToElement)
 
 -- Scroll smoothly to an element, centering it in the viewport
 liftEffect $ scrollToElement "panel-moduleA"
@@ -25,7 +25,7 @@ For more control, use `scrollToElementById_`:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (scrollToElementById_)
+import Hylograph.Internal.Behavior.FFI (scrollToElementById_)
 
 -- Scroll instantly to top of viewport
 liftEffect $ scrollToElementById_ "my-element" "instant" "start"
@@ -75,8 +75,8 @@ Connect visualization clicks to scroll behavior in Halogen:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.FFI (scrollToElement)
-import PSD3.Internal.Behavior.Types (onClickWithDatum)
+import Hylograph.Internal.Behavior.FFI (scrollToElement)
+import Hylograph.Internal.Behavior.Types (onClickWithDatum)
 
 -- In your Tree API visualization
 T.elem Rect [...]
@@ -133,4 +133,4 @@ For older browsers, behavior falls back gracefully (instant scroll or no-op).
 == Next Steps
 
 * xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] - Visual feedback across views
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - More interaction patterns
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - More interaction patterns

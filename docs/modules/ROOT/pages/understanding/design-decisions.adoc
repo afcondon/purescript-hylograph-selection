@@ -128,14 +128,14 @@ data OutputType
 
 === Phase 3: Charting Demo
 
-1. Integrate PSD3 D3 wrapper
+1. Integrate Hylograph D3 wrapper
 2. Chart specification types
 3. Expression → Chart rendering
 4. Basic Halogen app
 
 === Phase 4: AST Visualization
 
-1. Adapt PSD3 PatternTree
+1. Adapt Hylograph PatternTree
 2. Expression → Tree visualization
 3. Interactive exploration
 4. Link to evaluation steps
@@ -152,17 +152,17 @@ data OutputType
 * *Language*: PureScript
 * *UI*: Halogen + Halogen Store
 * *Parsing*: Bookhound (or purescript-parsing)
-* *Visualization*: PSD3 D3 wrappers
+* *Visualization*: Hylograph D3 wrappers
 * *Build*: Spago + esbuild
 
-== Relationship to PSD3
+== Relationship to Hylograph
 
 *Reuses:*
 
-* `purescript-psd3-tree` - Tree visualization
-* `purescript-psd3-selection` - Selection model
-* `purescript-psd3-layout` - Layout algorithms
-* D3 FFI bindings from psd3-demo-website
+* `purescript-hylograph-graph` - Tree visualization
+* `purescript-hylograph-selection` - Selection model
+* `purescript-hylograph-layout` - Layout algorithms
+* D3 FFI bindings from hylograph-demo-website
 
 *New:*
 

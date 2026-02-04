@@ -1,8 +1,8 @@
 = Finally Tagless Architecture
-:description: Understanding PSD3's core architectural pattern
+:description: Understanding Hylograph's core architectural pattern
 :keywords: finally tagless, architecture, interpreters, DSL
 
-PSD3 uses the *finally tagless* encoding for its attribute expressions. This enables the same visualization code to be interpreted in multiple ways - rendering to the DOM, generating test strings, or producing documentation.
+Hylograph uses the *finally tagless* encoding for its attribute expressions. This enables the same visualization code to be interpreted in multiple ways - rendering to the DOM, generating test strings, or producing documentation.
 
 == What is Finally Tagless?
 
@@ -22,7 +22,7 @@ Consider attribute expressions. You might want to:
 
 With a traditional AST (initial encoding), you'd need pattern matching for each use case. With finally tagless, each interpreter just implements the interface.
 
-== PSD3's Expression System
+== Hylograph's Expression System
 
 [source,purescript]
 ----
@@ -66,7 +66,7 @@ You write:
 xPosition = field @"x" `times` num 40.0 `plus` num 50.0
 ----
 
-And PSD3 can:
+And Hylograph can:
 
 * Evaluate it for rendering: `180.0` (given `{ x: 3.25 }`)
 * Stringify it for testing: `"(x * 40.0 + 50.0)"`

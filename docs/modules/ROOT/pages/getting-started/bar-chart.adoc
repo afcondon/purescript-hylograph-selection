@@ -1,5 +1,5 @@
 = Building a Bar Chart
-:description: Create a data-driven bar chart with PSD3
+:description: Create a data-driven bar chart with Hylograph
 :keywords: tutorial, bar chart, data binding, joinData
 
 [NOTE]

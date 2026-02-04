@@ -63,7 +63,7 @@ HOFs in formulas               Fold visualization          Comonadic extend
 =MAP(range, fn)                See SUM's tree              Neighbor contexts
 =FILTER(range, pred)           Recursion scheme picker     Build system modeling
 SQL results as tables          Lens-based data paths       Cellular automata
-PSD3 visualizations            Bidirectional editing       Infrastructure DSL
+Hylograph visualizations            Bidirectional editing       Infrastructure DSL
 ----
 
 [quote]

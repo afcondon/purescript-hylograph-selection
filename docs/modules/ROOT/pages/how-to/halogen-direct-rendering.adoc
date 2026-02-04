@@ -1,8 +1,8 @@
 = Halogen-Direct Rendering with ForceEngine
-:description: How to use PSD3's force simulation while rendering directly with Halogen SVG
+:description: How to use Hylograph's force simulation while rendering directly with Halogen SVG
 :keywords: Halogen, SVG, force simulation, direct rendering, no AST
 
-Sometimes you want the mathematical power of PSD3's force simulation without using the AST or HATS rendering system. This guide shows how to let Halogen own all rendering while PSD3 handles just the physics.
+Sometimes you want the mathematical power of Hylograph's force simulation without using the AST or HATS rendering system. This guide shows how to let Halogen own all rendering while Hylograph handles just the physics.
 
 == When to Use This Pattern
 
@@ -10,7 +10,7 @@ Use Halogen-direct rendering when:
 
 * You want full Halogen control over event handling (no bridging needed)
 * Your visualization is tightly coupled with Halogen component state
-* You prefer Halogen's `halogen-svg` over PSD3's element creation
+* You prefer Halogen's `halogen-svg` over Hylograph's element creation
 * The visualization is simple enough that the AST's composability isn't needed
 
 == Architecture Overview
@@ -27,7 +27,7 @@ Use Halogen-direct rendering when:
 │         ▼                   ▼              │
 │  ┌─────────────┐    ┌──────────────────┐   │
 │  │  render     │    │  ForceEngine     │   │
-│  │  (Halogen)  │    │  (PSD3)          │   │
+│  │  (Halogen)  │    │  (Hylograph)          │   │
 │  └─────────────┘    └──────────────────┘   │
 │         │                   │              │
 │         ▼                   │              │
@@ -94,7 +94,7 @@ renderNode node =
 
 [source,purescript]
 ----
-import PSD3.ForceEngine as FE
+import Hylograph.ForceEngine as FE
 
 setupSimulation nodes links = do
   sim <- liftEffect $ FE.createWithCallbacks FE.defaultConfig callbacks
@@ -170,7 +170,7 @@ handleAction = case _ of
 === Advantages
 
 * **Full Halogen control**: Events use standard Halogen patterns (`HE.onClick`, etc.)
-* **No bridging**: No need to pass callbacks into PSD3 or convert between event systems
+* **No bridging**: No need to pass callbacks into Hylograph or convert between event systems
 * **Simpler debugging**: All rendering logic is visible in one place
 * **CSS integration**: Standard Halogen CSS classes work naturally
 
@@ -192,6 +192,6 @@ Consider HATS when:
 
 == See Also
 
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - The callback bridging approach
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - The callback bridging approach
 * xref:understanding/hats.adoc[Understanding HATS] - The declarative alternative
 * `site/website/src/Component/Hero/ConceptGraph.purs` - Full working example

@@ -1,15 +1,15 @@
-= PSD3 in a Simple Web Page
-:description: How to use PSD3 without Halogen or a complex framework
+= Hylograph in a Simple Web Page
+:description: How to use Hylograph without Halogen or a complex framework
 :keywords: simple, webpage, no-framework, vanilla
 
-Not every visualization needs a full application framework. This guide shows how to use PSD3 in a simple HTML page with minimal setup.
+Not every visualization needs a full application framework. This guide shows how to use Hylograph in a simple HTML page with minimal setup.
 
 == When to Use This Approach
 
 * Quick prototypes and experiments
 * Static visualizations with no complex state
 * Embedding a visualization in an existing non-PureScript page
-* Learning PSD3 without Halogen complexity
+* Learning Hylograph without Halogen complexity
 
 == Basic Setup
 
@@ -41,10 +41,10 @@ module Main where
 
 import Prelude
 import Effect (Effect)
-import PSD3.AST as A
-import PSD3.AST (ElementType(..))
-import PSD3.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
-import PSD3.Render (runD3, select, renderTree)
+import Hylograph.AST as A
+import Hylograph.AST (ElementType(..))
+import Hylograph.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
+import Hylograph.Render (runD3, select, renderTree)
 
 main :: Effect Unit
 main = void $ runD3 do
@@ -86,7 +86,7 @@ For simple interactivity, use behaviors directly:
 
 [source,purescript]
 ----
-import PSD3.Internal.Behavior.Types (onClick, onHover)
+import Hylograph.Internal.Behavior.Types (onClick, onHover)
 import Effect.Console (log)
 
 myVisualization :: A.AST Unit
@@ -174,6 +174,6 @@ Consider moving to Halogen when you need:
 
 == Next Steps
 
-* xref:getting-started/your-first-selection.adoc[Your First Selection] - PSD3 basics
+* xref:getting-started/your-first-selection.adoc[Your First Selection] - Hylograph basics
 * xref:how-to/css-hover.adoc[Simple CSS Hover Effects] - Lightweight interactivity
 * xref:getting-started/webapp-architecture.adoc[Web App Architecture] - When you're ready for more

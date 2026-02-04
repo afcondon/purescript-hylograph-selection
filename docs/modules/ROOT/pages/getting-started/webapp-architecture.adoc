@@ -1,4 +1,4 @@
-= Web App Architecture with PSD3
+= Web App Architecture with Hylograph
 :description: Recommended architecture for web applications with data visualization
 :keywords: architecture, Halogen, webapp, structure
 
@@ -18,13 +18,13 @@ Building a web application with a data visualization component requires thinking
 │         ▼                                      │         │
 │  ┌─────────────┐                        ┌──────┴──────┐  │
 │  │   Render    │                        │  Callbacks  │  │
-│  │   (HTML)    │                        │  from PSD3  │  │
+│  │   (HTML)    │                        │  from Hylograph  │  │
 │  └──────┬──────┘                        └──────▲──────┘  │
 └─────────┼──────────────────────────────────────┼─────────┘
           │                                      │
           ▼                                      │
 ┌─────────────────────────────────────────────────────────┐
-│                    PSD3 Visualization                    │
+│                    Hylograph Visualization                    │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
 │  │  AST Tree   │───►│ D3 Renderer │───►│    DOM      │  │
 │  └─────────────┘    └─────────────┘    └──────┬──────┘  │
@@ -38,7 +38,7 @@ Building a web application with a data visualization component requires thinking
 
 *Halogen owns the state*:: Your Halogen component holds the application state. The visualization is a view of that state.
 
-*PSD3 renders declaratively*:: You build an AST from your state, PSD3 renders it. When state changes, you re-render.
+*Hylograph renders declaratively*:: You build an AST from your state, Hylograph renders it. When state changes, you re-render.
 
 *Events flow back via callbacks*:: Clicks, drags, and hovers in the visualization trigger callbacks that become Halogen actions.
 
@@ -50,7 +50,7 @@ module MyApp.Visualization where
 
 import Halogen as H
 import Halogen.HTML as HH
-import PSD3 as P
+import Hylograph as P
 
 type State =
   { data :: Array DataPoint
@@ -76,7 +76,7 @@ render :: State -> H.ComponentHTML Action () m
 render state =
   HH.div
     [ HP.ref (H.RefLabel "viz-container") ]
-    []  -- PSD3 will render into this div
+    []  -- Hylograph will render into this div
 
 handleAction :: forall o m. MonadEffect m => Action -> H.HalogenM State Action () o m Unit
 handleAction = case _ of
@@ -99,7 +99,7 @@ handleAction = case _ of
 
 == The Callback Bridge
 
-The key to integrating PSD3 with Halogen is the callback bridge:
+The key to integrating Hylograph with Halogen is the callback bridge:
 
 [source,purescript]
 ----
@@ -132,5 +132,5 @@ buildVisualization state onEvent =
 
 == Next Steps
 
-* xref:how-to/halogen-events.adoc[Halogen Events from PSD3] - Detailed event handling
-* xref:how-to/simple-webpage.adoc[PSD3 without Halogen] - Simpler setups
+* xref:how-to/halogen-events.adoc[Halogen Events from Hylograph] - Detailed event handling
+* xref:how-to/simple-webpage.adoc[Hylograph without Halogen] - Simpler setups
