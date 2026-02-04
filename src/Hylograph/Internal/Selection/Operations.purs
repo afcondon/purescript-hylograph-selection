@@ -11,6 +11,26 @@
 -- | Uses `web-dom` for DOM manipulation, not D3's selection API.
 -- |
 -- | **Internal module** - use `Hylograph.Selection` for the public API.
+-- |
+-- | ## SAFETY: Phantom Type Guards for unsafePartial
+-- |
+-- | This module uses `unsafePartial` extensively to pattern-match on Selection
+-- | constructors. These are safe because the phantom type parameter (SEmpty,
+-- | SPending, SBoundOwns, SBoundInherits, SExiting) is set at construction time
+-- | and enforced by the type system:
+-- |
+-- | - `SEmpty` guarantees `EmptySelection` constructor
+-- | - `SPending` guarantees `PendingSelection` constructor
+-- | - `SBoundOwns` guarantees `BoundSelection` with owned data
+-- | - `SBoundInherits` guarantees `BoundSelection` with inherited data
+-- | - `SExiting` guarantees `ExitingSelection` constructor
+-- |
+-- | The phantom types make illegal states unrepresentable at compile time.
+-- | A function taking `Selection SPending elem datum` can only receive a
+-- | PendingSelection, so the partial match is actually total for that type.
+-- |
+-- | Similarly, `Array.unsafeIndex` is used where indices come from internal
+-- | bookkeeping (e.g., join algorithms) that maintains valid bounds.
 module Hylograph.Internal.Selection.Operations
   ( select
   , selectElement

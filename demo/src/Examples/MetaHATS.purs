@@ -247,15 +247,11 @@ renderChildrenWithRepetition cfg parentX parentY childX children childLayouts mR
   in
     elem Group [] renderedChildren
 
--- | Array indexing helper
+-- | Array indexing helper (uses safe Array.index)
 infixl 8 arrayIndex as !!
 
 arrayIndex :: forall a. Array a -> Int -> Maybe a
-arrayIndex arr i
-  | i >= 0 && i < length arr = Just (unsafeIndex arr i)
-  | otherwise = Nothing
-
-foreign import unsafeIndex :: forall a. Array a -> Int -> a
+arrayIndex = Array.index
 
 -- | Compute Y center positions for children
 computeChildPositions :: MetaConfig -> Number -> Array Layout -> Array Number

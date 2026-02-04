@@ -5,9 +5,11 @@ module TreePretty where
 
 import Prelude
 
-import Data.Array (length)
+import Data.Array (length, head, tail)
 import Data.Foldable (foldMap)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String.CodeUnits as SCU
+import Data.String.Common (toUpper)
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold)
 import Hylograph.Internal.Selection.Types (ElementType(..))
 
@@ -33,7 +35,7 @@ prettyTree = go 0
             else ind <> "  []\n") <>
           ind <> "  [ " <>
           (if length node.children == 1
-            then trimStart (go 0 (unsafeHead node.children)) <> ind <> "  ]\n"
+            then trimStart (go 0 (fromMaybe Empty (head node.children))) <> ind <> "  ]\n"
             else "\n" <> foldMap (go (indent + 2)) node.children <> ind <> "  ]\n")
         else
           ind <> "elem " <> elemName <> " " <> prettyAttrs node.attrs <> " []\n"
@@ -92,10 +94,10 @@ prettyAttrsMultiline indent attrs =
 -- | Join strings with separator
 joinAttrs :: String -> Array String -> String
 joinAttrs sep arr =
-  case length arr of
-    0 -> ""
-    1 -> unsafeHead arr
-    _ -> unsafeHead arr <> foldMap (\s -> "\n" <> sep <> s) (unsafeTail arr)
+  case head arr, tail arr of
+    Nothing, _ -> ""
+    Just h, Nothing -> h
+    Just h, Just t -> h <> foldMap (\s -> "\n" <> sep <> s) t
 
 -- | Pretty-print attributes inline (for compact view)
 prettyAttrs :: Array Attr -> String
@@ -106,10 +108,10 @@ prettyAttrs attrs =
 
 joinWith :: String -> Array String -> String
 joinWith sep arr =
-  case length arr of
-    0 -> ""
-    1 -> unsafeHead arr
-    _ -> unsafeHead arr <> foldMap (\s -> sep <> s) (unsafeTail arr)
+  case head arr, tail arr of
+    Nothing, _ -> ""
+    Just h, Nothing -> h
+    Just h, Just t -> h <> foldMap (\s -> sep <> s) t
 
 showAttr :: Attr -> String
 showAttr (StaticAttr name val) =
@@ -162,15 +164,12 @@ friendlyName = case _ of
 
 -- | Simple title case for thunked names
 titleCase :: String -> String
-titleCase s = toUpper (charAt 0 s) <> drop 1 s
-
-foreign import toUpper :: String -> String
-foreign import drop :: Int -> String -> String
+titleCase s = toUpper (SCU.take 1 s) <> SCU.drop 1 s
 
 -- | Check if string looks like a number
 isNumeric :: String -> Boolean
 isNumeric s =
-  let c = charAt 0 s
+  let c = SCU.take 1 s
   in c >= "0" && c <= "9" || c == "-"
 
 -- | Show enumeration type
@@ -185,11 +184,5 @@ showAssembly :: Assembly -> String
 showAssembly Siblings = "Siblings"
 showAssembly Nested = "Nested"
 
--- FFI helpers
-foreign import unsafeHead :: forall a. Array a -> a
-foreign import unsafeTail :: forall a. Array a -> Array a
-foreign import unsafeIndex :: forall a. Array a -> Int -> a
-foreign import stringLength :: String -> Int
-foreign import take :: Int -> String -> String
-foreign import charAt :: Int -> String -> String
+-- | Trim leading whitespace (no stdlib equivalent)
 foreign import trimStart :: String -> String

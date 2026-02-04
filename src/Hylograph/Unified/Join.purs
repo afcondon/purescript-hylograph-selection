@@ -362,17 +362,31 @@ fullJoin name key data_ decomposer keyFn template gup =
 -- |   # withGUP myGUP
 -- |   # toTree
 -- | ```
+-- |
+-- | SAFETY: The unsafeCoerce calls in toTree are safe because:
+-- |
+-- | 1. **Type erasure for existentials**: PureScript lacks existential types, so we erase
+-- |    the inner datum type when storing decompose/template/gup functions. The functions
+-- |    were provided together at the call site (join/withDecompose/withGUP), guaranteeing
+-- |    they agree on the inner type.
+-- |
+-- | 2. **outer = inner when no decompose**: Without a decompose function, the join operates
+-- |    on outer directly (JoinSpec outer outer). The coercions are identity in this case.
+-- |
+-- | 3. **AST stores erased types**: The AST nodes (NestedJoin, UpdateNestedJoin) also use
+-- |    type erasure internally - they recover types via the stored functions at runtime.
 toTree :: forall outer inner. JoinSpec outer inner -> Tree outer
 toTree (JoinSpec spec) =
   case spec.config.decompose, spec.config.gup of
     -- Basic join (no decompose, no GUP)
-    -- When no decompose, outer = inner (join always creates JoinSpec datum datum)
+    -- SAFETY: When no decompose, outer = inner (join always creates JoinSpec datum datum)
     Nothing, Nothing ->
       AST.joinData spec.config.name spec.config.key
         (unsafeCoerce spec.data_)
         (unsafeCoerce spec.template)
 
     -- Nested join (decompose, no GUP)
+    -- SAFETY: decompose and template were provided together via withDecompose
     Just decompose, Nothing ->
       AST.nestedJoin spec.config.name spec.config.key
         spec.data_
@@ -380,7 +394,7 @@ toTree (JoinSpec spec) =
         (unsafeCoerce spec.template)
 
     -- Update join (no decompose, with GUP)
-    -- When no decompose, outer = inner, so we can coerce
+    -- SAFETY: When no decompose, outer = inner, so coercions are identity
     Nothing, Just gup ->
       unsafeCoerce $
         AST.updateJoin spec.config.name spec.config.key
@@ -393,6 +407,7 @@ toTree (JoinSpec spec) =
           }
 
     -- Full join (decompose + GUP)
+    -- SAFETY: All functions agree on inner type (provided together)
     Just decompose, Just gup ->
       AST.updateNestedJoin spec.config.name spec.config.key
         spec.data_

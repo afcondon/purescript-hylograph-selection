@@ -28,6 +28,7 @@ import Data.Array as Array
 import Data.Int as Int
 import Data.Number (abs)
 import Data.Maybe (Maybe(..))
+import Data.String.CodeUnits as SCU
 import Hylograph.HATS.Friendly as F
 import Hylograph.HATS (Tree, elem, staticStr, staticNum, forEach)
 import Hylograph.Internal.Selection.Types (ElementType(..))
@@ -169,9 +170,7 @@ computeLayout cfg = case _ of
 -- | Rough text width estimate (monospace-ish)
 estimateTextWidth :: Number -> String -> Number
 estimateTextWidth fontSize text =
-  Int.toNumber (stringLength text) * fontSize * 0.6
-
-foreign import stringLength :: String -> Int
+  Int.toNumber (SCU.length text) * fontSize * 0.6
 
 -- =============================================================================
 -- HATS Tree Generation
