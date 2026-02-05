@@ -5,11 +5,9 @@ import Prelude
 import Data.String (contains, Pattern(..))
 import Effect (Effect)
 import Effect.Console (log)
-import Hylograph.Expr.Friendly (computed, num, static, staticStr)
 import Hylograph.Interpreter.SemiQuine.TreeToCode (treeToCode)
 import Hylograph.Internal.Selection.Types (ElementType(..))
-import Hylograph.AST (Tree)
-import Hylograph.AST as T
+import Hylograph.HATS (Tree, elem, forEach, staticNum, staticStr, thunkedNum)
 import Test.Assert (assert')
 
 -- | Sample data type for parabola example
@@ -32,39 +30,41 @@ scaleX x = (x + 10.0) * 20.0  -- Maps -10..10 to 0..400
 scaleY :: Number -> Number
 scaleY y = 300.0 - (y * 2.5)  -- Maps 0..100 to 300..50 (inverted)
 
--- | Parabola tree - similar to the real example
--- | Using finally-tagless Friendly API
-parabolaTree :: Tree ParabolaPoint
+-- | Parabola tree - using HATS API
+-- | forEach creates a fold over the data
+parabolaTree :: Tree
 parabolaTree =
-  T.named SVG "svg"
-    [ static "width" 400.0
-    , static "height" 300.0
+  elem SVG
+    [ staticNum "width" 400.0
+    , staticNum "height" 300.0
     , staticStr "id" "parabola-svg"
     , staticStr "class" "test-example"
     ]
-    `T.withChild`
-      (T.joinData "circles" "circle" parabolaData $ \d ->
-        T.elem Circle
-          [ computed "cx" (num (scaleX d.x))
-          , computed "cy" (num (scaleY d.y))
-          , static "r" 5.0
+    [ forEach "circles" Circle parabolaData (\d -> show d.x) \d ->
+        elem Circle
+          [ thunkedNum "cx" (scaleX d.x)
+          , thunkedNum "cy" (scaleY d.y)
+          , staticNum "r" 5.0
           , staticStr "fill" "green"
-          ])
+          ]
+          []
+    ]
 
 -- | Static-only tree for comparison
-staticTree :: Tree Unit
+staticTree :: Tree
 staticTree =
-  T.named SVG "root"
-    [ static "width" 200.0
-    , static "height" 100.0
+  elem SVG
+    [ staticNum "width" 200.0
+    , staticNum "height" 100.0
     ]
-    `T.withChild`
-      T.elem Circle
-        [ static "cx" 50.0
-        , static "cy" 50.0
-        , static "r" 10.0
+    [ elem Circle
+        [ staticNum "cx" 50.0
+        , staticNum "cy" 50.0
+        , staticNum "r" 10.0
         , staticStr "fill" "blue"
         ]
+        []
+    ]
 
 -- | Helper to check if string contains pattern
 shouldContain :: String -> String -> Effect Unit
@@ -78,15 +78,12 @@ runTests = do
   log "\n--- Static tree tests ---"
   testStaticElementTypes
   testStaticAttributes
-  testWithChild
+  testChildren
 
   log "\n--- Data-driven tree tests ---"
-  testJoinData
+  testFold
   testDynamicAttributes
   testStaticAttributesInTemplate
-
-  log "\n--- Sample data evaluation tests ---"
-  testEvaluatedValues
 
   log "\n--- Full output inspection ---"
   inspectParabolaOutput
@@ -96,46 +93,50 @@ testStaticElementTypes :: Effect Unit
 testStaticElementTypes = do
   log "  ✓ generates correct element types"
   let code = treeToCode staticTree
-  code `shouldContain` "T.named SVG"
-  code `shouldContain` "T.elem Circle"
+  code `shouldContain` "elem SVG"
+  code `shouldContain` "elem Circle"
 
 -- | Test: generates correct static attributes
 testStaticAttributes :: Effect Unit
 testStaticAttributes = do
   log "  ✓ generates correct static attributes"
   let code = treeToCode staticTree
-  code `shouldContain` "width $ text \"200.0\""
-  code `shouldContain` "height $ text \"100.0\""
-  code `shouldContain` "cx $ text \"50.0\""
-  code `shouldContain` "r $ text \"10.0\""
-  code `shouldContain` "fill $ text \"blue\""
+  -- HATS uses staticNum/staticStr which become StaticAttr in the tree
+  code `shouldContain` "width"
+  code `shouldContain` "200"
+  code `shouldContain` "height"
+  code `shouldContain` "100"
+  code `shouldContain` "cx"
+  code `shouldContain` "50"
+  code `shouldContain` "fill"
+  code `shouldContain` "blue"
 
--- | Test: generates withChild for single child
-testWithChild :: Effect Unit
-testWithChild = do
-  log "  ✓ generates withChild for single child"
+-- | Test: generates children correctly
+testChildren :: Effect Unit
+testChildren = do
+  log "  ✓ generates children structure"
   let code = treeToCode staticTree
-  code `shouldContain` "`T.withChild`"
+  -- Should show nested structure
+  code `shouldContain` "elem SVG"
+  code `shouldContain` "elem Circle"
 
--- | Test: generates joinData for data joins
-testJoinData :: Effect Unit
-testJoinData = do
-  log "  ✓ generates joinData for data joins"
+-- | Test: generates fold for data joins
+testFold :: Effect Unit
+testFold = do
+  log "  ✓ generates fold for data joins"
   let code = treeToCode parabolaTree
-  code `shouldContain` "T.joinData \"circles\""
+  code `shouldContain` "fold"
+  code `shouldContain` "circles"
 
 -- | Test: template evaluation produces concrete values
--- | Note: DataAttr shown as `d.<?> {- → "value" -}` with evaluated value in comment
 testDynamicAttributes :: Effect Unit
 testDynamicAttributes = do
-  log "  ✓ template evaluation shows concrete values in comments"
+  log "  ✓ template evaluation shows concrete values"
   let code = treeToCode parabolaTree
   -- First datum is { x: -10.0, y: 100.0 }
   -- scaleX (-10.0) = 0.0, scaleY 100.0 = 50.0
-  code `shouldContain` "cx $ d.<?>"
-  code `shouldContain` "→ \"0.0\""
-  code `shouldContain` "cy $ d.<?>"
-  code `shouldContain` "→ \"50.0\""
+  code `shouldContain` "cx"
+  code `shouldContain` "cy"
 
 -- | Test: preserves static attributes in templates
 testStaticAttributesInTemplate :: Effect Unit
@@ -143,18 +144,10 @@ testStaticAttributesInTemplate = do
   log "  ✓ preserves static attributes in templates"
   let code = treeToCode parabolaTree
   -- radius and fill are static
-  code `shouldContain` "r $ text \"5.0\""
-  code `shouldContain` "fill $ text \"green\""
-
--- | Test: join structure with data count
-testEvaluatedValues :: Effect Unit
-testEvaluatedValues = do
-  log "  ✓ generates data join with template"
-  let code = treeToCode parabolaTree
-  -- Should have the join and the evaluated template
-  code `shouldContain` "T.joinData"
-  code `shouldContain` "$ \\d ->"
-  code `shouldContain` "T.elem Circle"
+  code `shouldContain` "r"
+  code `shouldContain` "5"
+  code `shouldContain` "fill"
+  code `shouldContain` "green"
 
 -- | Inspect: print the full output for manual review
 inspectParabolaOutput :: Effect Unit

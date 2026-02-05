@@ -2,7 +2,7 @@
 :description: Create your first Hylograph visualization in 10 minutes
 :keywords: tutorial, getting started, PureScript, D3, visualization
 
-In this tutorial, you'll create a simple visualization using Hylograph. By the end, you'll understand the core pattern: build a *tree AST* that describes your visualization, then interpret it to render.
+In this tutorial, you'll create a simple visualization using Hylograph. By the end, you'll understand the core pattern: build a *HATS tree* that describes your visualization, then interpret it to render.
 
 == Prerequisites
 
@@ -38,19 +38,16 @@ You build a *tree* that describes what you want:
 [source,purescript]
 ----
 -- Hylograph (declarative)
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.elem SVG
-    [ width (num 400.0)
-    , height (num 300.0)
-    ]
-    `A.withChild`
-      A.elem Circle
-        [ cx (num 200.0)
-        , cy (num 150.0)
-        , r (num 50.0)
-        , fill (text "steelblue")
+  HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ HF.circle
+        [ cx $ num 200.0
+        , cy $ num 150.0
+        , r $ num 50.0
+        , fill $ text "steelblue"
         ]
+    ]
 ----
 
 Then you render that tree to the DOM. The tree is *data* - you can inspect it, transform it, test it.
@@ -66,68 +63,59 @@ module Main where
 import Prelude
 
 import Effect (Effect)
-import Effect.Console (log)
 
-import Hylograph.AST as A
-import Hylograph.AST (ElementType(..))
+import Hylograph.HATS as H
+import Hylograph.HATS.Friendly as HF
 import Hylograph.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
-import Hylograph.Render (runD3, select, renderTree)
+import Hylograph.HATS.InterpreterTick (rerender)
 ----
 
 The key imports are:
 
-- `Hylograph.AST` - Tree building functions (`elem`, `withChild`, etc.)
-- `Hylograph.AST (ElementType(..))` - Element types (`SVG`, `Circle`, `Rect`, etc.)
+- `Hylograph.HATS` - Core HATS types (`Tree`, `Attr`, etc.)
+- `Hylograph.HATS.Friendly` - Element helpers (`svg`, `circle`, `rect`, `group`, etc.)
 - `Hylograph.Expr.Friendly` - Attribute helpers (`num`, `text`, `width`, `cx`, etc.)
-- `Hylograph.Render` - Rendering functions (`runD3`, `select`, `renderTree`)
+- `Hylograph.HATS.InterpreterTick` - Rendering function (`rerender`)
 
 == Step 2: Build the Tree
 
 [source,purescript]
 ----
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.elem SVG
-    [ width (num 400.0)
-    , height (num 300.0)
-    ]
-    `A.withChild`
-      A.elem Circle
-        [ cx (num 200.0)
-        , cy (num 150.0)
-        , r (num 50.0)
-        , fill (text "steelblue")
+  HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ HF.circle
+        [ cx $ num 200.0
+        , cy $ num 150.0
+        , r $ num 50.0
+        , fill $ text "steelblue"
         ]
+    ]
 ----
 
 Let's break this down:
 
-`A.AST Unit`:: The tree type. `Unit` means we're not binding any data yet.
+`H.Tree`:: The tree type. HATS trees are unparameterized - data binding is handled separately.
 
-`A.elem SVG [...]`:: Create an SVG element with attributes.
+`HF.svg [...]`:: Create an SVG element with attributes and children.
 
-`width (num 400.0)`:: Set width to 400. `num` wraps a number in the expression system.
+`width $ num 400.0`:: Set width to 400. `num` wraps a number in the expression system.
 
-`\`A.withChild\``:: Add a child element. The backticks make it infix.
+`HF.circle [...]`:: Create a circle element with attributes.
 
-`fill (text "steelblue")`:: String attributes use `text` instead of `num`.
+`fill $ text "steelblue"`:: String attributes use `text` instead of `num`.
 
 == Step 3: Render to the DOM
 
 [source,purescript]
 ----
 main :: Effect Unit
-main = void $ runD3 do
-  container <- select "body"
-  renderTree container myViz
-  pure unit
+main = void $ rerender "#app" myViz
 ----
 
-`runD3`:: Runs a D3 computation in the Effect monad.
+`rerender`:: Renders the HATS tree into the selected container. Takes a CSS selector and a tree.
 
-`select "body"`:: Select the body element as our container.
-
-`renderTree container myViz`:: Render the AST into the container.
+That's it! One line to render.
 
 == Complete Example
 
@@ -139,97 +127,82 @@ import Prelude
 
 import Effect (Effect)
 
-import Hylograph.AST as A
-import Hylograph.AST (ElementType(..))
+import Hylograph.HATS as H
+import Hylograph.HATS.Friendly as HF
 import Hylograph.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
-import Hylograph.Render (runD3, select, renderTree)
+import Hylograph.HATS.InterpreterTick (rerender)
 
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.elem SVG
-    [ width (num 400.0)
-    , height (num 300.0)
-    ]
-    `A.withChild`
-      A.elem Circle
-        [ cx (num 200.0)
-        , cy (num 150.0)
-        , r (num 50.0)
-        , fill (text "steelblue")
+  HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ HF.circle
+        [ cx $ num 200.0
+        , cy $ num 150.0
+        , r $ num 50.0
+        , fill $ text "steelblue"
         ]
+    ]
 
 main :: Effect Unit
-main = void $ runD3 do
-  container <- select "body"
-  renderTree container myViz
-  pure unit
+main = void $ rerender "#app" myViz
 ----
 
 == Adding More Elements
 
-Use `withChildren` to add multiple children:
+HATS trees naturally support multiple children:
 
 [source,purescript]
 ----
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.elem SVG
-    [ width (num 400.0)
-    , height (num 300.0)
+  HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ HF.circle
+        [ cx $ num 100.0, cy $ num 150.0, r $ num 40.0
+        , fill $ text "steelblue"
+        ]
+    , HF.circle
+        [ cx $ num 200.0, cy $ num 150.0, r $ num 40.0
+        , fill $ text "coral"
+        ]
+    , HF.circle
+        [ cx $ num 300.0, cy $ num 150.0, r $ num 40.0
+        , fill $ text "seagreen"
+        ]
     ]
-    `A.withChildren`
-      [ A.elem Circle
-          [ cx (num 100.0), cy (num 150.0), r (num 40.0)
-          , fill (text "steelblue")
-          ]
-      , A.elem Circle
-          [ cx (num 200.0), cy (num 150.0), r (num 40.0)
-          , fill (text "coral")
-          ]
-      , A.elem Circle
-          [ cx (num 300.0), cy (num 150.0), r (num 40.0)
-          , fill (text "seagreen")
-          ]
-      ]
 ----
 
 == Nesting Elements
 
-Trees can be nested arbitrarily deep:
+Trees can be nested arbitrarily deep using groups:
 
 [source,purescript]
 ----
-import Hylograph.AST (ElementType(..))  -- includes Group
 import Hylograph.Expr.Friendly (transform)
 
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.elem SVG
-    [ width (num 400.0), height (num 300.0) ]
-    `A.withChild`
-      A.elem Group
-        [ transform (text "translate(200, 150)") ]
-        `A.withChildren`
-          [ A.elem Circle [ r (num 50.0), fill (text "steelblue") ]
-          , A.elem Circle [ r (num 30.0), fill (text "white") ]
-          ]
+  HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ HF.group [ transform $ text "translate(200, 150)" ]
+        [ HF.circle [ r $ num 50.0, fill $ text "steelblue" ]
+        , HF.circle [ r $ num 30.0, fill $ text "white" ]
+        ]
+    ]
 ----
 
 == Named Elements
 
-Use `A.named` instead of `A.elem` when you need to reference an element later:
+Use `H.named` to create retrievable selections:
 
 [source,purescript]
 ----
-myViz :: A.AST Unit
+myViz :: H.Tree
 myViz =
-  A.named SVG "chart"
-    [ width (num 400.0), height (num 300.0) ]
-    `A.withChild`
-      A.named Circle "mainCircle"
-        [ cx (num 200.0), cy (num 150.0), r (num 50.0)
-        , fill (text "steelblue")
+  H.named "chart" $ HF.svg [ width $ num 400.0, height $ num 300.0 ]
+    [ H.named "mainCircle" $ HF.circle
+        [ cx $ num 200.0, cy $ num 150.0, r $ num 50.0
+        , fill $ text "steelblue"
         ]
+    ]
 ----
 
 Named selections can be retrieved after rendering for updates or attaching behaviors.
@@ -237,13 +210,13 @@ Named selections can be retrieved after rendering for updates or attaching behav
 == What You've Learned
 
 1. **Build trees, not commands** - Hylograph visualizations are data structures
-2. **`A.elem`** creates anonymous elements, **`A.named`** creates retrievable ones
-3. **`withChild`** and **`withChildren`** nest elements
+2. **`HF.svg`, `HF.circle`** etc. create elements with children
+3. **`H.named`** wraps an element to make it retrievable
 4. **`num`** and **`text`** wrap values for the attribute system
-5. **`runD3`** executes the rendering
+5. **`rerender`** executes the rendering in one call
 
 == Next Steps
 
-- xref:getting-started/bar-chart.adoc[Building a Bar Chart] - Data binding with `joinData`
+- xref:getting-started/bar-chart.adoc[Building a Bar Chart] - Data binding with enumerations
 - xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] - Interactive behaviors
-- xref:understanding/the-ast.adoc[The Selection AST] - Deep dive into the tree structure
+- xref:understanding/the-hats.adoc[The HATS System] - Deep dive into the tree structure

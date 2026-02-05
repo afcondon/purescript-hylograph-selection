@@ -9,14 +9,20 @@ This page provides an overview of the module structure. For complete API documen
 `Hylograph`::
 Re-exports the essential API. Start here for most use cases.
 
-`Hylograph.AST`::
-Tree building: `elem`, `named`, `withChild`, `joinData`, etc.
+`Hylograph.HATS`::
+Declarative tree DSL: `elem`, `named`, `children`, `withEnumeration`, etc.
+
+`Hylograph.HATS.Friendly`::
+User-friendly tree building: `node`, `group`, `svg`, `circle`, etc.
 
 `Hylograph.Expr.Friendly`::
 Attribute DSL: `num`, `text`, `width`, `cx`, `fill`, etc.
 
 `Hylograph.Render`::
-DOM rendering: `runD3`, `select`, `renderTree`.
+DOM rendering: `runD3`, `select`, `renderData`.
+
+`Hylograph.HATS.InterpreterTick`::
+Declarative tree rendering: `rerender`, `rerenderInto`.
 
 == Interpreters
 
@@ -29,8 +35,8 @@ Human-readable descriptions.
 `Hylograph.Interpreter.Mermaid`::
 AST structure diagrams.
 
-`Hylograph.Interpreter.MetaAST`::
-Untyped AST conversion.
+`Hylograph.Interpreter.MetaHATS`::
+Meta-visualization of HATS trees.
 
 == Internal Modules
 
@@ -78,10 +84,10 @@ D3 scale wrappers: `linear`, `ordinal`, `band`, color schemes.
 
 [source,purescript]
 ----
-import Hylograph.AST as A
-import Hylograph.AST (ElementType(..))
+import Hylograph.HATS as H
+import Hylograph.HATS.Friendly as HF
 import Hylograph.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
-import Hylograph.Render (runD3, select, renderTree)
+import Hylograph.HATS.InterpreterTick (rerender)
 ----
 
 === With Behaviors

@@ -2,7 +2,6 @@ module Hylograph.Interpreter.D3
   ( D3v2Selection_
   , D3v2M
   , runD3v2M
-  , reselectD3v2
   , queryAllD3v2
   , getElementsD3v2
   , selectChildInheritingD3v2
@@ -143,10 +142,6 @@ instance SelectionM D3v2Selection_ D3v2M where
   on behavior (D3v2Selection_ selection) = D3v2M do
     result <- Ops.on behavior selection
     pure $ D3v2Selection_ result
-
-  renderTree (D3v2Selection_ parent) tree = D3v2M do
-    selectionsMap <- Ops.renderTree parent tree
-    pure $ map D3v2Selection_ selectionsMap
 
 -- | TransitionM instance for D3v2 interpreter
 -- |
@@ -321,22 +316,6 @@ attributeValueToString :: AttributeValue -> String
 attributeValueToString (StringValue s) = s
 attributeValueToString (NumberValue n) = show n
 attributeValueToString (BooleanValue b) = show b
-
--- | Helper function for reselecting from D3v2 renderTree results
--- |
--- | This wraps the `reselect` function from Operations to work with D3v2Selection_ newtype.
-reselectD3v2
-  :: forall datum datumOut
-   . String
-  -> Map.Map String (D3v2Selection_ SBoundOwns Element datum)
-  -> Effect (D3v2Selection_ SEmpty Element datumOut)
-reselectD3v2 name selectionsMap = do
-  -- Unwrap D3v2Selection_ to Selection
-  let unwrappedMap = map (\(D3v2Selection_ sel) -> sel) selectionsMap
-  -- Call reselect
-  result <- Ops.reselect name unwrappedMap
-  -- Wrap result back in D3v2Selection_
-  pure $ D3v2Selection_ result
 
 -- | Query using CSS selector across all named selections
 -- |

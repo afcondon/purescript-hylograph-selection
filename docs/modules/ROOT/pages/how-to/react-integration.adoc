@@ -25,11 +25,8 @@ mkMyVisualization = do
   component "MyVisualization" \props -> React.do
     -- 2. Render visualization when component mounts
     useEffectOnce do
-      void $ runD3 do
-        let selector = "#" <> containerId
-        clear selector
-        container <- select selector
-        renderTree container (myVisualizationAST props.data)
+      let selector = "#" <> containerId
+      void $ rerender selector (myVisualizationTree props.data)
       pure mempty
 
     -- 3. Return container div with our unique ID
@@ -61,7 +58,7 @@ useContainerId = generateContainerIdImpl
 ----
 let counter = 0;
 
-export const generateContainerIdImpl = () => `psd3-container-${counter++}`;
+export const generateContainerIdImpl = () => `hylograph-container-${counter++}`;
 ----
 
 == Complete Bar Chart Example
@@ -74,13 +71,14 @@ module Hylograph.React.Example where
 
 import Prelude
 
+import Data.Array as Array
 import Data.Int (toNumber)
 import Effect (Effect)
-import Hylograph.AST as A
-import Hylograph.AST (ElementType(..))
-import Hylograph.Expr.Friendly (num, text, computed, computedStr, fromWithIndex, fromStrWithIndex)
+import Hylograph.HATS as H
+import Hylograph.HATS.Friendly as HF
+import Hylograph.Expr.Friendly (num, text, width, height, x, y, fill)
+import Hylograph.HATS.InterpreterTick (rerender)
 import Hylograph.React.Hooks (useContainerId)
-import Hylograph.Render (runD3, select, renderTree, clear)
 import React.Basic.DOM as R
 import React.Basic.Hooks (Component, component, useEffectOnce)
 import React.Basic.Hooks as React
@@ -92,11 +90,8 @@ mkBarChart = do
 
   component "BarChart" \props -> React.do
     useEffectOnce do
-      void $ runD3 do
-        let selector = "#" <> containerId
-        clear selector
-        container <- select selector
-        renderTree container (barChartAST props.chartData)
+      let selector = "#" <> containerId
+      void $ rerender selector (barChartTree props.chartData)
       pure mempty
 
     pure $ R.div
@@ -104,31 +99,24 @@ mkBarChart = do
       , style: R.css { width: "500px", height: "300px" }
       }
 
--- | The visualization AST - identical to what you'd write for Halogen
-barChartAST :: Array Number -> A.AST Number
-barChartAST dataset =
-  A.elem SVG
-    [ computed "width" (num 500.0)
-    , computed "height" (num 300.0)
-    , computedStr "style" (text "background: #f5f5f5")
-    ]
-    `A.withChild`
-      A.joinData "bars" "rect" dataset \_ ->
-        A.elem Rect
-          -- x position depends on index (bar number)
-          [ fromWithIndex "x" (\_ i -> toNumber i * 60.0 + 20.0)
-          -- y position depends on value (grows upward)
-          , fromWithIndex "y" (\val _ -> 280.0 - val * 2.5)
-          -- fixed width
-          , computed "width" (num 50.0)
-          -- height depends on value
-          , fromWithIndex "height" (\val _ -> val * 2.5)
-          -- color depends on value threshold
-          , fromStrWithIndex "fill" (\val _ ->
-              if val > 75.0 then "steelblue"
-              else if val > 50.0 then "cornflowerblue"
-              else "lightsteelblue")
-          ]
+-- | The visualization tree - identical to what you'd write for Halogen
+barChartTree :: Array Number -> H.Tree
+barChartTree dataset =
+  HF.svg [ width $ num 500.0, height $ num 300.0, style $ text "background: #f5f5f5" ]
+    (dataset # Array.mapWithIndex \i val ->
+      HF.rect
+        [ x $ num (toNumber i * 60.0 + 20.0)
+        , y $ num (280.0 - val * 2.5)
+        , width $ num 50.0
+        , height $ num (val * 2.5)
+        , fill $ text (barColor val)
+        ])
+
+barColor :: Number -> String
+barColor val
+  | val > 75.0 = "steelblue"
+  | val > 50.0 = "cornflowerblue"
+  | otherwise = "lightsteelblue"
 ----
 
 == Using DOM Elements Directly
@@ -137,7 +125,8 @@ If you prefer using React refs instead of CSS selectors, Hylograph provides `sel
 
 [source,purescript]
 ----
-import Hylograph.Render (runD3, selectElement, renderTree)
+import Hylograph.Render (runD3, selectElement)
+import Hylograph.Render (renderData)
 import React.Basic.Hooks (useRef)
 import Web.HTML.HTMLElement (toElement)
 import Data.Nullable (toMaybe)
@@ -150,9 +139,7 @@ mkChartWithRef = do
     useEffectOnce do
       for_ (toMaybe =<< toMaybe containerRef.current) \htmlEl -> do
         let element = toElement htmlEl
-        void $ runD3 do
-          container <- selectElement element
-          renderTree container (myChartAST props.data)
+        void $ rerenderInto element (myChartTree props.data)
       pure mempty
 
     pure $ R.div { ref: containerRef }
@@ -171,11 +158,8 @@ mkDynamicChart = do
   component "DynamicChart" \props -> React.do
     -- Re-render when chartData changes
     useEffect props.chartData do
-      void $ runD3 do
-        let selector = "#" <> containerId
-        clear selector
-        container <- select selector
-        renderTree container (barChartAST props.chartData)
+      let selector = "#" <> containerId
+      void $ rerender selector (barChartTree props.chartData)
       pure mempty
 
     pure $ R.div { id: containerId }
@@ -205,15 +189,13 @@ workspace:
       path: ../purescript-hylograph-selection
     hylograph-graph:
       path: ../purescript-hylograph-graph
-    hylograph-graph:
-      path: ../purescript-hylograph-graph
 ----
 
 == Why Framework-Agnostic Matters
 
-The visualization code (`barChartAST`) is completely decoupled from React. This means:
+The visualization code (`barChartTree`) is completely decoupled from React. This means:
 
-* **Reusable**: The same AST works in Halogen, React, or vanilla JS
+* **Reusable**: The same tree works in Halogen, React, or vanilla JS
 * **Testable**: Test visualization logic without a framework
 * **Portable**: Switch frameworks without rewriting visualizations
 

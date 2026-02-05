@@ -41,29 +41,24 @@ module Main where
 
 import Prelude
 import Effect (Effect)
-import Hylograph.AST as A
-import Hylograph.AST (ElementType(..))
+import Hylograph.HATS as H
+import Hylograph.HATS.Friendly as HF
 import Hylograph.Expr.Friendly (num, text, width, height, cx, cy, r, fill)
-import Hylograph.Render (runD3, select, renderTree)
+import Hylograph.HATS.InterpreterTick (rerender)
 
 main :: Effect Unit
-main = void $ runD3 do
-  container <- select "#chart"
-  renderTree container myVisualization
+main = void $ rerender "#chart" myVisualization
 
-myVisualization :: A.AST Unit
+myVisualization :: H.Tree
 myVisualization =
-  A.elem SVG
-    [ width (num 800.0)
-    , height (num 600.0)
-    ]
-    `A.withChild`
-      A.elem Circle
-        [ cx (num 400.0)
-        , cy (num 300.0)
-        , r (num 100.0)
-        , fill (text "steelblue")
+  HF.svg [ width $ num 800.0, height $ num 600.0 ]
+    [ HF.circle
+        [ cx $ num 400.0
+        , cy $ num 300.0
+        , r $ num 100.0
+        , fill $ text "steelblue"
         ]
+    ]
 ----
 
 === 3. Bundle and Run
@@ -80,30 +75,24 @@ spago bundle --module Main --outfile my-viz.js
 open index.html
 ----
 
-== Adding Interactivity
+== Adding Interactivity with Behaviors
 
-For simple interactivity, use behaviors directly:
+For simple interactivity, use HATS behaviors:
 
 [source,purescript]
 ----
-import Hylograph.Internal.Behavior.Types (onClick, onHover)
-import Effect.Console (log)
+import Hylograph.HATS (withBehavior)
+import Hylograph.Internal.Behavior.Types (Behavior(..))
 
-myVisualization :: A.AST Unit
+myVisualization :: H.Tree
 myVisualization =
-  A.elem SVG [ width (num 800.0), height (num 600.0) ]
-    `A.withChild`
-      A.elem Circle
-        [ cx (num 400.0), cy (num 300.0), r (num 100.0)
-        , fill (text "steelblue")
+  HF.svg [ width $ num 800.0, height $ num 600.0 ]
+    [ HF.circle
+        [ cx $ num 400.0, cy $ num 300.0, r $ num 100.0
+        , fill $ text "steelblue"
         ]
-        `A.withBehaviors`
-          [ onClick \_ -> log "Circle clicked!"
-          , onHover
-              { enter: [{ attr: "fill", value: "coral" }]
-              , leave: [{ attr: "fill", value: "steelblue" }]
-              }
-          ]
+      # H.withBehavior (Highlight { cssSelector: "circle", highlightClass: HighlightedPrimary })
+    ]
 ----
 
 == Managing State with Effect.Ref
@@ -119,25 +108,17 @@ main = do
   -- Mutable state
   countRef <- Ref.new 0
 
-  void $ runD3 do
-    container <- select "#chart"
+  let renderViz count =
+        HF.svg [ width $ num 800.0, height $ num 600.0 ]
+          [ HF.text
+              [ x $ num 400.0, y $ num 300.0
+              , textContent $ text $ "Count: " <> show count
+              ]
+          ]
 
-    let viz count =
-          A.elem SVG [ width (num 800.0), height (num 600.0) ]
-            `A.withChild`
-              A.elem Text
-                [ x (num 400.0), y (num 300.0)
-                , textContent (text $ "Count: " <> show count)
-                ]
-                `A.withBehaviors`
-                  [ onClick \_ -> do
-                      newCount <- Ref.modify (_ + 1) countRef
-                      -- Re-render with new count
-                      reRender container (viz newCount)
-                  ]
-
-    count <- liftEffect $ Ref.read countRef
-    renderTree container (viz count)
+  -- Initial render
+  count <- Ref.read countRef
+  void $ rerender "#chart" (renderViz count)
 ----
 
 == Loading External Data
@@ -154,12 +135,7 @@ main = launchAff_ do
     Left err -> log $ "Failed to load data: " <> printError err
     Right response -> do
       let points = decodePoints response.body
-      liftEffect $ renderVisualization points
-
-renderVisualization :: Array Point -> Effect Unit
-renderVisualization points = void $ runD3 do
-  container <- select "#chart"
-  renderTree container (scatterplot points)
+      liftEffect $ void $ rerender "#chart" (scatterplot points)
 ----
 
 == When to Graduate to Halogen

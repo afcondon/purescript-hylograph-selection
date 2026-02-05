@@ -32,20 +32,16 @@ module Hylograph.Internal.Capabilities.Selection
   , clear
   , merge
   , on
-  , renderTree
-  , renderTreeWithSimulation
   , withDatumType
   ) where
 
 import Prelude
 
 import Data.Foldable (class Foldable)
-import Data.Map (Map)
 import Data.Maybe (Maybe)
 import Hylograph.Internal.Attribute (Attribute)
 import Hylograph.Internal.Behavior.Types (Behavior)
 import Hylograph.Internal.Selection.Types (ElementType, JoinResult, SBoundOwns, SBoundInherits, SEmpty, SExiting, SPending)
-import Hylograph.AST (Tree)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM.Element (Element)
 
@@ -382,69 +378,6 @@ class Monad m <= SelectionM sel m | m -> sel where
      . Behavior datum
     -> sel state elem datum
     -> m (sel state elem datum)
-
-  -- | Declarative tree rendering (high-level API)
-  -- |
-  -- | Renders an entire tree structure at once, returning a map of named selections.
-  -- | This is the declarative alternative to imperative appendChild chains.
-  -- |
-  -- | Example:
-  -- | ```purescript
-  -- | import Hylograph.AST as T
-  -- |
-  -- | tree =
-  -- |   T.named "svg" SVG [width 800] `T.withChildren`
-  -- |     [ T.named "zoom" Group [class_ "zoom"] `T.withChild`
-  -- |         T.named "nodes" Group [class_ "nodes"]
-  -- |     ]
-  -- |
-  -- | container <- select "#viz"
-  -- | selections <- renderTree container tree
-  -- |
-  -- | -- Access named selections
-  -- | case Map.lookup "svg" selections of
-  -- |   Just svg -> ...
-  -- |   Nothing -> ...
-  -- | ```
-  renderTree
-    :: forall parent parentDatum datum
-     . Ord datum
-    => sel SEmpty parent parentDatum
-    -> Tree datum
-    -> m (Map String (sel SBoundOwns Element datum))
-
--- | Render a tree and then run a callback with the named selections
--- |
--- | This is a convenience function for integrating TreeAPI with simulations.
--- | The callback receives the map of named selections, allowing setup of
--- | simulation-related elements like data joins, tick functions, and behaviors.
--- |
--- | This enables a declarative tree structure while still supporting the
--- | imperative setup required for D3 force simulations.
--- |
--- | Example:
--- | ```purescript
--- | renderTreeWithSimulation container myTree \selections -> do
--- |   case Map.lookup "nodes" selections of
--- |     Just nodesGroup -> do
--- |       -- Set up simulation with the nodes group
--- |       _ <- init { nodes: data, links: links, ... }
--- |       JoinResult { enter, update, exit } <- joinData nodes "g" nodesGroup
--- |       -- ... handle enter/update/exit
--- |     Nothing -> pure unit
--- | ```
-renderTreeWithSimulation
-  :: forall parent parentDatum datum m sel
-   . SelectionM sel m
-  => Ord datum
-  => sel SEmpty parent parentDatum
-  -> Tree datum
-  -> (Map String (sel SBoundOwns Element datum) -> m Unit)
-  -> m (Map String (sel SBoundOwns Element datum))
-renderTreeWithSimulation container tree callback = do
-  selections <- renderTree container tree
-  callback selections
-  pure selections
 
 -- | Cast the phantom datum type of an empty selection
 -- |

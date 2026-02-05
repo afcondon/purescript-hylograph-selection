@@ -23,12 +23,10 @@
 -- |
 -- | ## Module Organization
 -- |
--- | - `PSD3.Unified.DataDSL` - Core type class for data operations
--- | - `PSD3.Unified.Display` - Profunctor-based display formatting
--- | - `PSD3.Unified.Attribute` - Bridge to PSD3's attribute system
--- | - `PSD3.Unified.Join` - Composable join combinators
--- | - `PSD3.Unified.Sugar` - Syntactic sugar operators
--- | - `PSD3.Unified.Interpreters.Eval` - DataDSL instances for Eval/EvalD
+-- | - `Hylograph.Unified.DataDSL` - Core type class for data operations
+-- | - `Hylograph.Unified.Display` - Profunctor-based display formatting
+-- | - `Hylograph.Unified.Attribute` - Bridge to attribute system
+-- | - `Hylograph.Unified.Sugar` - Syntactic sugar operators
 module Hylograph.Unified
   ( -- * DataDSL
     module DataDSL
@@ -38,8 +36,6 @@ module Hylograph.Unified
   , module Display
     -- * Attributes
   , module Attribute
-    -- * Joins
-  , module Join
     -- * Sugar
   , module Sugar
   ) where
@@ -83,18 +79,6 @@ import Hylograph.Unified.Attribute
   , fillD, strokeD, opacityD, textContentD, transformD
   , toAttribute, fromDisplay
   ) as Attribute
-
-import Hylograph.Unified.Join
-  ( JoinSpec(..)
-  , JoinConfig
-  , join
-  , withDecompose, Decomposer
-  , withGUP, GUPSpec, PhaseSpec
-  , enterSpec, updateSpec, exitSpec, noTransition
-  , JoinBuilder, buildJoin
-  , basicJoin, nestedJoin, gupJoin, fullJoin
-  , toTree
-  ) as Join
 
 import Hylograph.Unified.Sugar
   ( (+.), addOp
