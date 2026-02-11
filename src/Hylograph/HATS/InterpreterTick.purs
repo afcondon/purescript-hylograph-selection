@@ -9,6 +9,7 @@ module Hylograph.HATS.InterpreterTick
   ( rerender
   , rerenderInto
   , clearContainer
+  , clearAllHighlights
   , RerenderResult
   , SelectionMap
   ) where
@@ -646,6 +647,15 @@ foreign import attachCoordinatedBrushThunked
   -> Effect Unit
 
 foreign import setCursorPointer :: Element -> Effect Unit
+
+-- | Clear all coordinated highlights and tooltips.
+-- | Call this when tearing down a visualization (e.g. scene transitions)
+-- | to ensure no stale tooltips or highlight classes persist.
+foreign import clearAllHatsHighlights :: Effect Unit
+
+-- | Public alias for clearAllHatsHighlights
+clearAllHighlights :: Effect Unit
+clearAllHighlights = clearAllHatsHighlights
 
 -- | Attach modifier-aware click handler using purescript-web-uievents
 -- | No FFI — uses Web.UIEvent.MouseEvent for modifier key detection

@@ -485,15 +485,31 @@ function clearHatsHighlightsInGroupWithTooltips(groupName) {
 }
 
 /**
- * Clear all HATS coordinated highlights (useful before re-rendering)
+ * Clear all HATS coordinated highlights and tooltips (useful before re-rendering
+ * or when transitioning between views/scenes)
+ *
+ * Clears:
+ * - All highlight CSS classes from registered elements
+ * - The highlight registry itself
+ * - All tooltip DOM elements from the tooltip container
+ * - The element-to-tooltip map
  */
 export const clearAllHatsHighlights = () => {
+  // Clear highlight classes
   hatsHighlightRegistry.forEach((group, key) => {
     group.forEach(entry => {
       ALL_HIGHLIGHT_CLASSES.forEach(cls => entry.element.classList.remove(cls));
     });
   });
   hatsHighlightRegistry.clear();
+
+  // Clear all tooltips
+  hatsElementTooltips.clear();
+  if (hatsTooltipContainer) {
+    while (hatsTooltipContainer.firstChild) {
+      hatsTooltipContainer.removeChild(hatsTooltipContainer.firstChild);
+    }
+  }
 };
 
 // =============================================================================
