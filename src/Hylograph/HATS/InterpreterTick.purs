@@ -37,7 +37,11 @@ import Hylograph.Interaction.Coordinated (InteractionState(..)) as IS
 import Hylograph.Internal.Selection.Types (ElementType(..))
 import Hylograph.Internal.Selection.Operations (createElementWithNS)
 import Web.DOM.Element (Element)
-import Web.DOM.Element (toNode) as Element
+import Web.DOM.Element (toNode, toEventTarget) as Element
+import Web.Event.Event (stopPropagation)
+import Web.Event.Event (EventType(..)) as Event
+import Web.Event.EventTarget (addEventListener, eventListener)
+import Web.UIEvent.MouseEvent as MouseEvent
 import Web.DOM.Node (appendChild) as Node
 import Web.DOM.Document (Document)
 import Web.HTML (window)
@@ -367,6 +371,8 @@ rerenderTree doc parent tree = do
     ThunkedMouseEnter handler -> attachMouseEnterThunked el handler
     ThunkedMouseLeave handler -> attachMouseLeaveThunked el handler
     ThunkedClick handler -> attachClickThunked el handler
+    ThunkedClickWithModifier plainHandler modifierHandler ->
+      attachClickWithModifierPurs el plainHandler modifierHandler
     ThunkedDrag SimpleDrag -> attachSimpleDrag el
     ThunkedDrag (SimulationDrag simId) -> attachSimulationDragById el simId
     ThunkedDrag (SimulationDragNested simId) -> attachSimulationDragNestedById el simId
@@ -638,6 +644,31 @@ foreign import attachCoordinatedBrushThunked
   -> BoundingBox                                        -- extent
   -> Nullable String                                    -- groupName
   -> Effect Unit
+
+foreign import setCursorPointer :: Element -> Effect Unit
+
+-- | Attach modifier-aware click handler using purescript-web-uievents
+-- | No FFI — uses Web.UIEvent.MouseEvent for modifier key detection
+attachClickWithModifierPurs
+  :: Element
+  -> (Unit -> Effect Unit)
+  -> (Unit -> Effect Unit)
+  -> Effect Unit
+attachClickWithModifierPurs el plainHandler modifierHandler = do
+  listener <- eventListener \event -> do
+    stopPropagation event
+    case MouseEvent.fromEvent event of
+      Just mouseEvt ->
+        let hasModifier = MouseEvent.metaKey mouseEvt
+              || MouseEvent.ctrlKey mouseEvt
+              || MouseEvent.shiftKey mouseEvt
+        in if hasModifier
+           then modifierHandler unit
+           else plainHandler unit
+      Nothing ->
+        plainHandler unit  -- Fallback: treat as plain click
+  addEventListener (Event.EventType "click") listener false (Element.toEventTarget el)
+  setCursorPointer el
 
 -- | Convert HighlightClass to Int for FFI
 -- | Must match the constants in InterpreterTick.js

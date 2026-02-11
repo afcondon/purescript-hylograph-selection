@@ -53,6 +53,7 @@ module Hylograph.HATS
   , onMouseEnter
   , onMouseLeave
   , onClick
+  , onClickWithModifier
   , onDrag
   , onZoom
   -- Coordinated highlighting
@@ -185,6 +186,8 @@ data ThunkedBehavior
   = ThunkedMouseEnter (Unit -> Effect Unit)
   | ThunkedMouseLeave (Unit -> Effect Unit)
   | ThunkedClick (Unit -> Effect Unit)
+  | ThunkedClickWithModifier (Unit -> Effect Unit) (Unit -> Effect Unit)
+    -- ^ plain handler, modifier handler (metaKey/ctrlKey/shiftKey)
   | ThunkedDrag DragConfig
   | ThunkedZoom ZoomConfig
   | ThunkedCoordinatedHighlight
@@ -543,6 +546,23 @@ onMouseLeave handler = ThunkedMouseLeave (\_ -> handler)
 -- | Click handler
 onClick :: Effect Unit -> ThunkedBehavior
 onClick handler = ThunkedClick (\_ -> handler)
+
+-- | Click handler with modifier key detection
+-- |
+-- | Plain clicks (no modifier) invoke the first handler.
+-- | Modifier clicks (Cmd/Ctrl/Shift) invoke the second handler.
+-- |
+-- | ```purescript
+-- | \node -> withBehaviors
+-- |   [ onClickWithModifier
+-- |       (callbacks.onDrill node.id)      -- plain click
+-- |       (callbacks.onFilter node.id)     -- modifier+click
+-- |   ] $
+-- |   elem Circle [...] []
+-- | ```
+onClickWithModifier :: Effect Unit -> Effect Unit -> ThunkedBehavior
+onClickWithModifier plainHandler modifierHandler =
+  ThunkedClickWithModifier (\_ -> plainHandler) (\_ -> modifierHandler)
 
 -- | Drag behavior
 onDrag :: DragConfig -> ThunkedBehavior
