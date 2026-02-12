@@ -4,11 +4,11 @@
 
 | Section | Complete | Placeholder | Total |
 |---------|----------|-------------|-------|
-| Getting Started | 1 | 3 | 4 |
+| Getting Started | 2 | 3 | 5 |
 | How-To | 8 | 2 | 10 |
 | Understanding | 8 | 0 | 8 |
 | Reference | 1 | 0 | 1 |
-| **Total** | **18** | **5** | **23** |
+| **Total** | **19** | **5** | **24** |
 
 ---
 
@@ -16,6 +16,7 @@
 
 | Page | Status | Notes |
 |------|--------|-------|
+| Quickstart | ✅ Complete | TL;DR of full Hylograph API surface - distilled from skill doc |
 | Your First Selection | ✅ Complete | Full tutorial with working code |
 | Building a Bar Chart | 📝 Placeholder | Needs: data binding, scales, axes |
 | From D3.js to PSD3 | 📝 Placeholder | Needs: migration guide, pattern mapping |

@@ -35,8 +35,9 @@ myViz =
 
 New to Hylograph? Start here:
 
-* xref:getting-started/your-first-selection.adoc[Your First Selection] - Create your first visualization in 10 minutes
-* xref:getting-started/bar-chart.adoc[Building a Bar Chart] - A complete example from data to interactive chart
+* xref:getting-started/quickstart.adoc[Quickstart] - Everything you need in one page
+* xref:getting-started/your-first-selection.adoc[Your First Selection] - Step-by-step first visualization
+* xref:getting-started/bar-chart.adoc[Building a Bar Chart] - Data binding with scales
 * xref:getting-started/from-d3.adoc[From D3.js to Hylograph] - For users with D3 background
 
 == Installation

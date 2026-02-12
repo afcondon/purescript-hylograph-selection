@@ -1,4 +1,5 @@
 .Getting Started
+* xref:getting-started/quickstart.adoc[Quickstart]
 * xref:getting-started/your-first-selection.adoc[Your First Selection]
 * xref:getting-started/bar-chart.adoc[Building a Bar Chart]
 * xref:getting-started/from-d3.adoc[From D3.js to Hylograph]

@@ -1,0 +1,367 @@
+= Hylograph Quickstart
+:description: Everything you need to start building visualizations with Hylograph
+:keywords: quickstart, getting started, overview, HATS, visualization
+
+This page distills the essentials of Hylograph into a single read. After this, you'll know enough to build data-driven, interactive visualizations.
+
+== What Hylograph Is
+
+Hylograph is a declarative visualization ecosystem for PureScript. You describe _what_ you want as a composable tree value (a **HATS tree**), then an interpreter renders it. D3's algorithms (scales, layouts, force simulation) are available, but you never touch the DOM directly.
+
+[horizontal]
+HATS:: Hylomorphic Abstract Tree Syntax -- an unparameterized `Tree` ADT with a `Semigroup` instance, so trees compose freely via `<>`.
+Finally-tagless:: Attributes use type classes, so the same spec can render as SVG, plain English, or Mermaid diagrams.
+Phantom-typed selections:: The D3 interpreter tracks binding state at the type level -- invalid operations are compile errors.
+
+== Packages at a Glance
+
+[cols="1,2,1"]
+|===
+| Package | Purpose | When
+
+| `hylograph-selection`
+| Core: HATS trees, attributes, scales, interactions, D3 interpreter
+| *Always*
+
+| `hylograph-layout`
+| Pure layout algorithms (tree, treemap, pack, sankey, chord, partition, edge bundling)
+| Hierarchical or flow data
+
+| `hylograph-graph`
+| Graph structures, pathfinding (A*, Dijkstra, BFS/DFS), DAG ops
+| Network analysis
+
+| `hylograph-simulation`
+| Force-directed simulation (D3 or WASM engine)
+| Physics-based positioning
+
+| `hylograph-transitions`
+| Easing, interpolation, tick-based animation
+| Animated transitions
+|===
+
+Install what you need:
+
+[source,bash]
+----
+spago install hylograph-selection            # minimum
+spago install hylograph-layout               # + layouts
+spago install hylograph-simulation hylograph-d3-kernel  # + force sim
+----
+
+== The Core Loop
+
+Every Hylograph app follows the same three steps:
+
+. **Build** a pure `Tree` value from your data
+. **Render** it into a DOM container with `rerender`
+. **Re-render** when data changes (HATS handles enter/update/exit internally)
+
+[source,purescript]
+----
+import Hylograph.HATS (Tree, elem)
+import Hylograph.HATS.Friendly (viewBox, fill, r, cx, cy)
+import Hylograph.HATS.InterpreterTick (rerender)
+import Hylograph.Internal.Selection.Types (ElementType(..))
+
+myViz :: Tree
+myViz =
+  elem SVG [ viewBox 0.0 0.0 400.0 300.0 ]
+    [ elem Circle
+        [ cx 200.0, cy 150.0, r 50.0
+        , fill "steelblue"
+        ]
+        []
+    ]
+
+main :: Effect Unit
+main = void $ rerender "#app" myViz
+----
+
+Trees are plain values. You can compose them:
+
+[source,purescript]
+----
+chart :: Tree
+chart = title <> axes <> plotArea <> legend  -- Semigroup
+----
+
+== Data Binding with `forEach`
+
+`forEach` iterates an array and stamps a template per datum. It takes:
+
+. a **name** (string key for the join)
+. an **element type** (the wrapper element)
+. the **data** (any `Array`)
+. a **key function** (datum -> unique String)
+. a **template** (datum -> Tree)
+
+[source,purescript]
+----
+import Hylograph.HATS (forEach, thunkedNum, thunkedStr)
+
+scatterPoints :: Array { id :: String, x :: Number, y :: Number, color :: String } -> Tree
+scatterPoints points =
+  forEach "dots" Circle points _.id \pt ->
+    elem Circle
+      [ thunkedNum "cx" pt.x       -- datum-derived: use thunked*
+      , thunkedNum "cy" pt.y
+      , r 5.0                       -- constant: use Friendly helper
+      , thunkedStr "fill" pt.color
+      ]
+      []
+----
+
+[TIP]
+====
+**Attribute style guide:**
+
+[horizontal]
+Constant values:: Use Friendly helpers -- `r 5.0`, `fill "steelblue"`, `viewBox 0.0 0.0 800.0 600.0`
+Datum-derived values:: Use `thunkedStr`/`thunkedNum` inside `forEach` -- they capture the value in a closure
+Everything else:: Fall back to `staticStr "cursor" "pointer"` for attribute names Friendly doesn't cover
+====
+
+=== Beyond flat arrays
+
+`forEach` handles flat arrays. Hylograph also supports:
+
+* `fromTree` -- for tree-shaped data (org charts, file trees)
+* `forEachP` with `MapKeys`, `MapValues`, `MapEntries` -- for projecting `Map` structures into different views
+* Any `Foldable` structure in principle -- the hylomorphic fold at the heart of Hylograph means data goes in, visualization comes out, regardless of shape
+
+== Scales
+
+Scales map data values to visual values. Configure them with `#` (reverse application):
+
+[source,purescript]
+----
+import Hylograph.Scale as Scale
+import Hylograph.Scale (applyScale, nice)
+
+xScale :: Scale.ContinuousScale
+xScale = Scale.linear
+  # Scale.domain [ 0.0, 100.0 ]
+  # Scale.range  [ 0.0, 800.0 ]
+  # nice
+
+-- Use inside forEach template:
+thunkedNum "cx" (applyScale xScale pt.value)
+----
+
+Common scale types:
+
+[cols="1,2"]
+|===
+| Scale | Use
+
+| `linear`, `log`, `pow`, `sqrt`
+| Continuous numeric -> numeric
+
+| `band`, `point`
+| Categorical -> position (bar charts)
+
+| `scaleTime`, `scaleUtc`
+| Dates -> position
+
+| `sequential interpolateViridis`
+| Numeric -> color
+
+| `ordinal`
+| Categorical -> anything
+|===
+
+Built-in color schemes: `schemeCategory10At`, `schemeTableau10At`, `interpolateViridis`, `interpolatePlasma`, etc.
+
+== Interaction
+
+All behavior constructors live in `Hylograph.HATS`. Attach them with `withBehaviors`:
+
+[source,purescript]
+----
+import Hylograph.HATS (withBehaviors, onMouseEnter, onMouseLeave, onClick)
+
+forEach "items" Circle items _.id \item ->
+  withBehaviors
+    [ onClick (callbacks.onSelect item.id)
+    , onMouseEnter (callbacks.onHover item.id)
+    , onMouseLeave callbacks.onUnhover
+    ] $
+  elem Circle [ ... ] []
+----
+
+Behaviors take `Effect Unit`. The datum is captured in the closure because you're inside `forEach`.
+
+=== Coordinated highlighting
+
+For linked views where hovering in one highlights across all:
+
+[source,purescript]
+----
+import Hylograph.HATS (onCoordinatedHighlight)
+import Hylograph.Internal.Behavior.Types (HighlightClass(..))
+
+forEach "nodes" Circle nodes _.id \node ->
+  withBehaviors
+    [ onCoordinatedHighlight
+        { identify: node.name
+        , classify: \hoveredId ->
+            if node.name == hoveredId then Primary
+            else if hoveredId `elem` node.connections then Related
+            else Dimmed
+        , group: Nothing  -- global, or Just "my-group" to scope
+        }
+    ] $
+  elem Circle [ ... ] []
+----
+
+Elements receive CSS classes (`.highlight-primary`, `.highlight-related`, `.highlight-dimmed`) -- style them with CSS.
+
+Also available: `onCoordinatedInteraction` (responds to hover + brush + clear), `onBrush`, `onZoom`, `onDrag`, `onClickWithModifier`.
+
+== Animation (GUP)
+
+For animated enter/update/exit when data changes, use `forEachWithGUP`:
+
+[source,purescript]
+----
+import Hylograph.HATS (forEachWithGUP)
+import Hylograph.HATS.Friendly (r, fillOpacity)
+import Data.Time.Duration (Milliseconds(..))
+
+forEachWithGUP "circles" Circle points _.id
+  (\pt -> elem Circle                          -- target state
+    [ thunkedNum "cx" pt.x, thunkedNum "cy" pt.y
+    , r 5.0, thunkedStr "fill" (colorFor pt)
+    ] [])
+  { enter: Just                                -- fade in from nothing
+      { attrs: [ r 0.0, fillOpacity "0" ]
+      , transition: Just { duration: Milliseconds 500.0, delay: Nothing, easing: CubicOut, staggerDelay: Just 20.0 }
+      }
+  , update: Just                               -- smooth move
+      { attrs: []
+      , transition: Just { duration: Milliseconds 300.0, delay: Nothing, easing: CubicInOut, staggerDelay: Nothing }
+      }
+  , exit: Just                                 -- fade out
+      { attrs: [ r 0.0, fillOpacity "0" ]
+      , transition: Just { duration: Milliseconds 300.0, delay: Nothing, easing: CubicIn, staggerDelay: Nothing }
+      }
+  }
+----
+
+== Layouts
+
+Layout algorithms are pure functions: data in, positioned data out. You then build a HATS tree from the result.
+
+[source,purescript]
+----
+-- Treemap
+import DataViz.Layout.Hierarchy.Treemap (treemap, squarify, defaultTreemapConfig)
+
+let cells = treemap config hierarchy  -- pure computation
+_ <- rerender selector (treemapTree cells)
+
+-- Sankey
+import DataViz.Layout.Sankey.Compute (computeLayout)
+
+let result = computeLayout flows 800.0 400.0  -- { nodes, links }
+_ <- rerender selector (sankeyTree result)
+
+-- Tree layout
+import DataViz.Layout.Hierarchy.Tree (tree, defaultTreeConfig)
+
+let laid = tree config rootNode  -- positioned nodes + links
+_ <- rerender selector (treeVizTree laid)
+----
+
+Also available: circle packing (`pack`), partition, chord diagrams, edge bundling.
+
+== Force Simulation
+
+For physics-based layouts:
+
+[source,purescript]
+----
+import Hylograph.Simulation (runSimulation, Engine(..), setup, manyBody, center, collide, link, withStrength, static)
+import Hylograph.Simulation.Emitter (SimulationEvent(..), subscribe)
+
+{ handle, events } <- runSimulation
+  { engine: D3                     -- or WASM for 3-4x speed
+  , setup: setup "physics"
+      [ manyBody "charge" # withStrength (static (-100.0))
+      , center "center"
+      , collide "collision"
+      , link "links"
+      ]
+  , nodes, links, container: "#viz", alphaMin: 0.001
+  }
+
+_ <- subscribe events \event -> case event of
+  Tick _ -> do
+    currentNodes <- handle.getNodes
+    _ <- rerender "#viz .nodes" (nodesTree currentNodes)
+    pure unit
+  _ -> pure unit
+----
+
+For Halogen integration, bridge events with `toHalogenEmitter` from `Hylograph.ForceEngine.Halogen`.
+
+== App Structure
+
+A typical Hylograph app:
+
+[source]
+----
+my-app/
++-- spago.yaml
++-- src/
+|   +-- Main.purs             -- Entry point (launchAff_ + runUI)
+|   +-- Types.purs            -- Pure domain types
+|   +-- Component/App.purs    -- Halogen component (owns state)
+|   +-- Data/Loader.purs      -- Data fetching (Aff)
+|   +-- Viz/MyViz.purs        -- Pure HATS tree builders
++-- public/
+    +-- index.html            -- Container div + bundle.js
+----
+
+Halogen owns state, Hylograph renders. Events flow back via callbacks:
+
+[source,purescript]
+----
+-- In handleAction Initialize:
+{ listener, emitter } <- liftEffect HS.create
+void $ H.subscribe emitter
+
+liftEffect $ renderViz
+  { onItemClick: \id -> HS.notify listener (ItemClicked id) }
+----
+
+== Decision Cheat Sheet
+
+[cols="1,1,1"]
+|===
+| Data shape | Visualization | Packages
+
+| Flat array | Scatter, bar, line | `selection` (+ scales)
+| Hierarchical | Treemap, tree, sunburst | `selection` + `layout`
+| Network | Force-directed graph | `selection` + `simulation`
+| Flow (source -> target + value) | Sankey, chord | `selection` + `layout`
+| Time series | Line chart, area | `selection` (time scales)
+|===
+
+== Troubleshooting
+
+[horizontal]
+Nothing renders:: Container div doesn't exist yet -- ensure `Initialize` runs after Halogen creates the container
+Wrong container:: Check `#id` matches `HP.id` in your Halogen HTML
+Stale viz after data change:: Call `rerender` again with the new tree
+`forEach` not updating:: Key function must return unique strings per datum
+Attributes ignore datum:: Use `thunkedStr`/`thunkedNum` (not `staticStr`) inside `forEach` templates
+
+== Next Steps
+
+* xref:getting-started/your-first-selection.adoc[Your First Selection] -- step-by-step first visualization
+* xref:getting-started/bar-chart.adoc[Building a Bar Chart] -- data binding with scales
+* xref:how-to/coordinated-highlighting.adoc[Coordinated Highlighting] -- linked interactive views
+* xref:understanding/the-ast.adoc[The HATS System] -- how the tree works under the hood
+* xref:understanding/finally-tagless.adoc[Finally Tagless Architecture] -- why multiple interpreters

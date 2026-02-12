@@ -52,7 +52,16 @@ Output: `build/site/`
 
 ```yaml
 skills:
+  purescript:
+    description: "PureScript language patterns, idioms, and pitfalls"
+    path: ".claude/skills/purescript.md"
   hylograph-spa:
     description: "Scaffold or guide building a Halogen + Hylograph SPA"
     path: ".claude/skills/hylograph-spa.md"
+  hylograph:
+    description: "Build Halogen + Hylograph visualizations (full API reference + cookbook)"
+    path: ".claude/skills/hylograph.md"
+  hylograph-gog:
+    description: "Apply Grammar of Graphics thinking to Hylograph visualization design"
+    path: ".claude/skills/hylograph-grammar-of-graphics.md"
 ```
