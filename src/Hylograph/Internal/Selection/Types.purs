@@ -207,6 +207,25 @@ data ElementType
   | Th
   | Tbody
   | Thead
+  -- Semantic HTML elements
+  | Code      -- <code> inline code
+  | Var       -- <var> variable (mathematical/programming)
+  | Dfn       -- <dfn> term being defined
+  | Dl        -- <dl> definition list
+  | Dt        -- <dt> definition term
+  | Dd        -- <dd> definition description
+  | Ol        -- <ol> ordered list
+  | Ul        -- <ul> unordered list
+  | Li        -- <li> list item
+  | Small     -- <small> side comment / fine print
+  | Em        -- <em> emphasis
+  | Strong    -- <strong> strong importance
+  | Anchor    -- <a> hyperlink
+  | P         -- <p> paragraph
+  | Pre       -- <pre> preformatted text
+  | Section   -- <section> thematic grouping
+  | Mark      -- <mark> highlighted text
+  | Abbr      -- <abbr> abbreviation (title attr for tooltip)
 
 derive instance Eq ElementType
 derive instance Ord ElementType
@@ -236,6 +255,24 @@ elementContext Td = HTMLContext
 elementContext Th = HTMLContext
 elementContext Tbody = HTMLContext
 elementContext Thead = HTMLContext
+elementContext Code = HTMLContext
+elementContext Var = HTMLContext
+elementContext Dfn = HTMLContext
+elementContext Dl = HTMLContext
+elementContext Dt = HTMLContext
+elementContext Dd = HTMLContext
+elementContext Ol = HTMLContext
+elementContext Ul = HTMLContext
+elementContext Li = HTMLContext
+elementContext Small = HTMLContext
+elementContext Em = HTMLContext
+elementContext Strong = HTMLContext
+elementContext Anchor = HTMLContext
+elementContext P = HTMLContext
+elementContext Pre = HTMLContext
+elementContext Section = HTMLContext
+elementContext Mark = HTMLContext
+elementContext Abbr = HTMLContext
 
 -- | Smart constructor for creating bound selections
 -- |

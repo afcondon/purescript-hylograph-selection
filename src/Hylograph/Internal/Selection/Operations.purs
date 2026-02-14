@@ -1176,6 +1176,24 @@ elementTypeToString Td = "td"
 elementTypeToString Th = "th"
 elementTypeToString Tbody = "tbody"
 elementTypeToString Thead = "thead"
+elementTypeToString Code = "code"
+elementTypeToString Var = "var"
+elementTypeToString Dfn = "dfn"
+elementTypeToString Dl = "dl"
+elementTypeToString Dt = "dt"
+elementTypeToString Dd = "dd"
+elementTypeToString Ol = "ol"
+elementTypeToString Ul = "ul"
+elementTypeToString Li = "li"
+elementTypeToString Small = "small"
+elementTypeToString Em = "em"
+elementTypeToString Strong = "strong"
+elementTypeToString Anchor = "a"
+elementTypeToString P = "p"
+elementTypeToString Pre = "pre"
+elementTypeToString Section = "section"
+elementTypeToString Mark = "mark"
+elementTypeToString Abbr = "abbr"
 
 -- | Convert string to ElementType (inverse of elementTypeToString)
 stringToElementType :: String -> ElementType
@@ -1199,6 +1217,24 @@ stringToElementType "td" = Td
 stringToElementType "th" = Th
 stringToElementType "tbody" = Tbody
 stringToElementType "thead" = Thead
+stringToElementType "code" = Code
+stringToElementType "var" = Var
+stringToElementType "dfn" = Dfn
+stringToElementType "dl" = Dl
+stringToElementType "dt" = Dt
+stringToElementType "dd" = Dd
+stringToElementType "ol" = Ol
+stringToElementType "ul" = Ul
+stringToElementType "li" = Li
+stringToElementType "small" = Small
+stringToElementType "em" = Em
+stringToElementType "strong" = Strong
+stringToElementType "a" = Anchor
+stringToElementType "p" = P
+stringToElementType "pre" = Pre
+stringToElementType "section" = Section
+stringToElementType "mark" = Mark
+stringToElementType "abbr" = Abbr
 stringToElementType _ = Group -- Default to Group for unknown types
 
 -- | FFI function to set textContent property
