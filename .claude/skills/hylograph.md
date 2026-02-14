@@ -158,7 +158,7 @@ import Effect (Effect)
 import Hylograph.HATS (Tree, elem, forEach, thunkedNum, thunkedStr)
 import Hylograph.HATS.Friendly (viewBox, class_, r)
 import Hylograph.HATS.InterpreterTick (rerender, RerenderResult)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- | Pure function: data -> HATS tree (no effects)
 buildTree :: MyData -> Tree
@@ -274,7 +274,7 @@ import Effect (Effect)
 import Hylograph.HATS (Tree, elem, forEach, thunkedNum, thunkedStr)
 import Hylograph.HATS.Friendly (viewBox, transform, r, fillOpacity, strokeWidth)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.Scale as Scale
 import Hylograph.Scale (applyScale, nice)
 
@@ -359,7 +359,7 @@ import Effect (Effect)
 import Hylograph.HATS (Tree, elem, forEach, staticStr, thunkedNum, thunkedStr, withBehaviors, onMouseEnter, onMouseLeave)
 import Hylograph.HATS.Friendly (r, stroke, strokeWidth, strokeOpacity)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.Simulation (runSimulation, Engine(..), setup, manyBody, center, collide, link, withStrength, withRadius, withDistance, static, dynamic)
 import Hylograph.Simulation.Emitter (SimulationEvent(..), subscribe)
 import Hylograph.ForceEngine.Simulation (SimulationNode)
@@ -464,7 +464,7 @@ import DataViz.Layout.Hierarchy.Types (ValuedNode(..))
 import Hylograph.HATS (Tree, elem, forEach, thunkedStr, thunkedNum)
 import Hylograph.HATS.Friendly (width, height, stroke, strokeWidth, fontSize, fill)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- treemap :: forall a. TreemapConfig a -> ValuedNode a -> TreemapNode a
 -- Constructor: TNode { data_, depth, height, value, children, x0, y0, x1, y1 }
@@ -543,7 +543,7 @@ import DataViz.Layout.Hierarchy.Tree (tree, defaultTreeConfig, withLayerSeparati
 import Hylograph.HATS (Tree, elem, forEach, thunkedNum, thunkedStr)
 import Hylograph.HATS.Friendly (width, height, class_, d, fill, stroke, strokeWidth, r, textAnchor, fontSize)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- tree :: forall r. TreeConfig {...} -> Tree {...} -> Tree {...}
 -- Mutates x, y on input tree nodes. Configure via defaultTreeConfig.
@@ -622,7 +622,7 @@ import DataViz.Layout.Sankey.Types (LinkCSVRow, SankeyLayoutResult, SankeyNode, 
 import Hylograph.HATS (Tree, elem, forEach, thunkedNum, thunkedStr)
 import Hylograph.HATS.Friendly (width, height, class_, d, fill, textAnchor, fontSize, strokeOpacity)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- Sankey input: Array LinkCSVRow where LinkCSVRow = { s :: String, t :: String, v :: Number }
 
@@ -779,7 +779,7 @@ import Hylograph.HATS
   )
 import Hylograph.HATS.Friendly (width, height, r)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.Internal.Behavior.Types (HighlightClass(..))
 
 type DataPoint =
@@ -866,7 +866,7 @@ import DataViz.Layout.Chord.Types (ChordLayout, ChordGroup, Chord, defaultConfig
 import Hylograph.HATS (Tree, elem, forEach, thunkedStr)
 import Hylograph.HATS.Friendly (width, height, transform, fillOpacity)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.Scale (schemeCategory10At)
 
 renderChord :: String -> Array String -> Array (Array Number) -> Effect Unit

@@ -31,7 +31,7 @@ import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits as SCU
 import Hylograph.HATS.Friendly as F
 import Hylograph.HATS (Tree, elem, staticStr, staticNum, forEach)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Grammar AST

@@ -34,7 +34,7 @@ import Data.Array (range)
 import Data.Int as Int
 import Hylograph.HATS (Tree, elem, forEach, staticStr, staticNum, thunkedNum, thunkedStr)
 import Hylograph.HATS.Friendly as F
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Data Types

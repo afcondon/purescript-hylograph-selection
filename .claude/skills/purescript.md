@@ -573,7 +573,7 @@ area (Rect w h) = w * h
 ### 1. Name shadowing with constructors
 
 ```purescript
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 -- This imports: Circle, Rect, Path, Line, Text, Group, SVG, Div, ...
 
 -- WRONG: type alias shadows imported constructor

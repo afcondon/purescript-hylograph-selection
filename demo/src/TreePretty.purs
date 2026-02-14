@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String.CodeUnits as SCU
 import Data.String.Common (toUpper)
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- | Pretty-print a Tree as HATS pseudo-code
 prettyTree :: Tree -> String

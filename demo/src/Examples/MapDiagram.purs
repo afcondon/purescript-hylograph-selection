@@ -35,7 +35,7 @@ import Data.Maybe (fromMaybe)
 import Data.Tuple (Tuple(..), snd)
 import Hylograph.HATS.Friendly as F
 import Hylograph.HATS (Tree, MapKeys(..), MapValues(..), MapEntries(..), elem, forEachP, staticStr, staticNum, thunkedNum, thunkedStr)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Configuration

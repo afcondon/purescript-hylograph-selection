@@ -62,7 +62,7 @@ Every Hylograph app follows the same three steps:
 import Hylograph.HATS (Tree, elem)
 import Hylograph.HATS.Friendly (viewBox, fill, r, cx, cy)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 myViz :: Tree
 myViz =

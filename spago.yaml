@@ -3,7 +3,7 @@ workspace:
 
 package:
   name: hylograph-selection
-  description: Type-safe D3 selection and attribute library for PureScript
+  description: Declarative DOM tree construction and interpretation for PureScript
   publish:
     version: 0.1.1
     license: MIT AND ISC
@@ -19,7 +19,6 @@ package:
     - effect: ">=4.0.0 <5.0.0"
     - either: ">=6.1.0 <7.0.0"
     - foldable-traversable: ">=6.0.0 <7.0.0"
-    - free: ">=7.1.0 <8.0.0"
     - graphs: ">=8.1.0 <9.0.0"
     - hylograph-graph: ">=0.1.0 <0.2.0"
     - hylograph-transitions: ">=0.1.0 <0.2.0"

@@ -21,7 +21,7 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number.Format (fixed, toStringWith)
 import Hylograph.HATS (Tree, elem, forEach, staticStr, staticNum, thunkedStr)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- | Axis orientation
 data Orientation

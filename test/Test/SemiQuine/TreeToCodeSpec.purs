@@ -6,7 +6,7 @@ import Data.String (contains, Pattern(..))
 import Effect (Effect)
 import Effect.Console (log)
 import Hylograph.Interpreter.SemiQuine.TreeToCode (treeToCode)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.HATS (Tree, elem, forEach, staticNum, staticStr, thunkedNum)
 import Test.Assert (assert')
 

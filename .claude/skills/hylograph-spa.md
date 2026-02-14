@@ -196,7 +196,7 @@ import Effect (Effect)
 import Hylograph.HATS (Tree, elem)
 import Hylograph.HATS.Friendly (attr, x, y, width, height, fill, stroke, class_, style, viewBox)
 import Hylograph.HATS.InterpreterTick (rerender)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- FFI
 foreign import addClickHandlers :: String -> (String -> Effect Unit) -> Effect Unit
@@ -330,7 +330,7 @@ attrNum        :: String -> Number -> Attr
 ## ElementTypes Reference
 
 ```purescript
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- Container elements
 SVG, Group
