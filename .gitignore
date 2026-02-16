@@ -17,4 +17,7 @@ generated-docs/
 .DS_Store
 Thumbs.db
 
+# Generated docs
+*.pdf
+
 # Spago lock (generated)
