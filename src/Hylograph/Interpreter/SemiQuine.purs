@@ -36,7 +36,7 @@ treeToCode tree = String.joinWith "\n" $
   [ "-- Generated Tree API code (evalAttr)"
   , ""
   , "import Hylograph.HATS as T"
-  , "import Hylograph.Internal.Selection.Types (ElementType(..))"
+  , "import Hylograph.Internal.Element.Types (ElementType(..))"
   , "import Hylograph.Expr.Integration (evalAttr, evalAttrStr, fnAttr, fnAttrStr)"
   , "import Hylograph.Expr.Expr (lit, str)"
   , ""

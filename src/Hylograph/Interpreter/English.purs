@@ -19,7 +19,7 @@ import Data.Foldable (for_)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple (snd)
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- | Run the English interpreter on a tree
 runEnglish :: Tree -> String

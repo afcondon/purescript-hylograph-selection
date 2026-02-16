@@ -76,7 +76,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Effect (Effect)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..)) as ReExportHighlight
 import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..))
 import Hylograph.Interaction.Coordinated (InteractionTrigger(..), InteractionState(..), BoundingBox)

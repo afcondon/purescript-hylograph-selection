@@ -35,8 +35,8 @@ import Hylograph.Internal.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleE
 import Hylograph.Internal.Behavior.Types (HighlightClass(..)) as HC
 import Hylograph.Interaction.Coordinated (InteractionState(..), InteractionTrigger(..), BoundingBox)
 import Hylograph.Interaction.Coordinated (InteractionState(..)) as IS
-import Hylograph.Internal.Selection.Types (ElementType(..))
-import Hylograph.Internal.Selection.Operations (createElementWithNS)
+import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Internal.Element.Operations (createElementWithNS)
 import Web.DOM.Element (Element)
 import Web.DOM.Element (toNode, toEventTarget) as Element
 import Web.Event.Event (stopPropagation)
@@ -80,13 +80,11 @@ rerender selector tree = do
   container <- selectElement selector doc
   rerenderTree doc container tree
 
--- | Clear all children from a container
+-- | Clear all children from a container (no-op if selector doesn't match)
 clearContainer :: String -> Effect Unit
-clearContainer selector = do
-  doc <- window >>= document >>= pure <<< HTMLDocument.toDocument
-  container <- selectElement selector doc
-  children <- getChildElements container
-  traverse_ removeElement children
+clearContainer = clearContainer_
+
+foreign import clearContainer_ :: String -> Effect Unit
 
 -- | Re-render into a named selection from a previous render
 rerenderInto :: SelectionMap -> String -> Tree -> Effect RerenderResult

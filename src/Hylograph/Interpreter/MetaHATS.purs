@@ -21,7 +21,7 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Hylograph.HATS.Friendly as F
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold, elem, staticStr, staticNum)
-import Hylograph.Internal.Selection.Types (ElementType(..))
+import Hylograph.Internal.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Configuration

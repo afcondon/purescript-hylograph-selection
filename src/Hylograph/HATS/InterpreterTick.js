@@ -57,6 +57,16 @@ export const getKey = el => () => {
   return el.getAttribute('data-hats-key') || '';
 };
 
+// Clear all children from a container (no-op if selector doesn't match)
+export const clearContainer_ = selector => () => {
+  const container = document.querySelector(selector);
+  if (container) {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+  }
+};
+
 // Get direct child elements (for GUP diffing)
 export const getChildElements = parent => () => {
   return Array.from(parent.children);
