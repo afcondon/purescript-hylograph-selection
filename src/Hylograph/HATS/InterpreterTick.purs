@@ -402,6 +402,7 @@ rerenderTree doc parent tree = do
       in attachCoordinatedInteractionThunked el config.identify respondToHover respondToBrush respondToClear config.position (toNullable config.group)
     ThunkedBrush config ->
       void $ attachCoordinatedBrushThunked el config.extent (toNullable config.group)
+    ThunkedPointerDown handler -> attachPointerDownThunked el handler
 
   -- ==========================================================================
   -- Transition Creation
@@ -633,6 +634,7 @@ elementTypeToTagName = case _ of
 foreign import attachMouseEnterThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachMouseLeaveThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachClickThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
+foreign import attachPointerDownThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachZoom :: Element -> Number -> Number -> String -> Effect Unit
 foreign import attachSimpleDrag :: Element -> Effect Unit
 foreign import attachSimulationDragById :: Element -> String -> Effect Unit

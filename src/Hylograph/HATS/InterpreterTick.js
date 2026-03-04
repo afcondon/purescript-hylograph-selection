@@ -175,6 +175,13 @@ export const attachClickThunked = el => handler => () => {
   el.style.cursor = 'pointer';
 };
 
+export const attachPointerDownThunked = el => handler => () => {
+  el.addEventListener('pointerdown', function(event) {
+    event.stopPropagation();
+    handler()();
+  });
+};
+
 // =============================================================================
 // Highlight behavior
 // =============================================================================

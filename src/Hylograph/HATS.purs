@@ -56,6 +56,7 @@ module Hylograph.HATS
   , onClickWithModifier
   , onDrag
   , onZoom
+  , onPointerDown
   -- Coordinated highlighting
   , module ReExportHighlight
   , onCoordinatedHighlight
@@ -207,6 +208,9 @@ data ThunkedBehavior
       { extent :: BoundingBox                -- Brushable area
       , group :: Maybe String                -- Group to emit triggers to
       }
+  | ThunkedPointerDown (Unit -> Effect Unit)
+    -- ^ Fires on pointerdown (not click). Use for drag initiation where
+    -- you need the event before mouseup. The handler is thunked to capture datum.
 
 -- ============================================================================
 -- Enumeration (Coalgebra - how to unfold/traverse input)
@@ -571,6 +575,18 @@ onDrag = ThunkedDrag
 -- | Zoom behavior
 onZoom :: ZoomConfig -> ThunkedBehavior
 onZoom = ThunkedZoom
+
+-- | Pointer down handler (fires on pointerdown, before click)
+-- |
+-- | Use for drag initiation where you need the event before mouseup.
+-- | The handler captures datum values via closure.
+-- |
+-- | ```purescript
+-- | \knob -> withBehaviors [ onPointerDown (callbacks.onDragStart knob.cc knob.val) ] $
+-- |          elem Path [...] []
+-- | ```
+onPointerDown :: Effect Unit -> ThunkedBehavior
+onPointerDown handler = ThunkedPointerDown (\_ -> handler)
 
 -- | Coordinated highlighting behavior
 -- |
