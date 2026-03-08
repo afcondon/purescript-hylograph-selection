@@ -5,7 +5,7 @@ package:
   name: hylograph-selection
   description: Declarative DOM tree construction and interpretation for PureScript
   publish:
-    version: 0.3.0
+    version: 0.3.1
     license: MIT AND ISC
     location:
       githubOwner: afcondon
@@ -20,7 +20,7 @@ package:
     - foldable-traversable: ">=6.0.0 <7.0.0"
     - free: ">=7.1.0 <8.0.0"
     - graphs: ">=8.1.0 <9.0.0"
-    - hylograph-graph: ">=0.1.0 <0.2.0"
+    - hylograph-graph: ">=0.2.0 <0.3.0"
     - hylograph-transitions: ">=0.1.0 <0.2.0"
     - integers: ">=6.0.0 <7.0.0"
     - lists: ">=7.0.0 <8.0.0"
