@@ -365,8 +365,24 @@ function createHatsTooltip() {
 }
 
 function positionHatsTooltip(tooltip, event) {
-  const x = event.clientX + 15;
-  const y = event.clientY - 10;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const tooltipWidth = tooltip.offsetWidth || 300;
+  const tooltipHeight = tooltip.offsetHeight || 40;
+
+  // Default: right of cursor. Flip left if it would overflow.
+  let x = event.clientX + 15;
+  if (x + tooltipWidth > vw - 10) {
+    x = event.clientX - tooltipWidth - 15;
+  }
+
+  // Default: above cursor. Flip below if it would overflow top.
+  let y = event.clientY - 10;
+  if (y + tooltipHeight > vh - 10) {
+    y = vh - tooltipHeight - 10;
+  }
+  if (y < 10) y = 10;
+
   tooltip.style.left = `${x}px`;
   tooltip.style.top = `${y}px`;
 }
