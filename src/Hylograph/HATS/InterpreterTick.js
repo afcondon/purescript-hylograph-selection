@@ -411,11 +411,11 @@ function hideHatsTooltip(tooltip) {
  * @param {number} tooltipTrigger - When to show tooltip (0=OnHover, 1=WhenPrimary, 2=WhenRelated)
  * @returns {Effect Unit}
  */
-export const attachCoordinatedHighlightThunked = element => identifyThunk => classifyFn => groupName => tooltipContentThunk => tooltipTrigger => () => {
+export const attachCoordinatedHighlightThunked = element => identifyThunk => classifyFn => groupName => tooltipContentThunk => tooltipTrigger => tooltipBorderColor => () => {
   const group = groupName; // null means global
 
   // Register this element with tooltip info
-  const entry = { element, identifyThunk, classifyFn, tooltipContentThunk, tooltipTrigger };
+  const entry = { element, identifyThunk, classifyFn, tooltipContentThunk, tooltipTrigger, tooltipBorderColor };
   getHatsHighlightGroup(group).push(entry);
 
   // Attach mouseenter handler
@@ -485,6 +485,13 @@ function applyHatsHighlightsWithTooltips(groupName, hoveredId, triggerElement, e
         // Get content by invoking the thunk
         const content = tooltipContentThunk();
         showHatsTooltip(tooltip, content);
+
+        // Apply border color if configured
+        if (entry.tooltipBorderColor) {
+          tooltip.style.borderLeft = `3px solid ${entry.tooltipBorderColor}`;
+        } else {
+          tooltip.style.borderLeft = 'none';
+        }
 
         // Position at mouse for OnHover
         if (tooltipTrigger === TT_ON_HOVER && event) {

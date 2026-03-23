@@ -386,7 +386,7 @@ rerenderTree doc parent tree = do
 
         -- Convert TooltipTrigger to Int for FFI
         triggerAsInt = tooltipTriggerToInt config.tooltipTrigger
-      in attachCoordinatedHighlightThunked el config.identify classifyAsInt (toNullable config.group) (toNullable config.tooltipContent) triggerAsInt
+      in attachCoordinatedHighlightThunked el config.identify classifyAsInt (toNullable config.group) (toNullable config.tooltipContent) triggerAsInt (toNullable config.tooltipBorderColor)
     ThunkedCoordinatedInteraction config ->
       let
         -- Separate respond functions for each trigger type
@@ -647,6 +647,7 @@ foreign import attachCoordinatedHighlightThunked
   -> Nullable String        -- groupName
   -> Nullable (Unit -> String)  -- tooltipContentThunk (optional)
   -> Int                    -- tooltipTrigger (OnHover=0, WhenPrimary=1, WhenRelated=2)
+  -> Nullable String        -- tooltipBorderColor (optional CSS color)
   -> Effect Unit
 
 foreign import attachCoordinatedInteractionThunked

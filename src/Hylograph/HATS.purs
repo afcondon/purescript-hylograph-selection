@@ -197,6 +197,7 @@ data ThunkedBehavior
       , group :: Maybe String                -- Optional group name for scoping
       , tooltipContent :: Maybe (Unit -> String)  -- Thunked tooltip content generator
       , tooltipTrigger :: TooltipTrigger          -- When to show tooltip
+      , tooltipBorderColor :: Maybe String        -- Optional border color for tooltip
       }
   | ThunkedCoordinatedInteraction
       { identify :: Unit -> String                         -- Thunked: element identity
@@ -623,7 +624,8 @@ onCoordinatedHighlight config = ThunkedCoordinatedHighlight
   , classify: config.classify
   , group: config.group
   , tooltipContent: Nothing
-  , tooltipTrigger: OnHover  -- Default, unused since tooltipContent is Nothing
+  , tooltipTrigger: OnHover
+  , tooltipBorderColor: Nothing
   }
 
 -- | Coordinated highlight with tooltip support
@@ -647,7 +649,7 @@ onCoordinatedHighlightWithTooltip
   :: { identify :: String
      , classify :: String -> HighlightClass
      , group :: Maybe String
-     , tooltip :: Maybe { content :: String, showWhen :: TooltipTrigger }
+     , tooltip :: Maybe { content :: String, showWhen :: TooltipTrigger, borderColor :: Maybe String }
      }
   -> ThunkedBehavior
 onCoordinatedHighlightWithTooltip config = ThunkedCoordinatedHighlight
@@ -657,7 +659,8 @@ onCoordinatedHighlightWithTooltip config = ThunkedCoordinatedHighlight
   , tooltipContent: (\t -> \_ -> t.content) <$> config.tooltip
   , tooltipTrigger: case config.tooltip of
       Just t -> t.showWhen
-      Nothing -> OnHover  -- Default, but won't be used since tooltipContent is Nothing
+      Nothing -> OnHover
+  , tooltipBorderColor: config.tooltip >>= _.borderColor
   }
 
 -- | Full coordinated interaction behavior (supports brush, hover, focus, selection)

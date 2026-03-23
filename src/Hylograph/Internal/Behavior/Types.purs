@@ -139,6 +139,7 @@ instance Show TooltipTrigger where
 type TooltipConfig datum =
   { content :: datum -> String
   , showWhen :: TooltipTrigger
+  , borderColor :: Maybe String  -- Optional border color (CSS color string)
   }
 
 -- | Configuration for coordinated highlighting
