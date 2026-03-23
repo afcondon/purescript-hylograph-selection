@@ -75,6 +75,7 @@ showElemType = case _ of
   LinearGradient -> "LinearGradient"
   Stop -> "Stop"
   PatternFill -> "Pattern"
+  Title -> "Title"
   Div -> "Div"
   Span -> "Span"
   Table -> "Table"

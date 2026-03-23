@@ -603,6 +603,7 @@ elementTypeToTagName = case _ of
   LinearGradient -> "linearGradient"
   Stop -> "stop"
   PatternFill -> "pattern"
+  Title -> "title"
   Div -> "div"
   Span -> "span"
   Table -> "table"

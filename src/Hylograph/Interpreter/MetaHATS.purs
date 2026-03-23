@@ -584,6 +584,7 @@ showElementType = case _ of
   LinearGradient -> "Gradient"
   Stop -> "Stop"
   PatternFill -> "Pattern"
+  Title -> "Title"
   Div -> "Div"
   Span -> "Span"
   Table -> "Table"

@@ -164,6 +164,7 @@ showElemType = case _ of
   LinearGradient -> "LinearGradient"
   Stop -> "Stop"
   PatternFill -> "PatternFill"
+  Title -> "Title"
   Code -> "Code"
   Var -> "Var"
   Dfn -> "Dfn"
