@@ -1,50 +1,21 @@
 -- | Hylograph.Scale.FP - Functional Programming Abstractions for Scales
 -- |
--- | This module provides higher-level functional programming idioms
--- | built on top of the core Scale module.
+-- | Higher-level functional programming idioms built on top of Scale.Pure.
+-- | No FFI or D3 dependency.
 -- |
--- | ## Profunctor-like Operations
+-- | ## Scale Modifiers
 -- |
--- | Scales are naturally profunctorial: contravariant in domain, covariant in range.
--- |
--- | ```purescript
--- | -- Pre-process domain values
--- | normalizedScale = rawScale # contramapDomain normalize
--- |
--- | -- Post-process range values
--- | offsetScale = pixelScale # mapRange (_ + margin)
--- |
--- | -- Both at once
--- | transformedScale = scale # dimapScale preprocess postprocess
--- | ```
--- |
--- | ## Scale as Semigroup/Monoid (Modifiers)
--- |
--- | Scale modifiers compose with `<>`:
+-- | Scale modifiers compose:
 -- |
 -- | ```purescript
--- | niceAndClamped = niceModifier <> clampModifier
+-- | niceAndClamped = combineModifiers [niceModifier, clampModifier]
 -- | myScale = linear # niceAndClamped # domain [...] # range [...]
 -- | ```
 -- |
--- | ## Tick Generation as Unfold
--- |
--- | Generate ticks lazily using unfold semantics:
+-- | ## Sampling
 -- |
 -- | ```purescript
--- | import Data.Unfoldable (unfoldr)
--- |
--- | -- Custom tick generation
--- | logTicks = ticksUnfold logScale  -- Lazy stream of tick values
--- | ```
--- |
--- | ## Scale Sampling
--- |
--- | Sample a scale at regular intervals (useful for gradients, paths):
--- |
--- | ```purescript
--- | -- Sample 100 points along a color scale
--- | gradient = sample 100 viridisScale
+-- | gradient = sample 100 viridisColorScale
 -- | ```
 module Hylograph.Scale.FP
   ( -- * Scale Modifiers (Endo-like)
@@ -89,36 +60,31 @@ import Data.Array.NonEmpty as NEA
 import Data.Int as Int
 import Data.Maybe (fromMaybe)
 import Data.Tuple (Tuple(..))
-import Hylograph.Scale (Scale, Continuous, ContinuousScale, Interpolator)
-import Hylograph.Scale (applyScale, clamp, domain, nice, range, round, tickFormat, ticks) as Scale
+import Hylograph.Scale.Pure (ContinuousScale, Interpolator)
+import Hylograph.Scale.Pure (applyScale, clamp, domain, nice, range, round, tickFormat, ticks) as Scale
+import Hylograph.Scale.Pure as Pure
 
 -- ============================================================================
 -- SCALE MODIFIERS (Endo-like composition)
 -- ============================================================================
 
 -- | A scale modifier transforms a scale while preserving its type
--- | Modifiers form a Semigroup under composition
-type ScaleModifier d r k = Scale d r k -> Scale d r k
+type ScaleModifier = ContinuousScale -> ContinuousScale
 
 -- | Modifier that makes the domain nice (rounds to clean values)
-niceModifier :: forall r k. ScaleModifier Number r k
+niceModifier :: ScaleModifier
 niceModifier = Scale.nice
 
 -- | Modifier that enables clamping
-clampModifier :: forall d r k. ScaleModifier d r k
+clampModifier :: ScaleModifier
 clampModifier = Scale.clamp true
 
 -- | Modifier that enables rounding
-roundModifier :: forall d r k. ScaleModifier d r k
+roundModifier :: ScaleModifier
 roundModifier = Scale.round true
 
 -- | Combine multiple modifiers (apply left to right)
--- |
--- | ```purescript
--- | combined = combineModifiers [niceModifier, clampModifier, roundModifier]
--- | myScale = linear # combined # domain [...] # range [...]
--- | ```
-combineModifiers :: forall d r k. Array (ScaleModifier d r k) -> ScaleModifier d r k
+combineModifiers :: Array ScaleModifier -> ScaleModifier
 combineModifiers mods = \scale -> Array.foldl (\s m -> m s) scale mods
 
 -- ============================================================================
@@ -126,14 +92,7 @@ combineModifiers mods = \scale -> Array.foldl (\s m -> m s) scale mods
 -- ============================================================================
 
 -- | Sample a scale at n evenly-spaced points in [0, 1]
--- |
--- | Useful for generating color gradients, paths, etc.
--- |
--- | ```purescript
--- | -- Generate 256 colors for a gradient
--- | colors = sample 256 viridisColorScale
--- | ```
-sample :: forall r. Int -> Scale Number r Continuous -> Array r
+sample :: Int -> ContinuousScale -> Array Number
 sample n scale =
   let
     step = if n <= 1 then 0.0 else 1.0 / Int.toNumber (n - 1)
@@ -142,12 +101,7 @@ sample n scale =
     ts <#> Scale.applyScale scale
 
 -- | Sample within a specific range
--- |
--- | ```purescript
--- | -- Sample 50 points between 0.2 and 0.8
--- | samples = sampleRange 50 0.2 0.8 scale
--- | ```
-sampleRange :: forall r. Int -> Number -> Number -> Scale Number r Continuous -> Array r
+sampleRange :: Int -> Number -> Number -> ContinuousScale -> Array Number
 sampleRange n start end scale =
   let
     step = if n <= 1 then 0.0 else (end - start) / Int.toNumber (n - 1)
@@ -156,12 +110,7 @@ sampleRange n start end scale =
     ts <#> Scale.applyScale scale
 
 -- | Sample and return both domain and range values
--- |
--- | ```purescript
--- | -- Get (input, output) pairs
--- | pairs = sampleWithDomain 10 scale
--- | ```
-sampleWithDomain :: forall r. Int -> Scale Number r Continuous -> Array (Tuple Number r)
+sampleWithDomain :: Int -> ContinuousScale -> Array (Tuple Number Number)
 sampleWithDomain n scale =
   let
     step = if n <= 1 then 0.0 else 1.0 / Int.toNumber (n - 1)
@@ -174,17 +123,12 @@ sampleWithDomain n scale =
 -- ============================================================================
 
 -- | Get tick positions as pixel coordinates
--- |
--- | ```purescript
--- | -- Get where to draw tick marks
--- | positions = tickPositions 10 xScale
--- | ```
-tickPositions :: forall r k. Int -> Scale Number r k -> Array r
+tickPositions :: Int -> ContinuousScale -> Array Number
 tickPositions count scale =
   Scale.ticks count scale <#> Scale.applyScale scale
 
 -- | Get formatted tick labels
-tickLabels :: forall r k. Int -> String -> Scale Number r k -> Array String
+tickLabels :: Int -> String -> ContinuousScale -> Array String
 tickLabels count specifier scale =
   let
     formatter = Scale.tickFormat count specifier scale
@@ -193,13 +137,7 @@ tickLabels count specifier scale =
     tickVals <#> formatter
 
 -- | Get ticks with both position and label
--- |
--- | ```purescript
--- | -- For rendering axis ticks
--- | tickData = ticksWithLabels 10 ".0f" xScale
--- | -- Returns: [{ position: 0.0, label: "0" }, ...]
--- | ```
-ticksWithLabels :: forall r k. Int -> String -> Scale Number r k -> Array { position :: r, label :: String }
+ticksWithLabels :: Int -> String -> ContinuousScale -> Array { position :: Number, label :: String }
 ticksWithLabels count specifier scale =
   let
     formatter = Scale.tickFormat count specifier scale
@@ -212,21 +150,11 @@ ticksWithLabels count specifier scale =
 -- ============================================================================
 
 -- | Blend two interpolators together
--- |
--- | ```purescript
--- | -- 50% viridis, 50% plasma
--- | blended = blendInterpolators 0.5 interpolateViridis interpolatePlasma
--- | ```
 blendInterpolators :: Number -> Interpolator String -> Interpolator String -> Interpolator String
 blendInterpolators mix i1 i2 = \t ->
-  -- Note: This is a simple implementation - proper color blending would need RGB interpolation
   if t < mix then i1 (t / mix) else i2 ((t - mix) / (1.0 - mix))
 
 -- | Reverse an interpolator (1-t instead of t)
--- |
--- | ```purescript
--- | reversed = reverseInterpolator interpolateViridis
--- | ```
 reverseInterpolator :: forall a. Interpolator a -> Interpolator a
 reverseInterpolator interp = \t -> interp (1.0 - t)
 
@@ -245,22 +173,11 @@ cycleInterpolator interp = \t ->
 -- ============================================================================
 
 -- | Create a normalizing scale (maps domain to [0, 1])
--- |
--- | ```purescript
--- | normalizer = normalize 0.0 100.0
--- | normalizer 50.0  -- Returns 0.5
--- | ```
 normalize :: Number -> Number -> ContinuousScale
 normalize minVal maxVal =
-  Scale.domain [minVal, maxVal] $ Scale.range [0.0, 1.0] createLinear
+  Pure.linear # Scale.domain [minVal, maxVal] # Scale.range [0.0, 1.0]
 
--- | Create a quantizing scale (continuous → discrete buckets)
--- |
--- | ```purescript
--- | colorBuckets = quantize (NEA.cons' "low" ["medium", "high"])
--- | colorBuckets 0.0 100.0 33.0  -- Returns "low"
--- | colorBuckets 0.0 100.0 66.0  -- Returns "medium"
--- | ```
+-- | Create a quantizing scale (continuous -> discrete buckets)
 quantize :: forall a. NonEmptyArray a -> Number -> Number -> Number -> a
 quantize buckets minVal maxVal value =
   let
@@ -272,11 +189,6 @@ quantize buckets minVal maxVal value =
     fromMaybe (NEA.head buckets) (Array.index arr idx)
 
 -- | Create a threshold scale with custom breakpoints
--- |
--- | ```purescript
--- | rating = threshold [0.0, 60.0, 80.0, 90.0] (NEA.cons' "F" ["D", "C", "B", "A"])
--- | rating 75.0  -- Returns "C"
--- | ```
 threshold :: forall a. Array Number -> NonEmptyArray a -> Number -> a
 threshold thresholds values value =
   let
@@ -309,9 +221,3 @@ scaleInRange scale value =
     ext = scaleExtent scale
   in
     value >= ext.min && value <= ext.max
-
--- ============================================================================
--- INTERNAL HELPERS
--- ============================================================================
-
-foreign import createLinear :: ContinuousScale

@@ -49,17 +49,23 @@ module Hylograph.Scale.Pure
   , niceCount
   , exponent
   , base
+  , round
 
   -- * Scale Operations
   , applyScale
   , invert
   , ticks
+  , tickFormat
   , copy
 
   -- * Functional Combinators
   , andThen
   , contramap
   , map
+  , dimap
+
+  -- * Interpolator Type
+  , Interpolator
   ) where
 
 import Prelude hiding (map)
@@ -90,6 +96,7 @@ newtype Scale domain range kind = Scale
   , domain_  :: Array domain
   , range_   :: Array range
   , clamped  :: Boolean
+  , rounded  :: Boolean
   , ticks_   :: Int -> Array domain
   -- Internal bookkeeping for rebuilding after config changes
   , transform :: Number -> Number
@@ -97,6 +104,9 @@ newtype Scale domain range kind = Scale
   , exponent_ :: Number
   , base_ :: Number
   }
+
+-- | An interpolator maps [0, 1] to a value
+type Interpolator a = Number -> a
 
 -- | Convenient alias matching `Hylograph.Scale.ContinuousScale`
 type ContinuousScale = Scale Number Number Continuous
@@ -193,7 +203,8 @@ buildInverse transform untransform dom rng isClamped =
 rebuild :: ContinuousScale -> ContinuousScale
 rebuild (Scale s) =
   let
-    fwd = buildForward s.transform s.untransform s.domain_ s.range_ s.clamped
+    fwd' = buildForward s.transform s.untransform s.domain_ s.range_ s.clamped
+    fwd = if s.rounded then roundNum <<< fwd' else fwd'
     inv = buildInverse s.transform s.untransform s.domain_ s.range_ s.clamped
     tks = \count -> ticksImpl count (head0 s.domain_) (last1 s.domain_)
   in
@@ -356,6 +367,7 @@ linear = rebuild $ Scale
   , domain_: [0.0, 1.0]
   , range_: [0.0, 1.0]
   , clamped: false
+  , rounded: false
   , ticks_: \count -> ticksImpl count 0.0 1.0
   , transform: identity
   , untransform: identity
@@ -375,6 +387,7 @@ pow = rebuild $ Scale
   , domain_: [0.0, 1.0]
   , range_: [0.0, 1.0]
   , clamped: false
+  , rounded: false
   , ticks_: \count -> ticksImpl count 0.0 1.0
   , transform: \x -> Num.pow x 1.0
   , untransform: \x -> Num.pow x 1.0
@@ -403,6 +416,7 @@ sqrt =
       , domain_: [0.0, 1.0]
       , range_: [0.0, 1.0]
       , clamped: false
+      , rounded: false
       , ticks_: \count -> ticksImpl count 0.0 1.0
       , transform: xform
       , untransform: inv
@@ -431,6 +445,7 @@ log =
       , domain_: [1.0, 10.0]
       , range_: [0.0, 1.0]
       , clamped: false
+      , rounded: false
       , ticks_: \count -> ticksImpl count 1.0 10.0
       , transform: xform
       , untransform: inv
@@ -476,6 +491,17 @@ range rng (Scale s) = rebuild $ Scale s { range_ = rng }
 -- | ```
 clamp :: Boolean -> ContinuousScale -> ContinuousScale
 clamp c (Scale s) = rebuild $ Scale s { clamped = c }
+
+-- | Enable or disable output rounding
+-- |
+-- | When enabled, output values are rounded to the nearest integer.
+-- |
+-- | ```purescript
+-- | rounded = linear # domain [0.0, 100.0] # range [0.0, 500.0] # round true
+-- | applyScale rounded 33.3  -- Returns 167.0, not 166.5
+-- | ```
+round :: Boolean -> ContinuousScale -> ContinuousScale
+round r (Scale s) = rebuild $ Scale s { rounded = r }
 
 -- | Extend the domain to nice round values
 -- |
@@ -567,6 +593,13 @@ invert (Scale s) = s.inverse
 ticks :: Int -> ContinuousScale -> Array Number
 ticks count (Scale s) = s.ticks_ count
 
+-- | Get a tick formatter function
+-- |
+-- | The specifier argument is accepted for API compatibility but this
+-- | pure implementation uses `show` for formatting.
+tickFormat :: Int -> String -> ContinuousScale -> (Number -> String)
+tickFormat _count _specifier _scale = show
+
 -- | Create a copy of a scale (identity operation for pure data, included
 -- | for API compatibility with the D3 FFI module)
 copy :: ContinuousScale -> ContinuousScale
@@ -606,3 +639,11 @@ contramap f scale = applyScale scale <<< f
 -- | ```
 map :: forall b. (Number -> b) -> ContinuousScale -> (Number -> b)
 map f scale = f <<< applyScale scale
+
+-- | Transform both input and output (profunctor-like)
+-- |
+-- | ```purescript
+-- | transformed = scale # dimap preprocess postprocess
+-- | ```
+dimap :: forall a b. (a -> Number) -> (Number -> b) -> ContinuousScale -> (a -> b)
+dimap pre post scale = post <<< applyScale scale <<< pre

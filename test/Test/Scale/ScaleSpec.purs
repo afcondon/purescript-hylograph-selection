@@ -18,8 +18,7 @@ import Test.Assert (assert')
 
 -- Scale imports — test the Pure implementation
 import Hylograph.Scale.Pure (linear, pow, sqrt, domain, range, applyScale, invert, ticks, clamp, nice, exponent, andThen, contramap, map)
--- FP module still uses D3 Scale — will need its own Pure counterpart
--- import Hylograph.Scale.FP (sample, sampleRange, tickPositions, niceModifier, clampModifier, combineModifiers, normalize, scaleExtent, scaleMidpoint, scaleInRange)
+import Hylograph.Scale.FP (sample, sampleRange, tickPositions, niceModifier, clampModifier, combineModifiers, normalize, scaleExtent, scaleMidpoint, scaleInRange)
 
 -- =============================================================================
 -- Tests
@@ -35,7 +34,7 @@ runTests = do
   testScaleModifiers
   testPowerScales
   testScaleCombinators
-  -- testScaleFP  -- Disabled: needs Scale.FP ported to Pure
+  testScaleFP
 
 -- | Test: Linear scale basic operations
 testLinearScale :: Effect Unit
@@ -212,8 +211,7 @@ testScaleCombinators = do
 
   log "  ✓ Scale combinators work correctly"
 
--- | Test: Scale FP module (disabled — needs Scale.FP ported to Pure)
-{-
+-- | Test: Scale FP module
 testScaleFP :: Effect Unit
 testScaleFP = do
   log "\n  Scale FP Module:"
@@ -262,8 +260,7 @@ testScaleFP = do
 
   -- combineModifiers
   let mods = combineModifiers [niceModifier, clampModifier]
-  let modifiedScale = mods scale
+  let _modifiedScale = mods scale
   log "    combineModifiers [nice, clamp] applied"
 
   log "  ✓ Scale FP module works correctly"
--}

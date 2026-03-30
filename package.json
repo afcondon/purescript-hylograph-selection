@@ -24,11 +24,7 @@
     "url": "https://github.com/afcondon/purescript-psd3-selection/issues"
   },
   "homepage": "https://github.com/afcondon/purescript-psd3-selection#readme",
-  "dependencies": {
-    "d3-interpolate": "^3.0.1",
-    "d3-scale": "^4.0.2",
-    "d3-scale-chromatic": "^3.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@antora/cli": "^3.1.14",
     "@antora/site-generator": "^3.1.14"
