@@ -197,44 +197,64 @@ rebuild (Scale s) =
 -- D3-COMPATIBLE TICK ALGORITHM
 -- ============================================================================
 
--- | Compute the tick step size following D3's algorithm.
--- | Given a start, stop, and desired count, returns a "nice" step size
--- | that is a multiple of 1, 2, or 5 times a power of 10.
+-- | D3-compatible tick constants
+e10 :: Number
+e10 = Num.sqrt 50.0  -- 7.071...
+
+e5 :: Number
+e5 = Num.sqrt 10.0   -- 3.162...
+
+e2 :: Number
+e2 = Num.sqrt 2.0    -- 1.414...
+
+-- | Compute tick increment following D3's tickIncrement.
+-- | Returns negative values for step sizes < 1 (encoding trick: -n means 1/n).
+-- | This encoding is used by the nice algorithm for correct floor/ceil.
+tickIncrement :: Number -> Number -> Int -> Number
+tickIncrement start stop count =
+  let
+    step = (stop - start) / max 1.0 (Int.toNumber count)
+    power = Num.floor (Num.log step / Num.ln10)
+    err = step / Num.pow 10.0 power
+    factor = if err >= e10 then 10.0
+             else if err >= e5 then 5.0
+             else if err >= e2 then 2.0
+             else 1.0
+  in
+    if power < 0.0 then negate (Num.pow 10.0 (negate power)) / factor
+    else Num.pow 10.0 power * factor
+
+-- | Compute tick step size (always positive).
+-- | Converts tickIncrement's negative encoding to actual step value.
 tickStep :: Number -> Number -> Int -> Number
 tickStep start stop count =
   let
-    span = Num.abs (stop - start)
-    n = Int.toNumber (max 1 count)
-    rawStep = span / n
-    -- Find the power of 10 that is <= rawStep
-    logStep = Num.floor (Num.log rawStep / Num.ln10)
-    power = Num.pow 10.0 logStep
-    -- Determine the error factor
-    err = rawStep / power
-    -- Snap to 1, 2, 5, or 10 multiple
-    niceStep =
-      if err < 1.5 then power
-      else if err < 3.5 then power * 2.0
-      else if err < 7.5 then power * 5.0
-      else power * 10.0
+    reverse = stop < start
+    inc = if reverse
+          then tickIncrement stop start count
+          else tickIncrement start stop count
+    sign = if reverse then -1.0 else 1.0
   in
-    if span == 0.0 || not (Num.isFinite span) then 1.0
-    else niceStep
+    sign * (if inc < 0.0 then 1.0 / negate inc else inc)
 
 -- | Generate ticks for a given domain range and count
 ticksImpl :: Int -> Number -> Number -> Array Number
 ticksImpl count start stop =
-  let
-    step = tickStep start stop count
-    -- Align start/stop to step boundaries
-    tickStart = Num.ceil (start / step) * step
-    tickStop  = Num.floor (stop / step) * step
-    -- Number of ticks (add small epsilon for floating point)
-    n = Int.floor ((tickStop - tickStart) / step + 0.5) + 1
-  in
-    if step <= 0.0 || not (Num.isFinite step) then [start, stop]
-    else
-      Array.range 0 (n - 1) <#> \i -> tickStart + Int.toNumber i * step
+  if start > stop then
+    -- Reversed domain: generate ascending ticks then reverse
+    Array.reverse (ticksImpl count stop start)
+  else
+    let
+      step = tickStep start stop count
+      -- Align start/stop to step boundaries
+      tickStart = Num.ceil (start / step) * step
+      tickStop  = Num.floor (stop / step) * step
+      -- Number of ticks (add small epsilon for floating point)
+      n = Int.floor ((tickStop - tickStart) / step + 0.5) + 1
+    in
+      if step <= 0.0 || not (Num.isFinite step) then [start, stop]
+      else
+        Array.range 0 (n - 1) <#> \i -> tickStart + Int.toNumber i * step
 
 -- ============================================================================
 -- D3-COMPATIBLE NICE ALGORITHM
@@ -245,12 +265,36 @@ ticksImpl count start stop =
 -- | and ceil the max to multiples of that step.
 niceImpl :: Int -> Number -> Number -> { min :: Number, max :: Number }
 niceImpl count lo hi =
-  let
-    step = tickStep lo hi count
-    niceLo = Num.floor (lo / step) * step
-    niceHi = Num.ceil (hi / step) * step
-  in
-    { min: niceLo, max: niceHi }
+  if lo > hi then
+    -- Reversed domain: nice the swapped version, then swap back
+    let result = niceImpl count hi lo
+    in { min: result.max, max: result.min }
+  else
+    -- D3's nice is iterative: apply floor/ceil, recompute step, repeat until stable
+    niceLoop 10 (-1.0) lo hi count
+
+-- | Iterative nice loop — matches D3's behavior exactly
+-- | Uses tickIncrement (with negative encoding for sub-1 steps)
+-- | Recomputes after each floor/ceil pass until the increment converges
+niceLoop :: Int -> Number -> Number -> Number -> Int -> { min :: Number, max :: Number }
+niceLoop maxIter prestep lo hi count =
+  if maxIter <= 0 then { min: lo, max: hi }
+  else
+    let step = tickIncrement lo hi count
+    in
+      if step == prestep then { min: lo, max: hi }
+      else if step > 0.0 then
+        let
+          newLo = Num.floor (lo / step) * step
+          newHi = Num.ceil (hi / step) * step
+        in niceLoop (maxIter - 1) step newLo newHi count
+      else if step < 0.0 then
+        let
+          negStep = negate step
+          newLo = Num.ceil (lo * negStep) / negStep
+          newHi = Num.floor (hi * negStep) / negStep
+        in niceLoop (maxIter - 1) step newLo newHi count
+      else { min: lo, max: hi }
 
 -- ============================================================================
 -- CONTINUOUS SCALE CONSTRUCTORS
