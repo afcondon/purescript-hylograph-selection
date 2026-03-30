@@ -6,24 +6,23 @@
   <title>Hylograph — The Hylographic Fold</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* ================================================================
-       Swiss Typographic Style — Light Theme
-       ================================================================ */
     :root {
-      --bg: #fafafa;
-      --fg: #1a1a1a;
-      --fg-secondary: #555;
-      --fg-tertiary: #999;
-      --accent: #2563eb;
-      --border: #e0e0e0;
-      --panel-bg: #fff;
-      --code-bg: #f5f5f0;
-      --highlight-primary: #fbbf24;
-      --highlight-related: #60a5fa;
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --black: #000000;
+      --near-black: #0a0a0a;
+      --charcoal: #1a1a1a;
+      --dark-panel: #111;
+      --gold: #C9A962;
+      --gold-dim: #8B7355;
+      --gold-bright: #E8D5A3;
+      --cream: #FAF8F5;
+      --warm-white: #FFFEF9;
+      --text-dark: #2a2a2a;
+      --text-light: #e8e8e8;
+      --text-muted: #888;
+      --font-deco: 'Josefin Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,9 +35,9 @@
     }
 
     body {
-      font-family: var(--font-sans);
-      color: var(--fg);
-      background: var(--bg);
+      font-family: var(--font-deco);
+      color: var(--text-light);
+      background: var(--black);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
@@ -53,32 +52,49 @@
       flex-direction: column;
       padding: 3rem 4rem;
       position: relative;
+      border-bottom: 1px solid var(--gold-dim);
+    }
+
+    /* Gold dot terminals on chapter borders */
+    .chapter::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 7px;
+      height: 7px;
+      background: var(--gold);
+      border-radius: 50%;
     }
 
     .chapter-number {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--fg-tertiary);
+      color: var(--gold-dim);
       margin-bottom: 0.5rem;
     }
 
     .chapter h1 {
       font-size: 2.5rem;
       font-weight: 300;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
       margin-bottom: 0.75rem;
       line-height: 1.15;
     }
 
     .chapter-subtitle {
-      font-size: 1.05rem;
-      color: var(--fg-secondary);
+      font-size: 0.95rem;
+      color: var(--text-muted);
       max-width: 48em;
       margin-bottom: 2rem;
       font-weight: 300;
       line-height: 1.7;
+      letter-spacing: 0.02em;
     }
 
     /* ================================================================
@@ -94,9 +110,8 @@
 
     .viz-panel {
       flex: 1;
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
+      background: var(--cream);
+      border: 1px solid var(--gold-dim);
       position: relative;
       overflow: hidden;
       display: flex;
@@ -105,13 +120,21 @@
 
     .viz-panel.narrow { flex: 0 0 220px; }
 
+    .viz-panel.dark {
+      background: var(--dark-panel);
+    }
+
     .viz-panel-label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 600;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--fg-tertiary);
+      color: var(--gold-dim);
       padding: 0.75rem 1rem 0;
+    }
+
+    .viz-panel.dark .viz-panel-label {
+      color: var(--gold-dim);
     }
 
     .viz-panel-content {
@@ -125,6 +148,19 @@
     .viz-panel-content svg {
       max-width: 100%;
       max-height: 100%;
+    }
+
+    /* ================================================================
+       Fold Arrow
+       ================================================================ */
+    .fold-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 50px;
+      font-size: 1.5rem;
+      color: var(--gold-dim);
+      user-select: none;
     }
 
     /* ================================================================
@@ -142,10 +178,10 @@
     }
 
     nav.chapter-nav a {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--border);
+      background: var(--gold-dim);
       display: block;
       transition: background 0.2s, transform 0.2s;
       text-decoration: none;
@@ -153,35 +189,22 @@
 
     nav.chapter-nav a:hover,
     nav.chapter-nav a.active {
-      background: var(--fg);
+      background: var(--gold);
       transform: scale(1.4);
     }
 
     /* ================================================================
-       Fold Arrow (visual separator between data and output)
-       ================================================================ */
-    .fold-arrow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 60px;
-      font-size: 2rem;
-      color: var(--fg-tertiary);
-      user-select: none;
-    }
-
-    /* ================================================================
-       Coordinated Highlighting (CSS from the library)
+       Coordinated Highlighting
        ================================================================ */
     .highlight-primary {
       opacity: 1 !important;
-      stroke: var(--highlight-primary) !important;
+      stroke: var(--gold) !important;
       stroke-width: 2.5px !important;
     }
 
     .highlight-related {
       opacity: 0.9 !important;
-      stroke: var(--highlight-related) !important;
+      stroke: var(--gold-bright) !important;
       stroke-width: 1.5px !important;
     }
 
@@ -198,15 +221,16 @@
       bottom: 1.5rem;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 0.7rem;
-      color: var(--fg-tertiary);
-      letter-spacing: 0.08em;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
       opacity: 0.5;
       pointer-events: none;
     }
 
     /* ================================================================
-       Responsive (minimal — wide-screen optimized)
+       Responsive
        ================================================================ */
     @media (max-width: 1200px) {
       .chapter { padding: 2rem; }

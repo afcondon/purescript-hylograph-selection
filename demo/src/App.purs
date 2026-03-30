@@ -83,7 +83,7 @@ renderChapter1 =
         [ HH.text "Chapter 1" ]
     , HH.h1_ [ HH.text "The Fold" ]
     , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "A fold takes something apart on one side and puts something together on the other. The same data can produce entirely different structures \x2014 an HTML list, an SVG diagram, a text summary. The fold doesn\x2019t care what it builds. It only needs to know how to take one step." ]
+        [ HH.text "A fold takes something apart on one side and puts something together on the other. The same data can produce entirely different structures. The fold doesn\x2019t care what it builds. It only needs to know how to take one step." ]
     , HH.div [ HP.class_ (HH.ClassName "viz-row") ]
         [ -- Data column
           HH.div [ HP.class_ (HH.ClassName "viz-panel narrow") ]
@@ -99,8 +99,8 @@ renderChapter1 =
                 [ HH.div [ HP.id "ch1-svg" ] [] ]
             ]
         , HH.div [ HP.class_ (HH.ClassName "fold-arrow") ] [ HH.text "\x2192" ]
-        -- Structure (metatree, unexplained)
-        , HH.div [ HP.class_ (HH.ClassName "viz-panel") ]
+        -- Structure (metatree, unexplained) — dark panel
+        , HH.div [ HP.class_ (HH.ClassName "viz-panel dark") ]
             [ HH.div [ HP.class_ (HH.ClassName "viz-panel-label") ] [ HH.text "Structure" ]
             , HH.div [ HP.class_ (HH.ClassName "viz-panel-content") ]
                 [ HH.div [ HP.id "ch1-meta" ] [] ]
