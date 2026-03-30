@@ -4,7 +4,3 @@ export const clearElement = (selector) => () => {
     el.innerHTML = '';
   }
 };
-
-export const getElementWidth = (element) => () => {
-  return element.getBoundingClientRect().width;
-};
