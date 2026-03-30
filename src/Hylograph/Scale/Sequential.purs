@@ -1,0 +1,1026 @@
+-- | Hylograph.Scale.Sequential — Sequential, diverging, and cyclical color interpolators
+-- |
+-- | Pure PureScript implementation using pre-sampled 256-color lookup tables.
+-- | Colors sourced from D3's d3-scale-chromatic (Apache 2.0 licensed).
+-- |
+-- | Each interpolator maps [0, 1] → CSS hex color string (#rrggbb),
+-- | with linear RGB interpolation between adjacent table entries.
+module Hylograph.Scale.Sequential
+  ( -- * Sequential Interpolators (Single-Hue)
+    interpolateBlues
+  , interpolateGreens
+  , interpolateGreys
+  , interpolateOranges
+  , interpolatePurples
+  , interpolateReds
+
+  -- * Sequential Interpolators (Multi-Hue)
+  , interpolateViridis
+  , interpolatePlasma
+  , interpolateInferno
+  , interpolateMagma
+  , interpolateTurbo
+  , interpolateWarm
+  , interpolateCool
+  , interpolateRainbow
+  , interpolateCividis
+  , interpolateCubehelixDefault
+  , interpolateBuGn
+  , interpolateBuPu
+  , interpolateGnBu
+  , interpolateOrRd
+  , interpolatePuBuGn
+  , interpolatePuBu
+  , interpolatePuRd
+  , interpolateRdPu
+  , interpolateYlGnBu
+  , interpolateYlGn
+  , interpolateYlOrBr
+  , interpolateYlOrRd
+
+  -- * Diverging Interpolators
+  , interpolateRdYlGn
+  , interpolateRdBu
+  , interpolatePiYG
+  , interpolateBrBG
+  , interpolatePRGn
+  , interpolateSpectral
+  , interpolateRdGy
+  , interpolateRdYlBu
+
+  -- * Cyclical Interpolators
+  , interpolateSinebow
+  ) where
+
+import Prelude
+
+import Data.Int as Int
+import Data.Maybe (fromMaybe)
+import Data.String.CodeUnits as SCU
+
+-- ============================================================================
+-- LOOKUP TABLE INTERPOLATION
+-- ============================================================================
+
+-- | Interpolate a 256-entry color lookup table.
+-- | The table is a 1536-char string of concatenated 6-char hex values.
+-- | Input t is clamped to [0, 1]; output is linear RGB interpolation
+-- | between adjacent entries.
+interpolateTable :: String -> Number -> String
+interpolateTable table t' =
+  let
+    t = max 0.0 (min 1.0 t')
+    i = min 254 (Int.floor (t * 255.0))
+    f = t * 255.0 - Int.toNumber i
+    o1 = i * 6
+    o2 = (i + 1) * 6
+    r1 = hexAt table o1
+    g1 = hexAt table (o1 + 2)
+    b1 = hexAt table (o1 + 4)
+    r2 = hexAt table o2
+    g2 = hexAt table (o2 + 2)
+    b2 = hexAt table (o2 + 4)
+    r = Int.round (Int.toNumber r1 + (Int.toNumber r2 - Int.toNumber r1) * f)
+    g = Int.round (Int.toNumber g1 + (Int.toNumber g2 - Int.toNumber g1) * f)
+    b = Int.round (Int.toNumber b1 + (Int.toNumber b2 - Int.toNumber b1) * f)
+  in
+    "#" <> hexByte r <> hexByte g <> hexByte b
+
+hexAt :: String -> Int -> Int
+hexAt s offset = fromMaybe 0 (Int.fromStringAs Int.hexadecimal (SCU.slice offset (offset + 2) s))
+
+hexByte :: Int -> String
+hexByte n =
+  let clamped = max 0 (min 255 n)
+      hex = Int.toStringAs Int.hexadecimal clamped
+  in if SCU.length hex < 2 then "0" <> hex else hex
+
+-- ============================================================================
+-- COLOR DATA AND INTERPOLATORS
+-- ============================================================================
+
+bluesTable :: String
+bluesTable = "f7fbfff6fafff5fafef5f9fef4f9fef3f8fef2f8fdf2f7fdf1f7fdf0f6fdeff6fceef5fceef5fc"
+  <> "edf4fcecf4fbebf3fbeaf3fbeaf2fbe9f2fae8f1fae7f1fae7f0fae6f0f9e5eff9e4eff9e3eef9"
+  <> "e3eef8e2edf8e1edf8e0ecf8e0ecf7dfebf7deebf7ddeaf7ddeaf6dce9f6dbe9f6dae8f6d9e8f5"
+  <> "d9e7f5d8e7f5d7e6f5d6e6f4d6e5f4d5e5f4d4e4f4d3e4f3d2e3f3d2e3f3d1e2f3d0e2f2cfe1f2"
+  <> "cee1f2cde0f1cce0f1ccdff1cbdff1cadef0c9def0c8ddf0c7ddefc6dcefc5dcefc4dbeec3dbee"
+  <> "c2daeec1daedc0d9edbfd9ecbed8ecbdd8ecbcd7ebbbd7ebb9d6ebb8d5eab7d5eab6d4e9b5d4e9"
+  <> "b4d3e9b2d3e8b1d2e8b0d1e7afd1e7add0e7acd0e6abcfe6a9cfe5a8cee5a7cde5a5cde4a4cce4"
+  <> "a3cbe3a1cbe3a0cae39ec9e29dc9e29cc8e19ac7e199c6e197c6e096c5e094c4df93c3df91c3df"
+  <> "90c2de8ec1de8dc0de8bc0dd8abfdd88bedc87bddc85bcdc84bbdb82bbdb81badb7fb9da7eb8da"
+  <> "7cb7d97bb6d979b5d978b5d876b4d875b3d773b2d772b1d770b0d66fafd66daed56caed56badd5"
+  <> "69acd468abd466aad365a9d363a8d262a7d261a7d15fa6d15ea5d05da4d05ba3d05aa2cf59a1cf"
+  <> "57a0ce569fce559ecd549ecd529dcc519ccc509bcb4f9acb4d99ca4c98ca4b97c94a96c94895c8"
+  <> "4794c84693c74592c74492c64391c64190c5408fc43f8ec43e8dc33d8cc33c8bc23b8ac23a89c1"
+  <> "3988c13787c03686c03585bf3484bf3383be3282bd3181bd3080bc2f7fbc2e7ebb2d7dbb2c7cba"
+  <> "2b7bb92a7ab92979b82878b82777b72676b62574b62473b52372b42371b42270b3216fb3206eb2"
+  <> "1f6db11e6cb01d6bb01c6aaf1c69ae1b68ae1a67ad1966ac1865ab1864aa1763aa1662a91561a8"
+  <> "1560a7145fa6135ea5135da4125ca4115ba3115aa21059a11058a00f579f0e569e0e559d0e549c"
+  <> "0d539a0d52990c51980c50970b4f960b4e950b4d930b4c920a4b910a4a900a498e0a488d09478c"
+  <> "09468a094589094487094386094285094183084082083e80083d7f083c7d083b7c083a7a083979"
+  <> "08387708377608367408357308347108337008326e08316d08306b"
+
+interpolateBlues :: Number -> String
+interpolateBlues = interpolateTable bluesTable
+
+greensTable :: String
+greensTable = "f7fcf5f6fcf4f6fcf4f5fbf3f5fbf2f4fbf2f4fbf1f3faf0f2faf0f2faeff1faeef1faeef0f9ed"
+  <> "f0f9eceff9eceef9ebeef8eaedf8eaecf8e9ecf8e8ebf7e7ebf7e7eaf7e6e9f7e5e9f6e4e8f6e4"
+  <> "e7f6e3e7f6e2e6f5e1e5f5e1e4f5e0e4f4dfe3f4dee2f4dde1f4dce1f3dce0f3dbdff3dadef2d9"
+  <> "ddf2d8ddf2d7dcf1d6dbf1d5daf1d4d9f0d3d8f0d2d7efd1d6efd0d5efcfd4eeced4eeced3eecd"
+  <> "d2edcbd1edcad0ecc9cfecc8ceecc7cdebc6ccebc5cbeac4caeac3c9eac2c8e9c1c6e9c0c5e8bf"
+  <> "c4e8bec3e7bdc2e7bcc1e6bbc0e6b9bfe6b8bee5b7bde5b6bbe4b5bae4b4b9e3b3b8e3b2b7e2b0"
+  <> "b6e2afb5e1aeb3e1adb2e0acb1e0abb0dfaaaedfa8addea7acdea6abdda5aadca4a8dca3a7dba2"
+  <> "a6dba0a5da9fa3da9ea2d99da1d99c9fd89b9ed7999dd7989bd6979ad69699d59597d49496d492"
+  <> "95d39193d39092d28f91d18e8fd18d8ed08c8ccf8a8bcf898ace8888cd8787cd8685cc8584cb84"
+  <> "82cb8381ca8280c9817ec9807dc87f7bc77e7ac77c78c67b77c57a75c47974c47872c37871c277"
+  <> "6fc2766ec1756cc0746bbf7369bf7268be7166bd7065bc6f63bc6e62bb6e60ba6d5eb96c5db86b"
+  <> "5bb86a5ab76958b66857b56856b46754b46653b36551b26450b1644eb0634daf624caf614aae61"
+  <> "49ad6048ac5f46ab5e45aa5d44a95d42a85c41a75b40a75a3fa65a3ea5593ca4583ba3573aa257"
+  <> "39a15638a055379f54369e54359d53349c52339b51329a5031995030984f2f974e2e964d2d954d"
+  <> "2b944c2a934b29924a28914a279049268f48258f47248e47238d46228c45218b44208a431f8943"
+  <> "1e88421d87411c86401b85401a843f19833e18823d17813d16803c157f3b147e3a137d3a127c39"
+  <> "117b38107a371079370f78360e77350d76340c75340b74330b73320a7232097131087030086f2f"
+  <> "076e2f066c2e066b2d056a2d05692c04682b04672b04662a03642a036329026228026128026027"
+  <> "025e27015d26015c25015b25015a24015824015723005623005522005321005221005120005020"
+  <> "004e1f004d1f004c1e004a1e00491d00481d00471c00451c00441b"
+
+interpolateGreens :: Number -> String
+interpolateGreens = interpolateTable greensTable
+
+greysTable :: String
+greysTable = "fffffffffffffefefefefefefdfdfdfdfdfdfcfcfcfcfcfcfbfbfbfbfbfbfafafafafafaf9f9f9"
+  <> "f9f9f9f8f8f8f8f8f8f7f7f7f7f7f7f6f6f6f6f6f6f5f5f5f5f5f5f4f4f4f4f4f4f3f3f3f3f3f3"
+  <> "f2f2f2f1f1f1f1f1f1f0f0f0f0f0f0efefefefefefeeeeeeededededededececececececebebeb"
+  <> "eaeaeaeaeaeae9e9e9e8e8e8e8e8e8e7e7e7e6e6e6e6e6e6e5e5e5e4e4e4e3e3e3e3e3e3e2e2e2"
+  <> "e1e1e1e0e0e0e0e0e0dfdfdfdedededddddddddddddcdcdcdbdbdbdadadadadadad9d9d9d8d8d8"
+  <> "d7d7d7d6d6d6d6d6d6d5d5d5d4d4d4d3d3d3d2d2d2d1d1d1d1d1d1d0d0d0cfcfcfcecececdcdcd"
+  <> "cccccccbcbcbcacacac9c9c9c9c9c9c8c8c8c7c7c7c6c6c6c5c5c5c4c4c4c3c3c3c2c2c2c1c1c1"
+  <> "c0c0c0bfbfbfbebebebdbdbdbcbcbcbbbbbbbababab9b9b9b8b8b8b6b6b6b5b5b5b4b4b4b3b3b3"
+  <> "b2b2b2b1b1b1b0b0b0afafafadadadacacacabababaaaaaaa9a9a9a8a8a8a7a7a7a5a5a5a4a4a4"
+  <> "a3a3a3a2a2a2a1a1a19f9f9f9e9e9e9d9d9d9c9c9c9b9b9b9a9a9a989898979797969696959595"
+  <> "9494949393939191919090908f8f8f8e8e8e8d8d8d8c8c8c8b8b8b8a8a8a888888878787868686"
+  <> "8585858484848383838282828181818080807f7f7f7d7d7d7c7c7c7b7b7b7a7a7a797979787878"
+  <> "7777777676767575757474747373737272727171716f6f6f6e6e6e6d6d6d6c6c6c6b6b6b6a6a6a"
+  <> "6969696868686767676666666565656464646363636262626060605f5f5f5e5e5e5d5d5d5c5c5c"
+  <> "5b5b5b5a5a5a5959595757575656565555555454545353535252525050504f4f4f4e4e4e4d4d4d"
+  <> "4b4b4b4a4a4a4949494848484646464545454444444242424141414040403e3e3e3d3d3d3c3c3c"
+  <> "3a3a3a3939393838383636363535353434343232323131313030302e2e2e2d2d2d2c2c2c2a2a2a"
+  <> "2929292828282626262525252424242323232121212020201f1f1f1e1e1e1c1c1c1b1b1b1a1a1a"
+  <> "1919191818181616161515151414141313131212121010100f0f0f0e0e0e0d0d0d0c0c0c0a0a0a"
+  <> "090909080808070707060606050505030303020202010101000000"
+
+interpolateGreys :: Number -> String
+interpolateGreys = interpolateTable greysTable
+
+orangesTable :: String
+orangesTable = "fff5ebfff5eafff4e9fff4e8fff3e7fff3e6fff2e6fff2e5fff1e4fff1e3fff0e2fff0e1ffefe0"
+  <> "ffefdfffeedeffeeddfeeddcfeeddbfeecdafeecd9feebd8feebd7feead6feead5fee9d4fee9d3"
+  <> "fee8d2fee8d1fee7d0fee6cffee6cefee5ccfee5cbfee4cafee4c9fee3c8fee2c7fee2c5fee1c4"
+  <> "fee1c3fee0c2fedfc0fedfbffedebefeddbdfeddbbfedcbafedbb9fedab7fddab6fdd9b4fdd8b3"
+  <> "fdd8b2fdd7b0fdd6affdd5adfdd4acfdd4aafdd3a9fdd2a7fdd1a6fdd0a4fdd0a3fdcfa1fdcea0"
+  <> "fdcd9efdcc9dfdcb9bfdca99fdc998fdc896fdc795fdc693fdc591fdc490fdc38efdc28dfdc18b"
+  <> "fdc089fdbf88fdbe86fdbd84fdbc83fdbb81fdba7ffdb97efdb87cfdb77afdb679fdb577fdb475"
+  <> "fdb374fdb272fdb171fdb06ffdaf6dfdae6cfdad6afdac69fdab67fdaa65fda964fda762fda661"
+  <> "fda55ffda45efda35cfda25bfda159fda058fd9f56fd9e55fd9d53fd9c52fd9b50fd9a4ffc994d"
+  <> "fc984cfc974afc9649fc9548fc9346fc9245fc9143fc9042fb8f40fb8e3ffb8d3efb8c3cfb8b3b"
+  <> "fa8a3afa8938fa8837fa8736fa8534f98433f98332f98230f8812ff8802ef87f2cf77e2bf77d2a"
+  <> "f77b29f67a27f67926f57825f57724f57623f47522f47420f3731ff3721ef2701df26f1cf16e1b"
+  <> "f16d1af06c19f06b18ef6a17ef6916ee6815ed6714ed6614ec6513ec6312eb6211ea6110ea6010"
+  <> "e95f0fe85e0ee85d0ee75c0de65b0ce55a0ce4590be4580be3570ae25609e15509e05408df5308"
+  <> "de5208dd5207dc5107db5006da4f06d94e06d84d05d74c05d64c05d54b04d44a04d24904d14804"
+  <> "d04804cf4703cd4603cc4503cb4503c94403c84303c74303c54203c44103c24102c14002bf3f02"
+  <> "be3f02bd3e02bb3e02ba3d02b83d02b73c02b53b02b43b02b23a03b13a03af3903ae3903ac3803"
+  <> "ab3803aa3703a83703a73603a53603a43503a33503a13403a034039f33039d33039c32039b3203"
+  <> "993103983103973003953003942f03932f03922e04902e048f2d048e2d048d2c048b2c048a2b04"
+  <> "892b04882a04862a048529048429048328048128048027047f2704"
+
+interpolateOranges :: Number -> String
+interpolateOranges = interpolateTable orangesTable
+
+purplesTable :: String
+purplesTable = "fcfbfdfcfbfdfbfafcfbfafcfaf9fcfaf9fcfaf8fbf9f8fbf9f7fbf8f7fbf8f7faf7f6faf7f6fa"
+  <> "f7f5faf6f5f9f6f4f9f5f4f9f5f3f9f4f3f8f4f2f8f4f2f8f3f2f8f3f1f7f2f1f7f2f0f7f1f0f7"
+  <> "f1eff6f0eff6f0eef6efeef5efedf5eeedf5eeecf5edecf4edebf4ecebf4ebeaf3ebe9f3eae9f3"
+  <> "eae8f3e9e8f2e8e7f2e8e7f2e7e6f1e7e5f1e6e5f1e5e4f0e5e4f0e4e3f0e3e2efe3e2efe2e1ef"
+  <> "e1e1eee1e0eee0dfeedfdfeddedeeddeddedddddecdcdcecdbdbecdbdaebdadaebd9d9ead8d8ea"
+  <> "d7d7ead7d7e9d6d6e9d5d5e8d4d4e8d3d3e8d2d3e7d2d2e7d1d1e6d0d0e6cfcfe5cecee5cdcee5"
+  <> "cccde4cbcce4cbcbe3cacae3c9c9e2c8c8e2c7c7e1c6c6e1c5c5e0c4c4e0c3c3dfc2c3dfc1c2de"
+  <> "c0c1debfc0ddbebfddbebedcbdbddcbcbcdbbbbbdababadab9b9d9b8b8d9b7b7d8b6b5d8b5b4d7"
+  <> "b4b3d6b3b2d6b2b1d5b1b0d5b0afd4afaed4aeadd3aeacd2adabd2acaad1aba9d1aaa8d0a9a7cf"
+  <> "a8a6cfa7a5cea6a4cea5a3cda4a2cda3a1cca2a0cba19fcba09eca9f9dca9e9cc99e9ac99d9ac8"
+  <> "9c99c89b98c79a97c79996c69895c69794c59693c59592c49491c49390c3928fc3918ec2908dc2"
+  <> "908cc18f8bc18e8ac08d89c08c88bf8b87bf8a86be8985be8884bd8883bd8782bc8680bc857fbb"
+  <> "847eba837dba827cb9827bb9817ab88079b87f77b77e76b67e75b67d74b57c73b47b71b47b70b3"
+  <> "7a6fb3796eb2786cb1786bb1776ab07668af7567af7566ae7465ad7363ad7362ac7261ab715fab"
+  <> "705eaa705ca96f5ba86e5aa86e58a76d57a66c56a66c54a56b53a46a52a46950a3694fa2684ea2"
+  <> "674ca1674ba0664aa065489f65479e64469e63449d63439c62429c61409b613f9a603e9a5f3c99"
+  <> "5e3b995e3a985d38975c37975c36965b35955a33955a3294593194582f93582e92572d92562b91"
+  <> "562a9155299054288f54268f53258e52248e52238d51218c50208c501f8b4f1e8b4e1c8a4e1b8a"
+  <> "4d1a894c19884c17884b16874a15874a1486491286481185481084470f84460d83460c83450b82"
+  <> "440a8244098143078042068042057f41047f40027e40017e3f007d"
+
+interpolatePurples :: Number -> String
+interpolatePurples = interpolateTable purplesTable
+
+redsTable :: String
+redsTable = "fff5f0fff4effff4eefff3edfff2ecfff2ebfff1eafff0e9fff0e8ffefe7ffeee6ffeee6ffede5"
+  <> "ffece4ffece3ffebe2feeae1fee9e0fee9defee8ddfee7dcfee6dbfee6dafee5d9fee4d8fee3d7"
+  <> "fee2d6fee2d5fee1d4fee0d2fedfd1feded0feddcffedccdfedbccfedacbfed9cafed8c8fed7c7"
+  <> "fdd6c6fdd5c4fdd4c3fdd3c1fdd2c0fdd1bffdd0bdfdcfbcfdcebafdcdb9fdccb7fdcbb6fdc9b4"
+  <> "fdc8b3fdc7b2fdc6b0fdc5affdc4adfdc2acfdc1aafdc0a8fcbfa7fcbea5fcbca4fcbba2fcbaa1"
+  <> "fcb99ffcb89efcb69cfcb59bfcb499fcb398fcb196fcb095fcaf94fcae92fcac91fcab8ffcaa8e"
+  <> "fca98cfca78bfca689fca588fca486fca285fca183fca082fc9e81fc9d7ffc9c7efc9b7cfc997b"
+  <> "fc987afc9778fc9677fc9475fc9374fc9273fc9071fc8f70fc8e6ffc8d6dfc8b6cfc8a6bfc8969"
+  <> "fc8868fc8667fc8565fc8464fb8263fb8162fb8060fb7f5ffb7d5efb7c5dfb7b5bfb795afb7859"
+  <> "fb7758fb7657fb7455fa7354fa7253fa7052fa6f51fa6e50fa6c4ef96b4df96a4cf9684bf9674a"
+  <> "f96549f86448f86347f86146f86045f75e44f75d43f75c42f65a41f65940f6573ff5563ef5553d"
+  <> "f4533cf4523bf4503af34f39f34e38f24c37f24b37f14936f14835f04734ef4533ef4433ee4332"
+  <> "ed4131ed4030ec3f2feb3d2feb3c2eea3b2de93a2de8382ce7372be6362be6352ae5342ae43229"
+  <> "e33128e23028e12f27e02e27df2d26de2c26dd2b25dc2a25db2924da2824d92723d72623d62522"
+  <> "d52422d42321d32221d22121d12020d01f20ce1f1fcd1e1fcc1d1fcb1d1eca1c1ec91b1ec71b1d"
+  <> "c61a1dc5191dc4191cc3181cc2181cc0171bbf171bbe161bbd161abb151aba151ab91419b81419"
+  <> "b61419b51319b41318b21218b11218b01218ae1117ad1117ac1117aa1017a91016a71016a60f16"
+  <> "a40f16a30e15a10e15a00e159e0d159c0d149b0c14990c14970c14960b13940b13920a13900a13"
+  <> "8f0a128d09128b09128908128708118607118407118207118006107e06107c05107a051078040f"
+  <> "76040f75030f73030f71020e6f020e6d010e6b010e69000d67000d"
+
+interpolateReds :: Number -> String
+interpolateReds = interpolateTable redsTable
+
+viridisTable :: String
+viridisTable = "44015444025645045745055946075a46085c460a5d460b5e470d60470e61471063471164471365"
+  <> "48146748166848176948186a481a6c481b6d481c6e481d6f481f70482071482173482374482475"
+  <> "482576482677482878482979472a7a472c7a472d7b472e7c472f7d46307e46327e46337f463480"
+  <> "453581453781453882443983443a83443b84433d84433e85423f85424086424186414287414487"
+  <> "4045884046883f47883f48893e49893e4a893e4c8a3d4d8a3d4e8a3c4f8a3c508b3b518b3b528b"
+  <> "3a538b3a548c39558c39568c38588c38598c375a8c375b8d365c8d365d8d355e8d355f8d34608d"
+  <> "34618d33628d33638d32648e32658e31668e31678e31688e30698e306a8e2f6b8e2f6c8e2e6d8e"
+  <> "2e6e8e2e6f8e2d708e2d718e2c718e2c728e2c738e2b748e2b758e2a768e2a778e2a788e29798e"
+  <> "297a8e297b8e287c8e287d8e277e8e277f8e27808e26818e26828e26828e25838e25848e25858e"
+  <> "24868e24878e23888e23898e238a8d228b8d228c8d228d8d218e8d218f8d21908d21918c20928c"
+  <> "20928c20938c1f948c1f958b1f968b1f978b1f988b1f998a1f9a8a1e9b8a1e9c891e9d891f9e89"
+  <> "1f9f881fa0881fa1881fa1871fa28720a38620a48621a58521a68522a78522a88423a98324aa83"
+  <> "25ab8225ac8226ad8127ad8128ae8029af7f2ab07f2cb17e2db27d2eb37c2fb47c31b57b32b67a"
+  <> "34b67935b77937b87838b9773aba763bbb753dbc743fbc7340bd7242be7144bf7046c06f48c16e"
+  <> "4ac16d4cc26c4ec36b50c46a52c56954c56856c66758c7655ac8645cc8635ec96260ca6063cb5f"
+  <> "65cb5e67cc5c69cd5b6ccd5a6ece5870cf5773d05675d05477d1537ad1517cd2507fd34e81d34d"
+  <> "84d44b86d54989d5488bd6468ed64590d74393d74195d84098d83e9bd93c9dd93ba0da39a2da37"
+  <> "a5db36a8db34aadc32addc30b0dd2fb2dd2db5de2bb8de29bade28bddf26c0df25c2df23c5e021"
+  <> "c8e020cae11fcde11dd0e11cd2e21bd5e21ad8e219dae319dde318dfe318e2e418e5e419e7e419"
+  <> "eae51aece51befe51cf1e51df4e61ef6e620f8e621fbe723fde725"
+
+interpolateViridis :: Number -> String
+interpolateViridis = interpolateTable viridisTable
+
+plasmaTable :: String
+plasmaTable = "0d088710078813078916078a19068c1b068d1d068e20068f2206902406912605912805922a0593"
+  <> "2c05942e05952f059631059733059735049837049938049a3a049a3c049b3e049c3f049c41049d"
+  <> "43039e44039e46039f48039f4903a04b03a14c02a14e02a25002a25102a35302a35502a45601a4"
+  <> "5801a45901a55b01a55c01a65e01a66001a66100a76300a76400a76600a76700a86900a86a00a8"
+  <> "6c00a86e00a86f00a87100a87201a87401a87501a87701a87801a87a02a87b02a87d03a87e03a8"
+  <> "8004a88104a78305a78405a78606a68707a68808a68a09a58b0aa58d0ba58e0ca48f0da4910ea3"
+  <> "920fa39410a29511a19613a19814a099159f9a169f9c179e9d189d9e199da01a9ca11b9ba21d9a"
+  <> "a31e9aa51f99a62098a72197a82296aa2395ab2494ac2694ad2793ae2892b02991b12a90b22b8f"
+  <> "b32c8eb42e8db52f8cb6308bb7318ab83289ba3388bb3488bc3587bd3786be3885bf3984c03a83"
+  <> "c13b82c23c81c33d80c43e7fc5407ec6417dc7427cc8437bc9447aca457acb4679cc4778cc4977"
+  <> "cd4a76ce4b75cf4c74d04d73d14e72d24f71d35171d45270d5536fd5546ed6556dd7566cd8576b"
+  <> "d9586ada5a6ada5b69db5c68dc5d67dd5e66de5f65de6164df6263e06363e16462e26561e26660"
+  <> "e3685fe4695ee56a5de56b5de66c5ce76e5be76f5ae87059e97158e97257ea7457eb7556eb7655"
+  <> "ec7754ed7953ed7a52ee7b51ef7c51ef7e50f07f4ff0804ef1814df1834cf2844bf3854bf3874a"
+  <> "f48849f48948f58b47f58c46f68d45f68f44f79044f79143f79342f89441f89540f9973ff9983e"
+  <> "f99a3efa9b3dfa9c3cfa9e3bfb9f3afba139fba238fca338fca537fca636fca835fca934fdab33"
+  <> "fdac33fdae32fdaf31fdb130fdb22ffdb42ffdb52efeb72dfeb82cfeba2cfebb2bfebd2afebe2a"
+  <> "fec029fdc229fdc328fdc527fdc627fdc827fdca26fdcb26fccd25fcce25fcd025fcd225fbd324"
+  <> "fbd524fbd724fad824fada24f9dc24f9dd25f8df25f8e125f7e225f7e425f6e626f6e826f5e926"
+  <> "f5eb27f4ed27f3ee27f3f027f2f227f1f426f1f525f0f724f0f921"
+
+interpolatePlasma :: Number -> String
+interpolatePlasma = interpolateTable plasmaTable
+
+infernoTable :: String
+infernoTable = "00000401000501010601010802010a02020c02020e03021004031204031405041706041907051b"
+  <> "08051d09061f0a07220b07240c08260d08290e092b10092d110a30120a32140b34150b37160b39"
+  <> "180c3c190c3e1b0c411c0c431e0c451f0c48210c4a230c4c240c4f260c51280b53290b552b0b57"
+  <> "2d0b592f0a5b310a5c320a5e340a5f3609613809623909633b09643d09653e0966400a67420a68"
+  <> "440a68450a69470b6a490b6a4a0c6b4c0c6b4d0d6c4f0d6c510e6c520e6d540f6d550f6d57106e"
+  <> "59106e5a116e5c126e5d126e5f136e61136e62146e64156e65156e67166e69166e6a176e6c186e"
+  <> "6d186e6f196e71196e721a6e741a6e751b6e771c6d781c6d7a1d6d7c1d6d7d1e6d7f1e6c801f6c"
+  <> "82206c84206b85216b87216b88226a8a226a8c23698d23698f2469902568922568932667952667"
+  <> "9727669827669a28659b29649d29649f2a63a02a63a22b62a32c61a52c60a62d60a82e5fa92e5e"
+  <> "ab2f5ead305dae305cb0315bb1325ab3325ab43359b63458b73557b93556ba3655bc3754bd3853"
+  <> "bf3952c03a51c13a50c33b4fc43c4ec63d4dc73e4cc83f4bca404acb4149cc4248ce4347cf4446"
+  <> "d04545d24644d34743d44842d54a41d74b3fd84c3ed94d3dda4e3cdb503bdd513ade5238df5337"
+  <> "e05536e15635e25734e35933e45a31e55c30e65d2fe75e2ee8602de9612bea632aeb6429eb6628"
+  <> "ec6726ed6925ee6a24ef6c23ef6e21f06f20f1711ff1731df2741cf3761bf37819f47918f57b17"
+  <> "f57d15f67e14f68013f78212f78410f8850ff8870ef8890cf98b0bf98c0af98e09fa9008fa9207"
+  <> "fa9407fb9606fb9706fb9906fb9b06fb9d07fc9f07fca108fca309fca50afca60cfca80dfcaa0f"
+  <> "fcac11fcae12fcb014fcb216fcb418fbb61afbb81dfbba1ffbbc21fbbe23fac026fac228fac42a"
+  <> "fac62df9c72ff9c932f9cb35f8cd37f8cf3af7d13df7d340f6d543f6d746f5d949f5db4cf4dd4f"
+  <> "f4df53f4e156f3e35af3e55df2e661f2e865f2ea69f1ec6df1ed71f1ef75f1f179f2f27df2f482"
+  <> "f3f586f3f68af4f88ef5f992f6fa96f8fb9af9fc9dfafda1fcffa4"
+
+interpolateInferno :: Number -> String
+interpolateInferno = interpolateTable infernoTable
+
+magmaTable :: String
+magmaTable = "00000401000501010601010802010902020b02020d03030f03031204041405041606051806051a"
+  <> "07061c08071e0907200a08220b09240c09260d0a290e0b2b100b2d110c2f120d31130d34140e36"
+  <> "150e38160f3b180f3d19103f1a10421c10441d11471e114920114b21114e221150241253251255"
+  <> "27125829115a2a115c2c115f2d11612f116331116533106734106936106b38106c390f6e3b0f70"
+  <> "3d0f713f0f72400f74420f75440f764510774710784910784a10794c117a4e117b4f127b51127c"
+  <> "52137c54137d56147d57157e59157e5a167e5c167f5d177f5f187f601880621980641a80651a80"
+  <> "671b80681c816a1c816b1d816d1d816e1e81701f81721f81732081752181762181782281792282"
+  <> "7b23827c23827e24828025828125818326818426818627818827818928818b29818c29818e2a81"
+  <> "902a81912b81932b80942c80962c80982d80992d809b2e7f9c2e7f9e2f7fa02f7fa1307ea3307e"
+  <> "a5317ea6317da8327daa337dab337cad347cae347bb0357bb2357bb3367ab5367ab73779b83779"
+  <> "ba3878bc3978bd3977bf3a77c03a76c23b75c43c75c53c74c73d73c83e73ca3e72cc3f71cd4071"
+  <> "cf4070d0416fd2426fd3436ed5446dd6456cd8456cd9466bdb476adc4869de4968df4a68e04c67"
+  <> "e24d66e34e65e44f64e55064e75263e85362e95462ea5661eb5760ec5860ed5a5fee5b5eef5d5e"
+  <> "f05f5ef1605df2625df2645cf3655cf4675cf4695cf56b5cf66c5cf66e5cf7705cf7725cf8745c"
+  <> "f8765cf9785df9795df97b5dfa7d5efa7f5efa815ffb835ffb8560fb8761fc8961fc8a62fc8c63"
+  <> "fc8e64fc9065fd9266fd9467fd9668fd9869fd9a6afd9b6bfe9d6cfe9f6dfea16efea36ffea571"
+  <> "fea772fea973feaa74feac76feae77feb078feb27afeb47bfeb67cfeb77efeb97ffebb81febd82"
+  <> "febf84fec185fec287fec488fec68afec88cfeca8dfecc8ffecd90fecf92fed194fed395fed597"
+  <> "fed799fed89afdda9cfddc9efddea0fde0a1fde2a3fde3a5fde5a7fde7a9fde9aafdebacfcecae"
+  <> "fceeb0fcf0b2fcf2b4fcf4b6fcf6b8fcf7b9fcf9bbfcfbbdfcfdbf"
+
+interpolateMagma :: Number -> String
+interpolateMagma = interpolateTable magmaTable
+
+turboTable :: String
+turboTable = "23171b271a282b1c332f1e3f32204a36235439255f3b27683e2a72402c7b422f8344318b453493"
+  <> "46369b4839a2493ca8493eaf4a41b54a44bb4b46c04b49c54b4cca4b4ecf4b51d34a54d74a56db"
+  <> "4959de495ce2485fe54761e74664ea4567ec446aee446df0426ff24172f34075f53f78f63e7af7"
+  <> "3d7df73c80f83a83f93985f93888f9378bf9368df93590f83393f83295f73198f7309bf62f9df5"
+  <> "2ea0f42da2f32ca5f12ba7f02aaaef2aaced29afec28b1ea28b4e827b6e627b8e526bbe326bde1"
+  <> "26bfdf25c1dc25c3da25c6d825c8d625cad325ccd125cecf26d0cc26d2ca26d4c827d6c527d8c3"
+  <> "28d9c029dbbe29ddbb2adfb82be0b62ce2b32de3b12ee5ae30e6ac31e8a932e9a634eba435eca1"
+  <> "37ed9f39ef9c3af09a3cf1973ef29540f39242f49044f58d46f68b48f7884af7864df8844ff981"
+  <> "51fa7f54fa7d56fb7a59fb785cfc765efc7461fd7164fd6f66fd6d69fd6b6cfd696ffe6772fe65"
+  <> "75fe6378fe617bfe5f7efd5d81fd5c84fd5a87fd588afc568dfc5590fb5393fb5196fa5099fa4e"
+  <> "9cf94d9ff84ba2f84aa6f748a9f647acf546aff444b2f343b5f242b8f141bbf03fbeef3ec1ed3d"
+  <> "c3ec3cc6eb3bc9e93acce839cfe738d1e537d4e336d7e235d9e034dcdf33dedd32e0db32e3d931"
+  <> "e5d730e7d52fe9d42fecd22eeed02df0ce2cf1cb2cf3c92bf5c72bf7c52af8c329fac029fbbe28"
+  <> "fdbc28feb927ffb727ffb526ffb226ffb025ffad25ffab24ffa824ffa623ffa323ffa022ff9e22"
+  <> "ff9b21ff9921ff9621ff9320ff9020ff8e1fff8b1fff881eff851eff831dff801dff7d1dff7a1c"
+  <> "ff781cff751bff721bff6f1afd6c1afc6a19fa6719f96418f76118f65f18f45c17f25916f05716"
+  <> "ee5415ec5115ea4f14e84c14e64913e44713e24412df4212dd3f11da3d10d83a10d5380fd3360f"
+  <> "d0330ece310dcb2f0dc92d0cc62a0bc3280bc1260abe2409bb2309b92108b61f07b41d07b11b06"
+  <> "af1a05ac1805aa1704a81604a51403a31302a112029f11019d10009b0f009a0e00980e00960d00"
+  <> "950c00940c00930c00920c00910b00910c00900c00900c00900c00"
+
+interpolateTurbo :: Number -> String
+interpolateTurbo = interpolateTable turboTable
+
+warmTable :: String
+warmTable = "6e40aa6f40aa7140ab723fac743fac753fad773fad783fae7a3fae7c3faf7d3faf7f3faf803eb0"
+  <> "823eb0833eb0853eb1873eb1883eb18a3eb28b3eb28d3eb28f3db2903db2923db3943db3953db3"
+  <> "973db3983db39a3db39c3db39d3db39f3db3a13db3a23db3a43db3a63cb3a73cb3a93cb3aa3cb2"
+  <> "ac3cb2ae3cb2af3cb2b13cb2b23cb1b43cb1b63cb1b73cb0b93cb0ba3cb0bc3cafbe3cafbf3caf"
+  <> "c13daec23daec43dadc53dadc73dacc83dacca3dabcb3daacd3daace3da9d03ea9d13ea8d33ea7"
+  <> "d43ea7d53ea6d73ea5d83fa4da3fa4db3fa3dc3fa2de3fa1df40a0e040a0e2409fe3409ee4419d"
+  <> "e5419ce7419be8429ae94299ea4298eb4397ed4396ee4395ef4494f04493f14592f24591f34590"
+  <> "f4468ff5468ef6478df7478cf8488bf9488afa4988fb4987fc4a86fd4a85fe4b84fe4b83ff4c81"
+  <> "ff4d80ff4d7fff4e7eff4e7dff4f7bff507aff5079ff5178ff5276ff5275ff5374ff5473ff5572"
+  <> "ff5570ff566fff576eff586dff586bff596aff5a69ff5b68ff5c66ff5d65ff5d64ff5e63ff5f61"
+  <> "ff6060ff615fff625eff635dff645bff655aff6659ff6758ff6857ff6956ff6a54ff6b53ff6c52"
+  <> "ff6d51ff6e50ff6f4fff704eff714dff724cff734bff744aff7549ff7648ff7847ff7946ff7a45"
+  <> "ff7b44ff7c43ff7d42ff7e41ff8040ff813fff823eff833dff843dff863cff873bff883aff893a"
+  <> "ff8a39ff8c38ff8d37ff8e37ff8f36fe9136fd9235fd9334fc9534fb9633fa9733f99832f99a32"
+  <> "f89b32f79c31f69d31f59f30f4a030f3a130f2a32ff1a42ff0a52fefa62feea82feda92eecaa2e"
+  <> "ebac2eeaad2ee9ae2ee8b02ee7b12ee6b22ee5b32ee4b52ee3b62ee2b72fe1b92fe0ba2fdfbb2f"
+  <> "debc30ddbe30dbbf30dac030d9c131d8c331d7c432d6c532d5c633d4c833d3c934d2ca34d1cb35"
+  <> "cfcc36cece36cdcf37ccd038cbd138cad239c9d33ac8d53bc7d63cc6d73cc5d83dc4d93ec3da3f"
+  <> "c2db40c1dc41c0dd42bfdf43bee044bde146bce247bbe348bae449b9e54ab8e64bb7e74db6e84e"
+  <> "b6e94fb5ea51b4ea52b3eb53b2ec55b1ed56b1ee58b0ef59aff05b"
+
+interpolateWarm :: Number -> String
+interpolateWarm = interpolateTable warmTable
+
+coolTable :: String
+coolTable = "6e40aa6d41ab6d41ad6d42ae6c43af6c43b06b44b26b45b36a46b46a46b56a47b76948b86849b9"
+  <> "684aba674abb674bbd664cbe664dbf654ec0654fc16450c26350c36351c46252c56153c66154c7"
+  <> "6055c85f56c95f57ca5e58cb5d59cc5c5acd5c5bce5b5ccf5a5dd0595ed1595fd15860d25761d3"
+  <> "5662d45663d55564d55465d65366d75267d75168d85169d9506ad94f6bda4e6cda4d6ddb4c6edb"
+  <> "4b70dc4b71dc4a72dd4973dd4874de4775de4676df4577df4479df447adf437be0427ce0417de0"
+  <> "407ee03f80e13e81e13d82e13d83e13c84e13b86e13a87e13988e13889e1378ae1378ce1368de1"
+  <> "358ee1348fe13390e13292e13293e13194e03095e02f96e02e98e02e99df2d9adf2c9bdf2b9cde"
+  <> "2b9ede2a9fdd29a0dd29a1dd28a2dc27a4dc26a5db26a6db25a7da25a8d924aad923abd823acd8"
+  <> "22add722aed621afd521b1d520b2d420b3d31fb4d21fb5d21eb6d11eb8d01db9cf1dbace1dbbcd"
+  <> "1cbccc1cbdcc1cbecb1bbfca1bc0c91bc2c81ac3c71ac4c61ac5c51ac6c41ac7c21ac8c119c9c0"
+  <> "19cabf19cbbe19ccbd19cdbc19cebb19cfb919d0b819d1b719d2b619d3b51ad4b41ad5b21ad5b1"
+  <> "1ad6b01ad7af1bd8ad1bd9ac1bdaab1bdbaa1cdba81cdca71cdda61ddea41ddfa31edfa21ee0a0"
+  <> "1fe19f1fe29e20e29d20e39b21e49a22e59922e59723e69624e79524e79325e89226e89127e98f"
+  <> "27ea8e28ea8d29eb8c2aeb8a2bec892cec882ded872eed852fee8430ee8331ef8232ef8033f07f"
+  <> "34f07e35f07d37f17c38f17a39f2793af2783bf2773df3763ef3753ff37441f37342f47143f470"
+  <> "45f46f46f46e48f56d49f56c4bf56b4cf56a4ef56a4ff66951f66852f66754f66655f66557f664"
+  <> "59f6645af6635cf6625ef6615ff76161f76063f75f64f75f66f75e68f75d6af75d6bf65c6df65c"
+  <> "6ff65b71f65b73f65a74f65a76f65978f6597af6597cf6587ef65880f55881f55883f55785f557"
+  <> "87f55789f5578bf4578df4578ff45791f45793f45794f35796f35798f3579af3579cf2579ef258"
+  <> "a0f258a2f258a4f158a6f159a8f159aaf159abf05aadf05aaff05b"
+
+interpolateCool :: Number -> String
+interpolateCool = interpolateTable coolTable
+
+rainbowTable :: String
+rainbowTable = "6e40aa7140ab743fac773fad7a3fae7d3faf803eb0833eb0873eb18a3eb28d3eb2903db2943db3"
+  <> "973db39a3db39d3db3a13db3a43db3a73cb3aa3cb2ae3cb2b13cb2b43cb1b73cb0ba3cb0be3caf"
+  <> "c13daec43dadc73dacca3dabcd3daad03ea9d33ea7d53ea6d83fa4db3fa3de3fa1e040a0e3409e"
+  <> "e5419ce8429aea4298ed4396ef4494f14592f34590f5468ef7478cf9488afb4987fd4a85fe4b83"
+  <> "ff4d80ff4e7eff4f7bff5079ff5276ff5374ff5572ff566fff586dff596aff5b68ff5d65ff5e63"
+  <> "ff6060ff625eff645bff6659ff6857ff6a54ff6c52ff6e50ff704eff724cff744aff7648ff7946"
+  <> "ff7b44ff7d42ff8040ff823eff843dff873bff893aff8c38ff8e37fe9136fd9334fb9633f99832"
+  <> "f89b32f69d31f4a030f2a32ff0a52feea82fecaa2eeaad2ee8b02ee6b22ee4b52ee2b72fe0ba2f"
+  <> "debc30dbbf30d9c131d7c432d5c633d3c934d1cb35cece36ccd038cad239c8d53bc6d73cc4d93e"
+  <> "c2db40c0dd42bee044bce247bae449b8e64bb6e84eb5ea51b3eb53b1ed56b0ef59adf05aaaf159"
+  <> "a6f159a2f2589ef2589af35796f35793f4578ff4578bf45787f55783f55780f5587cf65878f659"
+  <> "74f65a71f65b6df65c6af75d66f75e63f75f5ff7615cf66259f66455f66552f6674ff6694cf56a"
+  <> "49f56c46f46e43f47041f3733ef3753bf27739f27937f17c34f07e32ef8030ee832eed852cec88"
+  <> "2aeb8a28ea8d27e98f25e89224e79522e59721e49a20e29d1fe19f1edfa21ddea41cdca71bdbaa"
+  <> "1bd9ac1ad7af1ad5b11ad4b419d2b619d0b819cebb19ccbd19cabf1ac8c11ac6c41ac4c61bc2c8"
+  <> "1bbfca1cbdcc1dbbcd1db9cf1eb6d11fb4d220b2d421afd522add723abd825a8d926a6db27a4dc"
+  <> "29a1dd2a9fdd2b9cde2d9adf2e98e03095e03293e13390e1358ee1378ce13889e13a87e13c84e1"
+  <> "3d82e13f80e1417de0437be04479df4676df4874de4a72dd4b70dc4d6ddb4f6bda5169d95267d7"
+  <> "5465d65663d55761d3595fd15a5dd05c5bce5d59cc5f57ca6055c86153c66351c46450c2654ec0"
+  <> "664cbe674abb6849b96a47b76a46b46b44b26c43af6d41ad6e40aa"
+
+interpolateRainbow :: Number -> String
+interpolateRainbow = interpolateTable rainbowTable
+
+cividisTable :: String
+cividisTable = "00205100215300225500235600235800245900255a00255c00265d00275e00275f002860002961"
+  <> "002962002a63002b64012b65022c65032d66042d67052e67052f6806306907306908316a09326a"
+  <> "0b326a0c336b0d346b0e346b0f356c10366c12376c13376d14386d15396d17396d183a6d193b6d"
+  <> "1a3b6d1c3c6e1d3d6e1e3e6e203e6e213f6e23406e24406e25416e27426e28436e29436e2b446e"
+  <> "2c456e2e456e2f466e30476e32486e33486e34496e364a6e374a6e394b6e3a4c6e3b4d6e3d4d6e"
+  <> "3e4e6e3f4f6e414f6e42506e43516d44526d46526d47536d48546d4a546d4b556d4c566d4d576d"
+  <> "4e576e50586e51596e52596e535a6e545b6e565c6e575c6e585d6e595e6e5a5e6e5b5f6e5c606e"
+  <> "5d616e5e616e60626e61636f62646f63646f64656f65666f66666f67676f6868706969706a6970"
+  <> "6b6a706c6b706d6c706d6c716e6d716f6e71706f71716f71727071737172747172757272767372"
+  <> "7674727774737875737976737a77737b77747b78747c79747d7a747e7a747f7b75807c75807d75"
+  <> "817d75827e75837f768480768580768581768682768783768884778984778985778a86778b8777"
+  <> "8c87778d88778e89788e8a788f8a78908b78918c78928d78938e78938e78948f78959078969178"
+  <> "9792789892789993789a94789b95789b96789c96789d97789e98789f9978a09a78a19a78a29b78"
+  <> "a39c78a49d78a59e77a69e77a79f77a8a077a9a177aaa276aba376aca376ada476aea575afa675"
+  <> "b0a775b2a874b3a874b4a974b5aa73b6ab73b7ac72b8ad72baae72bbae71bcaf71bdb070beb170"
+  <> "bfb26fc1b36fc2b46ec3b56dc4b56dc5b66cc7b76cc8b86bc9b96acaba6accbb69cdbc68cebc68"
+  <> "cfbd67d1be66d2bf66d3c065d4c164d6c263d7c363d8c462d9c561dbc660dcc660ddc75fdec85e"
+  <> "e0c95de1ca5ce2cb5ce3cc5be4cd5ae6ce59e7cf58e8d058e9d157ead256ebd355ecd454edd453"
+  <> "eed553f0d652f1d751f1d850f2d950f3da4ff4db4ef5dc4df6dd4df7de4cf8df4bf8e04bf9e14a"
+  <> "fae249fae349fbe448fbe548fce647fce746fde846fde946fdea45"
+
+interpolateCividis :: Number -> String
+interpolateCividis = interpolateTable cividisTable
+
+cubehelixDefaultTable :: String
+cubehelixDefaultTable = "0000000201020301030502050702060803080a030a0b040c0c050e0e050f0f0611100713110815"
+  <> "120817130919140a1b150b1d160c1f160d21170e23180f2518102719112919122b19132d1a142f"
+  <> "1a16311a17331a18351b1a361b1b381b1c3a1b1e3b1b1f3d1a213e1a22401a24411a25431a2744"
+  <> "192845192a46192c47192d48182f4918314a18324b17344c17364c17374d16394d163b4e163d4e"
+  <> "163f4e16404e15424e15444f15464e15474e15494e154b4e154d4e154e4d15504d15524c16534c"
+  <> "16554b16574b17584a175a49185b48195d48195e471a60461b61451c63441d64431e65421f6741"
+  <> "20684022693f236a3e256b3d266c3c286d3b2a6e3a2b6f392d70382f7137317236337335357435"
+  <> "3874343a75333c76323f76324177314477314678304978304c792f4e792f51792f54792f577a2f"
+  <> "5a7a2f5d7a2f607a2f637a2f667a30697b306c7b316f7b31727b32757b33787b347b7a357e7a36"
+  <> "817a37847a38877a3a8a7a3b8d7a3d907a3e937a40967a429979449c79469f7948a1794aa4794c"
+  <> "a7794fa97951ac7954ae7956b17959b3795bb5795eb77961b97964bc7967be796abf796dc17a70"
+  <> "c37a73c57a76c67a79c87b7cc97b7fca7c83cc7c86cd7d89ce7d8ccf7e8fd07e93d17f96d18099"
+  <> "d2809cd381a0d382a3d383a6d484a9d485acd486afd487b2d588b5d589b8d48abbd48cbed48dc1"
+  <> "d48ec3d490c6d391c9d392cbd294ced295d0d297d2d198d4d09ad7d09cd9cf9ddbcf9fddcea1df"
+  <> "cda2e0cca4e2cca6e4cba8e5caa9e7caabe8c9ade9c8afeac8b1ecc7b2edc6b4eec6b6eec5b8ef"
+  <> "c5baf0c4bcf1c4bdf1c3bff2c3c1f2c2c3f2c2c5f3c2c6f3c2c8f3c1caf3c1ccf3c1cdf3c1cff3"
+  <> "c1d1f3c2d2f3c2d4f3c2d6f3c2d7f3c3d9f3c3daf2c4dcf2c4ddf2c5dff2c6e0f1c6e1f1c7e3f1"
+  <> "c8e4f0c9e5f0cae7f0cbe8f0cce9efcdeaefcfebefd0ecefd1edefd3eeefd4efefd6f0efd7f1ef"
+  <> "d9f2efdbf3efdcf3efdef4efe0f5f0e2f6f0e3f6f0e5f7f1e7f8f1e9f8f2ebf9f3edfaf4effaf4"
+  <> "f0fbf5f2fbf6f4fcf7f6fcf8f8fdfafafdfbfbfefcfdfefeffffff"
+
+interpolateCubehelixDefault :: Number -> String
+interpolateCubehelixDefault = interpolateTable cubehelixDefaultTable
+
+buGnTable :: String
+buGnTable = "f7fcfdf6fcfdf6fcfdf5fbfdf5fbfcf4fbfcf4fbfcf3fafcf2fafcf2fafcf1fafcf1fafcf0f9fb"
+  <> "f0f9fbeff9fbeef9fbeef8fbedf8faedf8faecf8faebf8faebf7faeaf7f9eaf7f9e9f7f9e8f6f9"
+  <> "e8f6f8e7f6f8e6f6f8e6f5f7e5f5f7e4f5f7e4f5f6e3f4f6e2f4f6e2f4f5e1f4f5e0f3f4e0f3f4"
+  <> "dff3f4def3f3ddf2f3ddf2f2dcf2f2dbf1f1daf1f1d9f1f0d9f0efd8f0efd7f0eed6f0eed5efed"
+  <> "d4efecd3eeecd2eeebd1eeebd0edeacfede9ceede8cdece8ccece7cbebe6caebe6c9ebe5c7eae4"
+  <> "c6eae3c5e9e3c4e9e2c2e8e1c1e8e0c0e7dfbee7dfbde6debce6ddbae5dcb9e4dbb7e4dab6e3da"
+  <> "b4e3d9b3e2d8b1e2d7b0e1d6aee0d5ade0d4abdfd3aadfd2a8ded1a7ddd0a5ddcfa4dccea2dbcd"
+  <> "a0dbcc9fdacb9dd9ca9cd9c99ad8c898d7c797d7c695d6c594d5c492d5c390d4c28fd3c18dd3c0"
+  <> "8cd2bf8ad1be88d1bc87d0bb85cfba84cfb982ceb881cdb77fcdb67eccb47ccbb37bcbb279cab1"
+  <> "78c9b076c9ae75c8ad73c7ac72c7ab70c6aa6fc5a86dc5a76cc4a66ac3a469c3a368c2a266c1a1"
+  <> "65c19f64c09e62bf9d61bf9b60be9a5ebd985dbd975cbc965bbb9459bb9358ba9257b99056b98f"
+  <> "54b88d53b78c52b78b51b68950b5884fb4864db4854cb3834bb2824ab18049b17f48b07d47af7c"
+  <> "46ae7b45ae7944ad7843ac7642ab7540aa733fa9723ea8703da76f3ca66d3ba56c3aa56a39a469"
+  <> "38a36737a26636a16435a063349f61339e60329d5e319c5d309b5c2f9a5a2e99592d97572c9656"
+  <> "2b95552a945329935228925127914f26904e258f4d248e4c238d4a228c49218b48208a471f8946"
+  <> "1e88451d87441c86431b85421a844119834018823f17813e16803d157f3c147e3b137d3a127c39"
+  <> "117b38107a381079370f78360e77350d76340c75340b74330b73320a7232097131087030086f2f"
+  <> "076e2f066c2e066b2d056a2d05692c04682b04672b04662a03642a036329026228026128026027"
+  <> "025e27015d26015c25015b25015a24015824015723005623005522005321005221005120005020"
+  <> "004e1f004d1f004c1e004a1e00491d00481d00471c00451c00441b"
+
+interpolateBuGn :: Number -> String
+interpolateBuGn = interpolateTable buGnTable
+
+buPuTable :: String
+buPuTable = "f7fcfdf6fbfdf6fbfcf5fafcf4fafcf3f9fcf3f9fbf2f8fbf1f8fbf0f7faf0f7faeff6faeef6fa"
+  <> "eef5f9edf5f9ecf4f9ebf4f8eaf3f8eaf3f8e9f2f7e8f2f7e7f1f7e7f0f7e6f0f6e5eff6e4eff6"
+  <> "e3eef5e3eef5e2edf5e1ecf4e0ecf4dfebf3deeaf3ddeaf3dce9f2dce8f2dbe8f2dae7f1d9e6f1"
+  <> "d8e6f0d7e5f0d6e4f0d5e4efd4e3efd3e2eed2e1eed1e1eed0e0edcfdfedcedeeccddeecccddec"
+  <> "cbdcebcadbebc9dbeac8daeac7d9eac6d8e9c5d8e9c4d7e8c3d6e8c2d5e7c1d5e7c0d4e7bfd3e6"
+  <> "bed2e6bdd2e5bcd1e5bbd0e5bacfe4b9cfe4b8cee3b7cde3b5cce3b4cce2b3cbe2b2cae1b1c9e1"
+  <> "b0c9e1afc8e0afc7e0aec6dfadc5dfacc5deabc4deaac3dea9c2dda8c1dda7c0dca6c0dca5bfdb"
+  <> "a4bedba3bddaa3bcdaa2bbd9a1bad9a0b9d89fb8d89fb7d79eb6d79db5d69cb4d69cb3d59bb2d5"
+  <> "9ab1d49ab0d499afd398aed398add297acd197aad196a9d095a8d095a7cf94a6ce94a5ce93a3cd"
+  <> "93a2cc92a1cc92a0cb929fcb919dca919cc9909bc9909ac89098c78f97c78f96c68f95c68f93c5"
+  <> "8e92c48e91c48e8fc38e8ec28e8dc28d8cc18d8ac08d89c08d88bf8d86be8d85be8d84bd8c82bc"
+  <> "8c81bc8c80bb8c7eba8c7dba8c7cb98c7ab98c79b88c78b78c76b78c75b68c74b58c72b58c71b4"
+  <> "8c70b38b6eb38b6db28b6cb18b6ab18b69b08b68af8b66af8b65ae8b64ae8b62ad8b61ac8b60ac"
+  <> "8b5eab8a5daa8a5caa8a5aa98a59a88a58a88a56a78a55a68a54a68a52a58951a4894fa3894ea3"
+  <> "894da2894ba1894aa18949a088479f88469e88449d88439d88419c88409b873f9a873d99873c98"
+  <> "873a98873997863796863695863494863393853192853091852f90852d8f842c8e842a8d84298c"
+  <> "83278b83268a822589822388812287812186801f84801e837f1d827e1c817e1a807d197f7c187d"
+  <> "7b177c7b167b7a1579791478781377771276761174741073730f72720f70710e6f700d6d6e0c6c"
+  <> "6d0c6b6c0b696a0a68690a6668096566086365086263076062075f60065d5f055c5d055a5c0459"
+  <> "5a045758035657035455025354025152015050014e4f004d4d004b"
+
+interpolateBuPu :: Number -> String
+interpolateBuPu = interpolateTable buPuTable
+
+gnBuTable :: String
+gnBuTable = "f7fcf0f6fceff6fbeff5fbeef4fbedf3fbedf3faecf2faebf1faebf1f9eaf0f9e9eff9e9eef9e8"
+  <> "eef8e7edf8e7ecf8e6ecf8e5ebf7e5eaf7e4e9f7e3e9f6e3e8f6e2e7f6e1e7f6e1e6f5e0e5f5df"
+  <> "e5f5dfe4f4dee3f4dde2f4dde2f4dce1f3dbe0f3dbe0f3dadff3d9def2d9def2d8ddf2d7dcf2d7"
+  <> "dcf1d6dbf1d5daf1d5daf0d4d9f0d3d8f0d3d8f0d2d7efd1d6efd1d6efd0d5efcfd4eecfd3eece"
+  <> "d3eecdd2edcdd1edccd0edcbd0edcbcfeccaceeccacdecc9cdebc8ccebc8cbebc7caeac6c9eac6"
+  <> "c8eac5c7e9c5c6e9c4c5e8c4c5e8c3c4e8c2c3e7c2c2e7c1c1e7c1c0e6c0bfe6c0bde5bfbce5bf"
+  <> "bbe5bebae4beb9e4beb8e3bdb7e3bdb6e2bdb5e2bcb3e1bcb2e1bcb1e1bbb0e0bbafe0bbaedfbb"
+  <> "acdfbbabdebaaadebaa9ddbaa7ddbaa6dcbaa5dcbaa3dbbaa2dbbaa1dabaa0daba9ed9bb9dd9bb"
+  <> "9cd8bb9ad8bb99d7bb98d7bc96d6bc95d6bc93d5bd92d5bd91d4bd8fd3be8ed3be8dd2be8bd2bf"
+  <> "8ad1bf88d1c087d0c086cfc184cfc183cec181cec280cdc27fccc37dccc37ccbc47acac479cac5"
+  <> "77c9c576c8c675c8c673c7c772c6c770c5c76fc5c86ec4c86cc3c96bc3c969c2ca68c1ca67c0ca"
+  <> "65bfcb64bfcb63becb61bdcc60bccc5fbbcc5dbacc5cb9cc5ab9cd59b8cd58b7cd57b6cd55b5cd"
+  <> "54b4cd53b3cd51b2cd50b1cd4fb0cd4eafcd4caecd4badcc4aaccc49abcc48aacc46a9cb45a8cb"
+  <> "44a6cb43a5ca42a4ca41a3c93fa2c93ea1c83da0c83c9ec73b9dc73a9cc6399bc6379ac53699c5"
+  <> "3597c43496c43395c33294c23193c23092c12f90c02d8fc02c8ebf2b8dbf2a8cbe298abd2889bd"
+  <> "2788bc2687bc2586bb2485ba2383ba2282b92081b91f80b81e7fb71d7eb71c7db61b7bb51a7ab5"
+  <> "1979b41978b31877b31776b21674b11573b01472b01371af1370ae126fad116dac106cac106bab"
+  <> "0f6aaa0e69a90e67a80d66a70d65a60c64a50c63a40c61a30b60a20b5fa10a5ea00a5d9e0a5b9d"
+  <> "0a5a9c09599b09589a095699095597095496095395085294085092084f91084e90084d8e084b8d"
+  <> "084a8c08498a084889084688084586084485084384084182084081"
+
+interpolateGnBu :: Number -> String
+interpolateGnBu = interpolateTable gnBuTable
+
+orRdTable :: String
+orRdTable = "fff7ecfff7ebfff6eafff6e9fff5e7fff5e6fff4e5fff4e4fff3e3fff3e2fff2e1fff2e0fff1de"
+  <> "fff1ddfff0dcfff0dbfeefdafeefd9feeed7feeed6feedd5feedd4feecd3feecd2feebd0feebcf"
+  <> "feeacefeeacdfee9ccfee9cafee8c9fee8c8fee7c7fee7c6fee6c4fee5c3fee5c2fee4c1fee4bf"
+  <> "fee3befee3bdfee2bcfee1bafee1b9fee0b8fee0b7fedfb5fedeb4fedeb3fdddb2fddcb1fddcaf"
+  <> "fddbaefddaadfddaacfdd9abfdd8a9fdd8a8fdd7a7fdd6a6fdd6a5fdd5a4fdd4a3fdd4a1fdd3a0"
+  <> "fdd29ffdd29efdd19dfdd09cfdcf9bfdcf9afdce99fdcd98fdcc97fdcc96fdcb95fdca94fdc994"
+  <> "fdc893fdc892fdc791fdc690fdc58ffdc48efdc38dfdc28cfdc18bfdc08afdbf89fdbe88fdbd87"
+  <> "fdbc86fdbb85fdba84fdb983fdb882fdb781fdb680fdb57ffdb47dfdb27cfdb17bfdb07afdaf79"
+  <> "fdae78fdac76fdab75fdaa74fca873fca772fca671fca46ffca36efca26dfca06cfc9f6bfc9e6a"
+  <> "fc9c68fc9b67fb9a66fb9865fb9764fb9563fb9462fb9361fb9160fa905ffa8f5efa8d5dfa8c5c"
+  <> "f98b5bf9895af98859f98759f88558f88457f88356f78155f78055f77f54f67d53f67c52f67b52"
+  <> "f57951f57850f4774ff4754ff4744ef3734df3714cf2704cf26f4bf16d4af16c49f06b49f06948"
+  <> "ef6847ef6646ee6545ed6344ed6243ec6042ec5f42eb5d41ea5c40ea5a3fe9593ee8573ce8563b"
+  <> "e7543ae65339e65138e55037e44e36e44c35e34b34e24932e14831e04630e0442fdf432ede412d"
+  <> "dd402bdc3e2adc3c29db3b28da3927d93826d83624d73423d63322d53121d43020d32e1fd22c1e"
+  <> "d12b1dd0291bcf281ace2619cd2518cc2317cb2216ca2015c91f14c81d13c71c12c61b11c51911"
+  <> "c31810c2170fc1150ec0140dbf130cbe120cbc110bbb100aba0e09b80d09b70c08b60b07b50b07"
+  <> "b30a06b20906b10805af0705ae0704ac0604ab0504a90503a80403a60402a50302a40302a20302"
+  <> "a002019f02019d02019c01019a01019901019701019601009401009200009100008f00008e0000"
+  <> "8c00008a00008900008700008600008400008200008100007f0000"
+
+interpolateOrRd :: Number -> String
+interpolateOrRd = interpolateTable orRdTable
+
+puBuGnTable :: String
+puBuGnTable = "fff7fbfef6fbfef6fafdf5fafdf4fafcf4f9fbf3f9fbf2f9faf2f8faf1f8f9f0f8f8f0f7f8eff7"
+  <> "f7eef7f7eef6f6edf6f5edf5f5ecf5f4ebf5f3ebf4f3eaf4f2e9f4f1e9f3f1e8f3f0e7f3efe7f2"
+  <> "efe6f2eee6f2ede5f1ede4f1ece4f1ebe3f0eae3f0eae2f0e9e1efe8e1efe7e0efe7e0eee6dfee"
+  <> "e5dfeee4deeee3ddede3ddede2dcede1dcece0dbecdfdbecdedaebddd9ebdcd9ebdcd8eadbd8ea"
+  <> "dad7ead9d7e9d8d6e9d7d5e9d6d5e8d5d4e8d4d4e8d3d3e7d2d3e7d1d2e7d0d2e6ced1e6cdd0e6"
+  <> "ccd0e5cbcfe5cacfe5c9cee4c8cde4c7cde4c5cce3c4cce3c3cbe3c2cae2c0cae2bfc9e2bec9e1"
+  <> "bdc8e1bbc7e1bac7e0b8c6e0b7c6e0b6c5dfb4c4dfb3c4dfb1c3deb0c2deaec2deadc1ddabc1dd"
+  <> "aac0dca8bfdca7bfdca5bedba4bddba2bddba0bcda9fbcda9dbbda9bbad999bad998b9d996b8d8"
+  <> "94b8d892b7d791b6d78fb6d78db5d68bb5d689b4d687b3d586b3d584b2d482b1d480b1d47eb0d3"
+  <> "7cafd37aafd279aed277add275add173acd171abd070abd06eaad06ca9cf6aa9cf68a8ce67a7ce"
+  <> "65a6cd63a6cd62a5cd60a4cc5ea3cc5da3cb5ba2cb59a1ca58a1ca56a0c9549fc9539ec8519ec7"
+  <> "4f9dc74e9cc64c9bc64b9bc5499ac44799c44699c34498c24397c14197c14096c03e95bf3c94be"
+  <> "3b94bd3993bc3893bb3692ba3591b93391b83190b7308fb52e8fb42d8eb32b8eb2298db0288daf"
+  <> "268cae258bac238bab228aa9208aa81f89a61d89a51c88a31b88a21987a018879f17869d15869b"
+  <> "14859a1385981284971183951083930e82920d82900c818e0c818d0b808b0a808a097f88087e86"
+  <> "087e85077d83077d82067c80057b7e057b7d057a7b047a7a047978037877037875037774037672"
+  <> "02757102756f02746e02736c02736b027269027168017066016f65016f64016e62016d61016c60"
+  <> "016b5e016a5d01695b01685a016759016658016556016455016354016253016151016050015f4f"
+  <> "015e4e015d4d015c4b015b4a015a49015948015847015646015544015443015342015241015140"
+  <> "014f3f014e3e014d3d014c3b014b3a014a39014838014737014636"
+
+interpolatePuBuGn :: Number -> String
+interpolatePuBuGn = interpolateTable puBuGnTable
+
+puBuTable :: String
+puBuTable = "fff7fbfef6fbfef6fafdf5fafdf5fafcf4fafbf4f9fbf3f9faf3f9faf2f8f9f2f8f8f1f8f8f1f8"
+  <> "f7f0f7f7f0f7f6eff7f5eff6f5eef6f4eef6f3edf6f3edf5f2ecf5f1ecf5f1ebf4f0ebf4efeaf4"
+  <> "efe9f3eee9f3ede8f3ede8f2ece7f2ebe7f2eae6f1eae5f1e9e5f1e8e4f0e7e3f0e7e3f0e6e2ef"
+  <> "e5e2efe4e1efe3e0eee3e0eee2dfeee1deede0deeddfddeddedcecdddcecdcdbecdcdaebdbdaeb"
+  <> "dad9ead9d8ead8d8ead7d7e9d6d6e9d5d6e9d4d5e8d3d4e8d2d4e8d1d3e7d0d2e7ced2e6cdd1e6"
+  <> "ccd1e6cbd0e5cacfe5c9cfe5c8cee4c7cde4c5cde4c4cce3c3cbe3c2cbe3c0cae2bfc9e2bec9e1"
+  <> "bdc8e1bbc7e1bac7e0b9c6e0b8c6e0b6c5dfb5c4dfb4c4dfb2c3deb1c2deafc2deaec1ddadc1dd"
+  <> "abc0dcaabfdca8bfdca7bedba6bddba4bddba3bcdaa1bcdaa0bbda9ebad99dbad99bb9d99ab8d8"
+  <> "98b8d897b7d795b6d794b6d792b5d691b5d68fb4d68db3d58cb3d58ab2d489b1d487b1d485b0d3"
+  <> "84afd382afd281aed27fadd27dadd17bacd17aabd078abd076aad075a9cf73a9cf71a8ce6fa7ce"
+  <> "6ea6cd6ca6cd6aa5cd68a4cc66a3cc65a3cb63a2cb61a1ca5fa0ca5da0c95b9fc95a9ec9589dc8"
+  <> "569dc8549cc7529bc7509ac64e99c64d99c54b98c54997c44796c44595c34394c34294c24093c2"
+  <> "3e92c13c91c13b90c1398fc0378ec0358dbf348cbf328cbe308bbe2f8abd2d89bd2b88bc2a87bc"
+  <> "2886bb2785bb2584ba2483b92282b92181b81f80b81e7fb71c7eb71b7eb61a7db5197cb5177bb4"
+  <> "167ab41579b31478b21377b11276b11175b01074af0f74af0e73ae0d72ad0c71ac0c70ab0b6fab"
+  <> "0a6faa0a6ea9096da8096ca7086ba6086ba5076aa40769a30768a20667a10667a006669f06659e"
+  <> "05649d05649c05639b056299056198056097046096045f95045e93045d92045c91045c90045b8e"
+  <> "045a8d04598c04588a04578904568704558604558504548304538203528003517f03507d034f7c"
+  <> "034e7a034d79034c77034b75034a7403497203487103476f03466d03456c03446a034369034267"
+  <> "024165023f64023e62023d60023c5f023b5d023a5b02395a023858"
+
+interpolatePuBu :: Number -> String
+interpolatePuBu = interpolateTable puBuTable
+
+puRdTable :: String
+puRdTable = "f7f4f9f6f3f9f6f3f8f5f2f8f5f2f8f4f1f7f4f0f7f3f0f7f3eff6f2eff6f2eef6f1edf5f1edf5"
+  <> "f0ecf5f0ebf4efebf4efeaf4eee9f3eee9f3ede8f3ede7f2ece6f2ece6f1ebe5f1ebe4f1eae3f0"
+  <> "eae3f0e9e2efe9e1efe8e0efe8dfeee7deeee6ddede6dcede5dbece5dbece4daebe4d9ebe3d7ea"
+  <> "e3d6e9e2d5e9e1d4e8e1d3e8e0d2e7e0d1e7dfd0e6dfcfe5decee5decce4ddcbe4dccae3dcc9e2"
+  <> "dbc8e2dbc7e1dac5e0dac4e0d9c3dfd9c2dfd8c0ded8bfddd7beddd7bddcd6bcdbd6badbd5b9da"
+  <> "d5b8dad4b7d9d4b6d8d3b4d8d3b3d7d3b2d6d2b1d6d2b0d5d1aed5d1add4d1acd3d0abd3d0aad2"
+  <> "d0a8d2d0a7d1cfa6d0cfa5d0cfa4cfcfa2cecea1cecea0cdce9fcdce9dccce9ccbce9bcbce9aca"
+  <> "ce98c9ce97c9ce96c8ce94c7ce93c7cf92c6cf91c5cf8fc5cf8ec4d08cc3d08bc3d08ac2d188c1"
+  <> "d187c1d186c0d284bfd283bfd381bed380bdd47ebcd47dbcd57bbbd57abad678b9d677b8d775b8"
+  <> "d774b7d872b6d871b5d96fb4d96db3da6cb3da6ab2db69b1db67b0dc65afdc64aedd62addd60ac"
+  <> "de5fabde5daadf5ba9df59a8df58a7e056a6e054a5e053a4e151a3e14fa2e14da0e24c9fe24a9e"
+  <> "e2489de2479ce2459be24399e24298e34097e33e96e33d94e33b93e33a92e33890e2378fe2358e"
+  <> "e2348ce2328be2318ae23088e12e87e12d85e12c84e02b82e02a81df2880df277edf267dde257b"
+  <> "dd247add2378dc2277dc2175db2074da2072d91f71d91e6fd81d6ed71c6dd61b6bd51b6ad41a68"
+  <> "d31967d21866d11864d01763cf1662ce1661cd155fcc145ecb145dc9135cc8125bc7125ac61159"
+  <> "c41058c31057c20f56c00f55bf0e54bd0d53bc0d52ba0c51b90c50b70b4fb60b4fb40a4eb30a4d"
+  <> "b1094cb0094bae084bac084aab0749a90748a80648a60647a40546a30545a10544a004449e0443"
+  <> "9c04429b034199034097033f96033f94023e93023d91023c8f023b8e013a8c01398b0138890137"
+  <> "8801368601358401348301338100328000317e00307d002f7b002d79002c78002b76002a750029"
+  <> "7300287200277000266f00256d00246c00226a002169002067001f"
+
+interpolatePuRd :: Number -> String
+interpolatePuRd = interpolateTable puRdTable
+
+rdPuTable :: String
+rdPuTable = "fff7f3fff6f2fff6f2fff5f1fff4f0fff3f0fff3effff2eefff1edfef0edfef0ecfeefebfeeeeb"
+  <> "feeeeafeede9feece9feebe8feebe7feeae6fee9e6fee8e5fee8e4fee7e3fee6e3fee5e2fee5e1"
+  <> "fde4e0fde3e0fde2dffde2defde1ddfde0ddfddfdcfddedbfddedafdddd9fddcd8fddbd8fddad7"
+  <> "fddad6fdd9d5fdd8d4fdd7d4fdd6d3fdd5d2fdd5d1fdd4d0fdd3cffcd2cffcd1cefcd0cdfccfcc"
+  <> "fccecbfccecbfccdcafcccc9fccbc8fccac8fcc9c7fcc8c6fcc7c5fcc6c5fcc5c4fcc4c3fcc3c3"
+  <> "fcc2c2fcc1c2fcc0c1fcbfc0fcbec0fcbdbffbbbbffbbabefbb9befbb8bdfbb7bdfbb6bcfbb5bc"
+  <> "fbb3bbfbb2bbfbb1bbfbb0bafbafbafbadb9fbacb9fbabb8fba9b8faa8b7faa7b7faa5b7faa4b6"
+  <> "faa3b6faa1b5faa0b5fa9fb4fa9db4fa9cb3fa9ab3fa99b2fa97b2f996b1f994b1f993b0f991b0"
+  <> "f98faff98eaff98caef98baef989adf887acf886acf884abf882abf881aaf87faaf77ea9f77ca9"
+  <> "f77aa8f778a7f677a7f675a6f673a6f572a5f570a5f56ea4f46da4f46ba3f369a3f368a2f266a2"
+  <> "f264a2f163a1f161a1f05fa0f05ea0ef5c9fee5a9fee599fed579eec559eec549deb529dea509c"
+  <> "e94f9ce94d9ce84c9be74a9be6489ae5479ae4459ae34399e24299e14098e03e98df3d97de3b97"
+  <> "dd3a96dc3896db3695da3595d93394d83294d63093d52e92d42d92d32b91d12a91d02890cf268f"
+  <> "ce258fcc238ecb228dca208dc81f8cc71d8bc51c8bc41b8ac31989c11889c01788be1588bd1487"
+  <> "bb1386ba1286b81185b70f84b50e84b40d83b20c83b10b82af0b82ae0a81ac0981aa0880a90780"
+  <> "a7077fa6067fa4067ea3057ea1057e9f047d9e047d9c037c9b037c99037c97037b96027b94027b"
+  <> "93027a91027a8f027a8e017a8c01798b01798901798701788601788401788301788101777f0177"
+  <> "7e01777c01767b01767901767801757601757401757301747101747001746e01736d01736b0173"
+  <> "6901726801726601726501716301716200706000705f00705d006f5b006f5a006e58006e57006e"
+  <> "55006d54006d52006c51006c4f006c4e006b4c006b4b006a49006a"
+
+interpolateRdPu :: Number -> String
+interpolateRdPu = interpolateTable rdPuTable
+
+ylGnBuTable :: String
+ylGnBuTable = "ffffd9feffd8feffd6fdfed5fdfed4fcfed3fcfed2fbfdd0fafdcffafdcef9fdcdf9fdcbf8fcca"
+  <> "f7fcc9f7fcc8f6fcc7f6fbc6f5fbc5f4fbc4f4fbc3f3fac2f2fac1f1fac0f1f9bff0f9beeff9bd"
+  <> "eff9bceef8bbedf8bbecf8baebf7b9eaf7b9eaf7b8e9f6b8e8f6b7e7f6b7e6f5b6e5f5b6e4f4b5"
+  <> "e3f4b5e2f4b5e1f3b4e0f3b4dff2b4ddf2b4dcf1b4dbf1b4daf0b4d9f0b3d7efb3d6efb3d5eeb3"
+  <> "d3eeb3d2edb3d1edb4cfecb4ceecb4ccebb4cbebb4c9eab4c8e9b4c6e9b4c4e8b4c3e7b5c1e7b5"
+  <> "bfe6b5bde5b5bce5b5bae4b5b8e3b6b6e2b6b4e2b6b2e1b6b0e0b6aedfb6acdfb7aadeb7a8ddb7"
+  <> "a6dcb7a4dbb7a2dbb8a0dab89ed9b89cd8b899d7b997d7b995d6b993d5b991d4b98fd3ba8dd2ba"
+  <> "8ad2ba88d1ba86d0bb84cfbb82cebb80cebb7ecdbc7cccbc7acbbc78cabc76cabd73c9bd71c8bd"
+  <> "6fc7bd6dc6be6bc6be6ac5be68c4be66c3bf64c3bf62c2bf60c1bf5ec0c05cbfc05abfc059bec0"
+  <> "57bdc055bcc153bbc152bac150bac14eb9c14db8c14bb7c149b6c248b5c246b4c245b3c243b2c2"
+  <> "42b1c240b0c23fafc23daec23cadc23bacc239abc238aac237a9c235a8c234a7c233a6c232a5c2"
+  <> "31a3c130a2c12fa1c12ea0c12d9fc12c9dc02b9cc02a9bc0299ac02898bf2897bf2796bf2695be"
+  <> "2693be2592be2591bd248fbd248ebc238cbc238bbb228abb2288ba2287ba2185b92184b92182b8"
+  <> "2181b8217fb7217eb6207cb6207bb52079b52078b42076b32075b32073b22072b12070b1216fb0"
+  <> "216daf216cae216aae2169ad2167ac2166ac2164ab2163aa2261aa2260a9225ea8225da7225ca7"
+  <> "225aa62259a52257a52256a42354a32353a32352a22350a1234fa0234ea0234c9f234b9e234a9d"
+  <> "23499d23479c23469b23459a224499224298224197224096223f95223e94213d93213c92213a91"
+  <> "20399020388f20378d1f368c1f358b1e348a1e33881d32871d31851c31841c30821b2f811a2e7f"
+  <> "1a2d7e192c7c182b7a172b79172a7716297515287414277213277013266e12256c11246b102469"
+  <> "0f23670e22650d21630d21610c20600b1f5e0a1e5c091e5a081d58"
+
+interpolateYlGnBu :: Number -> String
+interpolateYlGnBu = interpolateTable ylGnBuTable
+
+ylGnTable :: String
+ylGnTable = "ffffe5ffffe4feffe2feffe1feffdffeffdefdfeddfdfedbfdfedafdfed9fcfed7fcfed6fcfed5"
+  <> "fbfed3fbfed2fbfdd1fbfdcffafdcefafdcdf9fdccf9fdcaf9fdc9f8fcc8f8fcc7f7fcc5f7fcc4"
+  <> "f6fcc3f6fcc2f5fbc1f5fbc0f4fbbff4fbbef3fabdf3fabcf2fabbf1fabaf1f9b9f0f9b8eff9b7"
+  <> "eff9b6eef8b5edf8b4ecf8b3ebf7b2ebf7b2eaf7b1e9f6b0e8f6afe7f6aee6f5aee5f5ade4f4ac"
+  <> "e3f4abe2f4abe1f3aae0f3a9dff2a8def2a8ddf2a7dcf1a6dbf1a6daf0a5d9f0a4d8efa4d6efa3"
+  <> "d5eea2d4eea2d3eda1d2eda0d0eca0cfec9fceeb9ecdeb9ecbea9dcaea9cc9e99cc7e89bc6e89a"
+  <> "c5e79ac3e799c2e698c1e598bfe597bee496bde496bbe395bae294b8e294b7e193b5e192b4e092"
+  <> "b2df91b1df90afde90aedd8facdd8eabdc8ea9db8da8db8ca6da8ca5d98ba3d98aa2d88aa0d789"
+  <> "9ed7889dd6889bd5879ad58698d48696d38595d28493d28492d18390d0828ed0828dcf818bce80"
+  <> "89cd8088cd7f86cc7e84cb7d83ca7d81ca7c7fc97b7ec87a7cc77a7ac77979c67877c57775c477"
+  <> "73c37672c37570c2746ec1746dc0736bbf7269be7168be7066bd6f64bc6f63bb6e61ba6d5fb96c"
+  <> "5eb96b5cb86a5ab76a59b66957b56856b46754b36653b26551b16450b0644eaf634dae624bad61"
+  <> "4aac6048ab5f47aa5e46a95e44a85d43a75c42a65b40a55a3fa4593ea3593da2583ca1573aa056"
+  <> "399f55389d55379c54369b53359a5234995133985132975031964f30944e2f934e2e924d2d914c"
+  <> "2c904b2a8f4b298e4a288d49278b49268a482589472488472387462286452185452084441f8344"
+  <> "1e82431d81431c80421b7f421a7e41197d41187c40177b40167a3f15793f14783e13773e12763d"
+  <> "11753d10743c10733c0f723c0e723b0d713b0c703a0b6f3a0b6e3a0a6d39096c39086b38086a38"
+  <> "076938066837066737056636056536046435046335046235036134036034025f33025e33025d33"
+  <> "025c32015b32015a3101593101573001563001553000542f00532f00522e00512e00502d004f2d"
+  <> "004e2d004d2c004c2c004a2b00492b00482a00472a004629004529"
+
+interpolateYlGn :: Number -> String
+interpolateYlGn = interpolateTable ylGnTable
+
+ylOrBrTable :: String
+ylOrBrTable = "ffffe5ffffe4fffee2fffee1fffee0fffedffffdddfffddcfffddbfffdd9fffcd8fffcd7fffcd6"
+  <> "fffcd4fffbd3fffbd2fffbd0fffacffffacefffaccfff9cbfff9cafff9c9fff8c7fff8c6fff8c5"
+  <> "fff7c3fff7c2fff7c1fff6bffff6befff5bdfff5bcfff4bafff4b9fff4b8fff3b6fff3b5fff2b4"
+  <> "fff2b2fff1b1fff1affff0aeffefadffefabffeeaaffeea9ffeda7feeca6feeca4feeba3feeaa1"
+  <> "feeaa0fee99efee89dfee89bfee79afee698fee697fee595fee493fee392fee390fee28efee18d"
+  <> "fee08bfedf89fedf87fede86fedd84fedc82fedb80feda7efed97dfed87bfed779fed777fed675"
+  <> "fed573fed471fed370fed26efed16cfed06afecf68fece66fecd64fecc63fecb61fec95ffec85d"
+  <> "fec75bfec65afec558fec456fec355fec253fec051febf50febe4efebd4dfebc4bfeba4afeb948"
+  <> "feb847feb746feb544feb443feb341feb240feb03ffeaf3efeae3cfeac3bfdab3afdaa39fda938"
+  <> "fda737fda635fda534fda333fca232fca131fc9f30fc9e2ffc9d2efb9b2dfb9a2cfb992bfb972a"
+  <> "fa962afa9529fa9328f99227f99126f89025f88e25f88d24f78c23f78a22f68921f68821f58620"
+  <> "f5851ff4841ff3831ef3811df2801cf27f1cf17e1bf07c1af07b1aef7a19ee7918ee7718ed7617"
+  <> "ec7517eb7416eb7215ea7115e97014e86f14e86e13e76c12e66b12e56a11e46911e36810e2670f"
+  <> "e1650fe1640ee0630edf620dde610ddd600cdc5f0cdb5e0bda5d0bd95b0ad75a0ad65909d55809"
+  <> "d45708d35608d25508d15407cf5307ce5207cd5106cc5006ca4f06c94e05c84d05c74c05c54b05"
+  <> "c44b05c24a04c14904c04804be4704bd4604bb4504ba4504b84404b74304b54203b44103b24103"
+  <> "b14003af3f03ae3e03ac3e03ab3d03a93c03a83b04a63b04a43a04a33904a13904a038049e3704"
+  <> "9c37049b36049936049835049634049434049333049133049032048e31048c31048b3005893005"
+  <> "882f05862f05842e05832e05812d05802d057e2c057c2c057b2b05792b05782a05762a05742905"
+  <> "7329057128067028066e27066c27066b2606692606682506662506"
+
+interpolateYlOrBr :: Number -> String
+interpolateYlOrBr = interpolateTable ylOrBrTable
+
+ylOrRdTable :: String
+ylOrRdTable = "ffffccfffecbfffec9fffdc8fffdc6fffcc5fffcc4fffbc2fffac1fffac0fff9befff9bdfff8bb"
+  <> "fff8bafff7b9fff6b7fff6b6fff5b5fff5b3fff4b2fff4b0fff3affff2aefff2acfff1abfff1aa"
+  <> "fff0a8fff0a7ffefa6ffeea4ffeea3ffeda2ffeda0ffec9fffeb9dffeb9cffea9bffea99ffe998"
+  <> "ffe897ffe895ffe794ffe693ffe691ffe590ffe48fffe48dffe38cfee28bfee289fee188fee087"
+  <> "fee085fedf84fede83fedd82fedc80fedc7ffedb7efeda7cfed97bfed87afed778fed777fed676"
+  <> "fed574fed473fed372fed270fed16ffed06efecf6cfece6bfecd6afecb69feca67fec966fec865"
+  <> "fec764fec662fec561fec460fec25ffec15efec05cfebf5bfebe5afebd59febb58feba57feb956"
+  <> "feb855feb754feb553feb452feb351feb250feb14ffeb04efeae4dfead4dfeac4cfeab4bfeaa4a"
+  <> "fea84afea749fea648fea547fea347fea246fea145fda045fd9e44fd9d44fd9c43fd9b42fd9942"
+  <> "fd9841fd9741fd9540fd9440fd923ffd913ffd8f3efd8e3efd8d3dfd8b3cfd893cfd883bfd863b"
+  <> "fd853afd833afd8139fd8039fd7e38fd7c38fd7b37fd7937fd7736fc7535fc7335fc7234fc7034"
+  <> "fc6e33fc6c33fc6a32fc6832fb6731fb6531fb6330fb6130fb5f2ffa5d2efa5c2efa5a2dfa582d"
+  <> "f9562cf9542cf9522bf8512bf84f2af74d2af74b29f64929f64828f54628f54427f44227f44127"
+  <> "f33f26f23d26f23c25f13a25f03824f03724ef3524ee3423ed3223ed3123ec2f22eb2e22ea2c22"
+  <> "e92b22e92921e82821e72621e62521e52420e42220e32120e22020e11f20e01d20df1c20de1b20"
+  <> "dd1a20dc1920db1820da1720d91620d81520d71420d51320d41221d31121d21021d10f21cf0e21"
+  <> "ce0d21cd0d22cc0c22ca0b22c90a22c80a22c60923c50823c40823c20723c10723bf0624be0624"
+  <> "bc0524bb0524b90424b80424b60425b50325b30325b10325b00225ae0225ac0225ab0225a90125"
+  <> "a70126a50126a40126a20126a001269e01269c00269a0026990026970026950026930026910026"
+  <> "8f00268d00268b00268a0026880026860026840026820026800026"
+
+interpolateYlOrRd :: Number -> String
+interpolateYlOrRd = interpolateTable ylOrRdTable
+
+rdYlGnTable :: String
+rdYlGnTable = "a50026a70226a90426ab0626ad0826af0926b10b26b30d26b50f26b61127b81327ba1527bc1727"
+  <> "be1927c01b27c21d28c41f28c52128c72328c92529cb2729cc2929ce2b2ad02d2ad12f2bd3312b"
+  <> "d4332cd6352cd7382dd93a2eda3c2edc3e2fdd4030de4331e04532e14733e24a33e34c34e44e35"
+  <> "e55136e75337e85538e95839ea5a3aeb5d3cec5f3ded613eed643fee6640ef6941f06b42f16e43"
+  <> "f17044f27346f37547f37848f47a49f57d4af57f4bf6824df6844ef7864ff78950f88b51f88e53"
+  <> "f89054f99355f99556f99858fa9a59fa9c5afa9f5bfba15dfba35efba660fba861fcaa62fcad64"
+  <> "fcaf65fcb167fcb368fcb56afdb86bfdba6dfdbc6efdbe70fdc071fdc273fdc474fdc676fdc878"
+  <> "fdca79fecc7bfecd7dfecf7efed180fed382fed584fed685fed887feda89fedb8bfedd8dfede8f"
+  <> "fee090fee192fee394fee496fee698fee79afee89bfeea9dfeeb9ffeeca0feeda2feeea3fdefa5"
+  <> "fdf0a6fdf1a7fdf2a9fcf3aafcf4abfcf5abfbf5acfbf6adfaf6adfaf7adf9f7aef8f7aef7f8ad"
+  <> "f7f8adf6f8adf5f8acf4f8abf3f8abf1f8aaf0f7a9eff7a8eef7a6edf6a5ebf6a4eaf6a2e8f5a1"
+  <> "e7f59fe6f49de4f39ce2f39ae1f298dff297def195dcf093daef92d9ef90d7ee8ed5ed8dd3ec8b"
+  <> "d2ec89d0eb88ceea86cce985cae983c8e882c6e780c4e67fc2e57ec0e47cbee47bbce37abae279"
+  <> "b8e178b6e076b4df75b2de74b0dd73aedc72acdb71a9da70a7d970a5d86fa3d86ea0d76d9ed66c"
+  <> "9cd56c99d36b97d26b95d16a92d06990cf698ece688bcd6889cc6786cb6784ca6681c9667fc866"
+  <> "7cc66579c56577c46474c36471c2636fc0636cbf6269be6267bd6264bc6161ba605eb9605cb85f"
+  <> "59b65f56b55e53b45e51b25d4eb15c4baf5c48ae5b46ad5a43ab5a40aa593da8583ba75738a557"
+  <> "36a45633a25531a1542e9f542c9d532a9c52289a5125995023974f21954f1f944e1e924d1c904c"
+  <> "1a8f4b188d4a178b491589481487471286461184461082450e80440d7e430c7d420b7b410a7940"
+  <> "08773f07753e06733d05713c04703b036e3a026c39016a38006837"
+
+interpolateRdYlGn :: Number -> String
+interpolateRdYlGn = interpolateTable rdYlGnTable
+
+rdBuTable :: String
+rdBuTable = "67001f6a011f6d02207003207304217605217906227b07227e0823810923840a24870b248a0c25"
+  <> "8c0d268f0f269210279411279712289a14299c15299f172aa1182ba41a2ca61c2da81d2daa1f2e"
+  <> "ad212faf2330b12531b32732b52933b72b34b82e35ba3036bc3238be3539bf373ac13a3bc33c3d"
+  <> "c43f3ec6413fc74441c94742ca4943cc4c45cd4f46ce5248d0544ad1574bd25a4dd45d4ed56050"
+  <> "d66252d86554d96855da6b57db6d59dd705bde735ddf755fe07861e17b63e27d65e48067e58369"
+  <> "e6856be7886de88b6fe98d71ea9073eb9276ec9578ed977aee9a7cee9c7fef9f81f0a183f1a486"
+  <> "f2a688f2a88bf3ab8df4ad90f4af92f5b295f5b497f6b69af6b89cf7ba9ff7bda1f8bfa4f8c1a6"
+  <> "f8c3a9f9c5abf9c7aef9c9b0facab3faccb5faceb8fad0bafad2bcfad3bffad5c1fbd7c4fbd8c6"
+  <> "fbdac8fbdbcafbddccfadecffae0d1fae1d3fae2d5fae3d7fae5d8fae6daf9e7dcf9e8def9e9e0"
+  <> "f8eae1f8eae3f7ebe4f7ece6f6ede7f6ede8f5eee9f4eeebf4efecf3efedf2efedf1efeef0f0ef"
+  <> "eff0f0eef0f0edf0f1eceff1ebeff1eaeff2e9eff2e7eef2e6eef2e5edf2e3edf2e2ecf2e0ecf2"
+  <> "dfebf2ddeaf2dbeaf1dae9f1d8e8f1d6e7f0d4e6f0d3e6f0d1e5efcfe4efcde3eecbe2eec9e1ed"
+  <> "c7e0edc5dfecc2ddecc0dcebbedbeabcdaeabad9e9b7d8e8b5d7e8b2d5e7b0d4e6aed3e6abd1e5"
+  <> "a9d0e4a6cfe3a3cde3a1cce29ecae19cc9e099c7e096c6df93c4de91c3dd8ec1dc8bc0db88beda"
+  <> "85bcd983bbd880b9d77db7d77ab5d677b3d574b2d471b0d36faed26cacd169aad066a8cf64a7ce"
+  <> "61a5cd5ea3cc5ba1cb599fca569dc9549bc85199c74f98c64d96c54b94c44892c34690c2448ec1"
+  <> "428cc0408bbf3e89be3d87bd3b85bc3983bb3781ba3680b9347eb7337cb6317ab53078b42e76b2"
+  <> "2d75b12c73b02a71ae296fad286dab266baa2569a82467a62365a42164a22062a01f609e1e5e9c"
+  <> "1d5c9a1b5a981a589519569318549017528e164f8b154d89134b8612498311478110457e0f437b"
+  <> "0e41780d3f750c3d730a3b7009386d08366a073467063264053061"
+
+interpolateRdBu :: Number -> String
+interpolateRdBu = interpolateTable rdBuTable
+
+piYGTable :: String
+piYGTable = "8e015290025492035594045797055999065a9b075c9d085e9f0960a10b61a30c63a50d65a70e66"
+  <> "a91068ab116aad136baf146db1166fb31771b51972b71b74b91d76ba1e78bc217abe237bbf257d"
+  <> "c1277fc22a81c42c83c52f84c73186c83488c9378acb3a8ccc3d8ecd408fce4391cf4693d04995"
+  <> "d24c97d34f99d4529bd5569dd6599ed75ca0d85fa2d963a4d966a6da69a8db6caadc6fabdd72ad"
+  <> "de75afdf78b1e07bb3e07eb4e181b6e284b8e386bae489bbe48cbde58ebfe691c1e794c2e796c4"
+  <> "e899c5e99bc7ea9dc9eaa0caeba2cceca4cdeca7cfeda9d0eeabd1eeadd3efafd4f0b1d6f0b4d7"
+  <> "f1b6d8f1b8d9f2badaf2bbdcf3bdddf4bfdef4c1dff5c3e0f5c5e1f5c6e2f6c8e3f6cae4f7cbe4"
+  <> "f7cde5f8cfe6f8d0e7f8d2e8f9d3e8f9d5e9f9d6eaf9d8eafad9ebfadaecfadcecfaddedfadeed"
+  <> "fadfeefae1eefae2effae3effae4f0fae5f0fae6f1fae7f1fae8f1fae9f1faeaf2f9ebf2f9ecf2"
+  <> "f9ecf2f9edf2f8eef2f8eff2f8eff2f7f0f1f7f1f1f7f1f1f6f2f0f6f2f0f5f3eff5f3eff4f3ee"
+  <> "f4f4edf3f4edf3f4ecf2f5ebf2f5eaf1f5e9f1f5e7f0f5e6eff5e5eff5e4eef5e2edf5e1ecf5df"
+  <> "ebf5deebf5dceaf5dae9f4d8e8f4d6e7f4d5e6f3d3e5f3d1e4f3cee2f2cce1f2cae0f2c8dff1c6"
+  <> "ddf1c3dcf0c1daefbed9efbcd7eeb9d6eeb7d4edb4d3ecb2d1ecafcfebacceeaaacce9a7cae8a4"
+  <> "c8e8a1c7e79fc5e69cc3e599c1e496bfe393bde291bbe18eb9e08bb7df88b5de85b3dc83b1db80"
+  <> "afda7dadd97aabd878a9d675a7d572a5d46fa2d26da0d16a9ed0689cce659acd6298cc6096ca5d"
+  <> "93c95b91c7598fc6568dc4548bc35289c15087c04d84be4b82bd4980bb477eba457cb8437ab641"
+  <> "78b54076b33e74b23c72b03b70af396ead386cab366aaa3568a83366a63264a53162a32f60a12e"
+  <> "5ea02d5c9e2c5b9c2b599b2a5799295597285396275294265092254e90254c8f244b8d23498b22"
+  <> "478a224688214486214384204182203f811f3e7f1f3c7d1e3b7b1e397a1d38781d36761c34741c"
+  <> "33721c31711b306f1b2e6d1b2d6b1a2b691a2a681a286619276419"
+
+interpolatePiYG :: Number -> String
+interpolatePiYG = interpolateTable piYGTable
+
+brBGTable :: String
+brBGTable = "5430055631055833055b34065d35065f3606613806633906663a07683c076a3d076c3e086e4008"
+  <> "70410873430975440977450979470a7b480a7d4a0b804b0b824d0c844e0d86500d88510e8a530f"
+  <> "8c540f8e5610905811925912955b13975d14995e159b60169d62179f6419a1651aa3671ba5691d"
+  <> "a66b1ea86d20aa6f21ac7123ae7325b07526b27728b3792ab57b2cb77d2eb97f30ba8232bc8435"
+  <> "bd8637bf8839c18b3cc28d3ec48f41c59243c79446c89648c9994bcb9b4ecc9d51cda054cfa256"
+  <> "d0a459d1a75cd3a95fd4ab62d5ad65d6b068d7b26bd8b46edab671dbb874dcba77ddbc7adebf7d"
+  <> "dfc080e0c283e1c486e2c688e3c88be4ca8ee5cb91e6cd94e7cf96e8d099e9d29cead49fead5a1"
+  <> "ebd6a4ecd8a7edd9a9eddbaceedcaeefddb1efdeb4f0e0b6f1e1b8f1e2bbf2e3bdf2e4c0f2e5c2"
+  <> "f3e6c4f3e7c7f3e8c9f4e8cbf4e9cdf4eacff4ebd1f4ebd3f4ecd5f4edd7f4edd9f4eedbf4eedc"
+  <> "f4efdef3efdff3efe1f3f0e2f2f0e4f2f0e5f1f0e6f0f1e7f0f1e8eff1e9eef1eaedf1eaecf1eb"
+  <> "ebf1ebeaf1ece9f1ece7f1ece6f0ece5f0ece3f0ece2f0ece0efecdfefecddefebdbeeebd9eeea"
+  <> "d8edead6ede9d4ece9d2ece8d0ebe7ceebe6cceae5cae9e5c7e9e4c5e8e3c3e7e2c1e6e1bee5e0"
+  <> "bce5deb9e4ddb7e3dcb4e2dbb2e1daafe0d9addfd7aaded6a8ddd5a5dbd3a2dad2a0d9d19dd8cf"
+  <> "9ad7ce97d5cc95d4cb92d3c98fd1c88cd0c689cec486cdc384cbc181cac07ec8be7bc6bc78c5ba"
+  <> "75c3b972c1b770bfb56dbeb36abcb167bab064b8ae61b6ac5eb4aa5cb2a859b0a656aea453aca3"
+  <> "50aaa14ea89f4ba69d48a49b46a29943a097409e953e9c933b9a9139988f36968d34948b329289"
+  <> "2f90872d8e852b8c84288a8226888024867e22847c20827a1e80781c7e761a7c74187a72177970"
+  <> "15776e13756d12736b1071690f6f670e6d650c6c630b6a610a685f09665e08655c07635a066158"
+  <> "065f56055e54045c52045a5103584f03574d02554b025349025248015046014e44014d42014b40"
+  <> "01493e00483d00463b004439004337004135003f34003e32003c30"
+
+interpolateBrBG :: Number -> String
+interpolateBrBG = interpolateTable brBGTable
+
+pRGnTable :: String
+pRGnTable = "40004b42024d44034f4605524807544b08564d0a584f0c5a510d5c530f5f551161571263591465"
+  <> "5b16675d18695f1a6b611c6d631d70651f726721746923766b25786d277a6e297c702b7d722e7f"
+  <> "7430817532837734857937877a39897c3b8a7e3e8c7f408e814390824591844893854a95874d96"
+  <> "884f988a52998b549b8d579d8e599e905ca0915ea19361a39463a49666a69768a7996ba99a6daa"
+  <> "9b70ac9d72ad9f74afa077b0a279b2a37bb3a57db5a680b6a882b7a984b9ab86baac88bcae8bbd"
+  <> "af8dbeb18fc0b391c1b493c2b695c4b797c5b999c6ba9bc8bc9dc9bd9fcabfa1cbc1a3cdc2a5ce"
+  <> "c4a7cfc5a9d0c7abd1c8add2caafd3cbb1d5cdb2d6ceb4d7cfb6d8d1b8d9d2badad4bcdbd5bddc"
+  <> "d6bfddd8c1ded9c3dfdac5e0dbc6e0ddc8e1decae2dfcbe3e0cde4e1cfe5e2d0e6e4d2e6e5d4e7"
+  <> "e6d5e8e6d7e9e7d8e9e8daeae9dbebeaddebebdeecebe0ecece1edede2edede3eeeee5eeeee6ef"
+  <> "efe7efefe8efefe9eff0eaf0f0ebf0f0ecf0f0edf0f0eeeff0eeeff0efefeff0efeff0eeeff1ee"
+  <> "eef1edeef2ededf2ecedf2ebecf2eaebf2e9ebf3e8eaf3e7e9f3e6e8f2e5e7f2e4e6f2e3e5f2e1"
+  <> "e4f2e0e2f2dfe1f1dde0f1dcdef1daddf0d9dcf0d7daefd6d9efd4d7eed2d6eed1d4edcfd2edcd"
+  <> "d1eccbcfebc9cdebc8cbeac6cae9c4c8e9c2c6e8c0c4e7bec2e6bcc0e5babee4b8bce4b6bae3b4"
+  <> "b8e2b2b6e1b0b3e0aeb1dfacafdeaaaddca8aadba6a8daa4a6d9a1a3d89fa1d69d9ed59b9bd498"
+  <> "99d29696d19494cf9191ce8f8ecc8d8ccb8b89c98886c88683c68480c4817ec37f7bc17d78bf7a"
+  <> "75bd7872bc7670ba746db8716ab66f67b46d64b26b62b0695fae675cad6559ab6257a96054a75e"
+  <> "51a55d4fa35b4ca1594a9f57479d55459b534299514096503d944e3b924c39904b368e49348c47"
+  <> "328a463088442e86432c844129824028803e267e3d247b3b22793a2077391e75371d73361b7135"
+  <> "1a6f33186d32176b3115693014672e12652d11632c10612b0f5f2a0d5d280c5a270b58260a5625"
+  <> "095424085223065022054e21044c1f034a1e02481d01461c00441b"
+
+interpolatePRGn :: Number -> String
+interpolatePRGn = interpolateTable pRGnTable
+
+spectralTable :: String
+spectralTable = "9e0142a00343a20643a40844a70b44a90d45ab0f45ad1245af1446b11646b31947b51b47b71d48"
+  <> "ba2048bc2248be2449c02749c12949c32b4ac52d4ac7304ac9324acb344bcd364bce384bd03b4b"
+  <> "d23d4bd33f4bd5414bd7434bd8454bda474adb494add4b4ade4d4adf4f4ae1514ae2534ae35549"
+  <> "e45749e65949e75b49e85d49e95f49ea6149eb6349ec6549ed6749ee6a49ef6c49f06e4af0704a"
+  <> "f1724af2744bf3774bf3794cf47b4df47e4df5804ef6824ff68550f78750f78951f88c52f88e53"
+  <> "f89154f99356f99557f99858fa9a59fa9c5afa9f5cfba15dfba35efba660fba861fcaa62fcad64"
+  <> "fcaf65fcb167fcb368fcb56afdb86bfdba6dfdbc6efdbe70fdc071fdc273fdc474fdc676fdc878"
+  <> "fdca79fecc7bfecd7dfecf7efed180fed382fed584fed685fed887feda89fedb8bfedd8dfede8f"
+  <> "fee090fee192fee394fee496fee698fee79afee89bfeea9dfeeb9ffeeca1feeda2feefa4fef0a5"
+  <> "fef1a7fef2a8fdf3a9fdf3aafdf4abfdf5acfcf6adfcf6aefcf7affbf7affbf8b0faf8b0faf9b0"
+  <> "f9f9b0f9f9b0f8f9b0f7faaff7faaff6faaef5faaef4f9adf3f9acf2f9acf2f9abf0f9aaeff8a9"
+  <> "eef8a8edf8a7ecf7a7ebf7a6e9f6a5e8f6a4e7f5a3e5f5a2e4f4a2e2f3a1e0f3a1dff2a0ddf1a0"
+  <> "dbf19fd9f09fd7ef9fd6ee9fd4ee9fd2ed9ed0ec9ecdeb9fcbea9fc9e99fc7e89fc5e89fc3e79f"
+  <> "c0e6a0bee5a0bce4a0b9e3a0b7e2a1b4e1a1b2e0a1b0dfa1addea2abdda2a8dca2a6dba3a3daa3"
+  <> "a0d9a39ed8a39bd7a399d6a496d5a494d4a491d3a48ed1a48cd0a489cfa587cea584cda582cba5"
+  <> "7fcaa67dc9a67ac7a677c6a675c5a773c3a770c2a86ec0a86bbea869bda966bba964b9aa62b8aa"
+  <> "60b6ab5db4ac5bb2ac59b0ad57aeae55acae53aaaf51a8af50a6b04ea4b14ca2b14ba0b2499db2"
+  <> "489bb34799b34697b34595b44492b44390b4438eb4428cb54289b54287b44285b44283b44280b4"
+  <> "437eb3437cb3447ab34577b24575b14673b14771b0486eaf4a6caf4b6aae4c68ad4e65ac4f63ab"
+  <> "5161aa525fa9545ca8555aa75758a65956a55b53a45c51a35e4fa2"
+
+interpolateSpectral :: Number -> String
+interpolateSpectral = interpolateTable spectralTable
+
+rdGyTable :: String
+rdGyTable = "67001f6a011f6d02207003207304217605217906227b07227e0823810923840a24870b248a0c25"
+  <> "8c0d268f0f269210279411279712289a14299c15299f172aa1182ba41a2ca61c2da81d2daa1f2e"
+  <> "ad212faf2330b12531b32732b52933b72b34b82e35ba3036bc3238be3539bf373ac13a3bc33c3d"
+  <> "c43f3ec6413fc74441c94742ca4943cc4c45cd4f46ce5248d0544ad1574bd25a4dd45d4ed56050"
+  <> "d66252d86554d96855da6b57db6d59dd705bde735ddf755fe07861e17b63e27d65e48067e58369"
+  <> "e6856be7886de88b6fe98d71ea9073eb9276ec9578ed977aee9a7cee9c7fef9f81f0a183f1a486"
+  <> "f2a688f2a88bf3ab8df4ad90f4af92f5b295f5b497f6b69af6b89cf7bb9ff7bda1f8bfa4f8c1a6"
+  <> "f9c3a9f9c5acf9c7aefac9b1facbb3facdb6fbcfb8fbd1bbfbd3bdfbd4c0fcd6c2fcd8c5fcdac7"
+  <> "fcdbcafcddccfddfcefde0d1fde2d3fde4d5fde5d7fde6dafde8dcfde9defdeae0fdece1fdede3"
+  <> "fdeee5fdefe6fdf0e8fcf0e9fcf1ebfcf2ecfcf2edfbf3eefbf3effaf4f0faf4f0f9f4f1f9f4f1"
+  <> "f8f4f1f7f4f1f6f3f1f6f3f1f5f2f1f4f2f1f3f1f0f2f1f0f1f0eff0efefefeeeeeeedededecec"
+  <> "ecebebeaeaeae9e9e9e8e8e8e7e7e7e5e5e5e4e4e4e3e3e3e2e2e2e0e0e0dfdfdfdddddddcdcdc"
+  <> "dbdbdbd9d9d9d8d8d8d7d7d7d5d5d5d4d4d4d2d2d2d1d1d1cfcfcfcecececccccccbcbcbc9c9c9"
+  <> "c8c8c8c6c6c6c4c4c4c3c3c3c1c1c1bfbfbfbebebebcbcbcbababab9b9b9b7b7b7b5b5b5b3b3b3"
+  <> "b2b2b2b0b0b0aeaeaeacacacaaaaaaa8a8a8a6a6a6a4a4a4a3a3a3a1a1a19f9f9f9d9d9d9b9b9b"
+  <> "9999999797979595959292929090908e8e8e8c8c8c8a8a8a8888888686868484848282827f7f7f"
+  <> "7d7d7d7b7b7b7979797777777474747272727070706e6e6e6c6c6c696969676767656565636363"
+  <> "6161615e5e5e5c5c5c5a5a5a5858585656565454545151514f4f4f4d4d4d4b4b4b494949474747"
+  <> "4545454343434040403e3e3e3c3c3c3a3a3a3838383636363434343232323030302e2e2e2c2c2c"
+  <> "2a2a2a2828282626262424242222222020201e1e1e1c1c1c1a1a1a"
+
+interpolateRdGy :: Number -> String
+interpolateRdGy = interpolateTable rdGyTable
+
+rdYlBuTable :: String
+rdYlBuTable = "a50026a70226a90426ab0626ad0826af0926b10b26b30d26b50f26b61127b81327ba1527bc1727"
+  <> "be1927c01b27c21d28c41f28c52128c72328c92529cb2729cc2929ce2b2ad02d2ad12f2bd3312b"
+  <> "d4332cd6352cd7382dd93a2eda3c2edc3e2fdd4030de4331e04532e14733e24a33e34c34e44e35"
+  <> "e55136e75337e85538e95839ea5a3aeb5d3cec5f3ded613eed643fee6640ef6941f06b42f16e43"
+  <> "f17044f27346f37547f37848f47a49f57d4af57f4bf6824df6844ef7864ff78950f88b51f88e53"
+  <> "f89054f99355f99557f99858fa9a59fa9c5bfa9f5cfba15dfba35ffba660fba862fcaa63fcad65"
+  <> "fcaf66fcb168fcb369fcb56bfdb86dfdba6efdbc70fdbe72fdc073fdc275fdc477fdc678fdc87a"
+  <> "fdca7cfecc7efecd80fecf81fed183fed385fed587fed689fed88afeda8cfedb8efedd90fede92"
+  <> "fee094fee196fee397fee499fee69bfee79dfee89ffeeaa1feeba3feeca4feeda6feeea8fef0aa"
+  <> "fef1acfdf2aefdf2b0fdf3b2fdf4b4fcf5b6fcf6b8fbf6bafbf7bcfaf7befaf8c0f9f8c2f9f8c4"
+  <> "f8f9c6f7f9c8f7f9caf6f9ccf5f9cef4f9d0f3f9d2f2f9d4f1f8d6f0f8d8eff8daedf8dcecf7dd"
+  <> "ebf7dfeaf6e1e8f6e2e7f5e4e6f5e5e4f4e7e3f3e8e1f3e9e0f2eadef1ebdcf1ecdbf0edd9efed"
+  <> "d7eeeed5eeeed4edefd2ecefd0ebefceeaefcce9efcae8efc8e7efc6e6efc5e5efc3e4eec0e3ee"
+  <> "bee2eebce1edbae0edb8deecb6ddebb4dcebb2dbeab0d9e9aed8e9acd7e8aad5e7a7d4e6a5d2e6"
+  <> "a3d1e5a1d0e49fcee39dcde29bcbe199c9e196c8e094c6df92c4de90c3dd8ec1dc8cbfdb8abeda"
+  <> "88bcd986bad884b8d782b6d67fb5d57db3d47bb1d379afd277add175abd073a9cf71a7ce6fa5cd"
+  <> "6da3cc6ca1cb6a9fca689dc9669bc86499c76297c56094c45f92c35d90c25b8ec1598cc05889bf"
+  <> "5687be5485bc5383bb5180ba507eb94e7cb84d7ab74c77b54a75b44973b34870b2466eb1456cb0"
+  <> "4469ae4367ad4264ac4162ab4060aa3f5da83e5ba73d58a63c56a53b54a43a51a2394fa1384ca0"
+  <> "374a9f37479e36459c35429b34409a333d99333b97323896313695"
+
+interpolateRdYlBu :: Number -> String
+interpolateRdYlBu = interpolateTable rdYlBuTable
+
+sinebowTable :: String
+sinebowTable = "ff4040ff423dff453aff4838fe4b35fe4e33fe5130fd542efd572bfc5a29fb5d27fa6025f96322"
+  <> "f96620f7691ef66c1cf56f1af47218f37517f17815f07c13ee7f11ed8210eb850ee9880de88b0c"
+  <> "e68e0ae49209e29508e09807de9b06dc9e05d9a104d7a403d5a703d2aa02d0ad02ceb001cbb301"
+  <> "c9b600c6b800c3bb00c1be00bec100bbc300b8c600b6c900b3cb01b0ce01add002aad202a7d503"
+  <> "a4d703a1d9049edc059bde0698e00795e20892e4098ee60a8be80c88e90d85eb0e82ed107fee11"
+  <> "7cf01378f11575f31772f4186ff51a6cf61c69f71e66f92063f92260fa255dfb275afc2957fd2b"
+  <> "54fd2e51fe304efe334bfe3548ff3845ff3a42ff3d40ff403dff423aff4538ff4835fe4b33fe4e"
+  <> "30fe512efd542bfd5729fc5a27fb5d25fa6022f96320f9661ef7691cf66c1af56f18f47217f375"
+  <> "15f17813f07c11ee7f10ed820eeb850de9880ce88b0ae68e09e49208e29507e09806de9b05dc9e"
+  <> "04d9a103d7a403d5a702d2aa02d0ad01ceb001cbb300c9b600c6b800c3bb00c1be00bec100bbc3"
+  <> "00b8c600b6c901b3cb01b0ce02add002aad203a7d503a4d704a1d9059edc069bde0798e00895e2"
+  <> "0992e40a8ee60c8be80d88e90e85eb1082ed117fee137cf01578f11775f31872f41a6ff51c6cf6"
+  <> "1e69f72066f92263f92560fa275dfb295afc2b57fd2e54fd3051fe334efe354bfe3848ff3a45ff"
+  <> "3d42ff4040ff423dff453aff4838ff4b35fe4e33fe5130fe542efd572bfd5a29fc5d27fb6025fa"
+  <> "6322f96620f9691ef76c1cf66f1af57218f47517f37815f17c13f07f11ee8210ed850eeb880de9"
+  <> "8b0ce88e0ae69209e49508e29807e09b06de9e05dca104d9a403d7a703d5aa02d2ad02d0b001ce"
+  <> "b301cbb600c9b800c6bb00c3be00c1c100bec300bbc600b8c900b6cb01b3ce01b0d002add202aa"
+  <> "d503a7d703a4d904a1dc059ede069be00798e20895e40992e60a8ee80c8be90d88eb0e85ed1082"
+  <> "ee117ff0137cf11578f31775f41872f51a6ff61c6cf71e69f92066f92263fa2560fb275dfc295a"
+  <> "fd2b57fd2e54fe3051fe334efe354bff3848ff3a45ff3d42ff4040"
+
+interpolateSinebow :: Number -> String
+interpolateSinebow = interpolateTable sinebowTable
+

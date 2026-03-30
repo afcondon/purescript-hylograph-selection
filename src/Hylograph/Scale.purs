@@ -1,8 +1,9 @@
 -- | Hylograph.Scale - Pure PureScript scales for data visualization
 -- |
 -- | This module re-exports the pure implementation from Scale.Pure,
--- | categorical color palettes from Scale.ColorSchemes, and
--- | color interpolation from Scale.Interpolation.
+-- | categorical color palettes from Scale.ColorSchemes,
+-- | color interpolation from Scale.Interpolation, and
+-- | sequential/diverging color interpolators from Scale.Sequential.
 -- |
 -- | No D3 or FFI dependency.
 -- |
@@ -24,6 +25,9 @@ module Hylograph.Scale
 
   -- * Color Interpolation
   , module Interpolation
+
+  -- * Sequential/Diverging/Cyclical Interpolators
+  , module Sequential
   ) where
 
 -- Re-export everything from Scale.Pure
@@ -78,3 +82,44 @@ import Hylograph.Scale.Interpolation
   , interpolateHsl
   , interpolateNumber
   ) as Interpolation
+
+-- Re-export sequential, diverging, and cyclical color interpolators
+import Hylograph.Scale.Sequential
+  ( interpolateBlues
+  , interpolateGreens
+  , interpolateGreys
+  , interpolateOranges
+  , interpolatePurples
+  , interpolateReds
+  , interpolateViridis
+  , interpolatePlasma
+  , interpolateInferno
+  , interpolateMagma
+  , interpolateTurbo
+  , interpolateWarm
+  , interpolateCool
+  , interpolateRainbow
+  , interpolateCividis
+  , interpolateCubehelixDefault
+  , interpolateBuGn
+  , interpolateBuPu
+  , interpolateGnBu
+  , interpolateOrRd
+  , interpolatePuBuGn
+  , interpolatePuBu
+  , interpolatePuRd
+  , interpolateRdPu
+  , interpolateYlGnBu
+  , interpolateYlGn
+  , interpolateYlOrBr
+  , interpolateYlOrRd
+  , interpolateRdYlGn
+  , interpolateRdBu
+  , interpolatePiYG
+  , interpolateBrBG
+  , interpolatePRGn
+  , interpolateSpectral
+  , interpolateRdGy
+  , interpolateRdYlBu
+  , interpolateSinebow
+  ) as Sequential
