@@ -120,6 +120,10 @@ clampNum lo hi x =
   else if x > hi then hi
   else x
 
+-- | Round to nearest integer (half-up), matching JavaScript's Math.round
+roundNum :: Number -> Number
+roundNum x = Num.floor (x + 0.5)
+
 -- | Build the forward and inverse functions from transform, domain, range, and clamp settings.
 -- | The mapping is: normalize in domain via transform, then interpolate into range.
 buildForward
@@ -157,8 +161,9 @@ buildInverse
   -> (Number -> Number)
   -> Array Number
   -> Array Number
+  -> Boolean
   -> (Number -> Maybe Number)
-buildInverse transform untransform dom rng =
+buildInverse transform untransform dom rng isClamped =
   let
     d0 = head0 dom
     d1 = last1 dom
@@ -180,7 +185,8 @@ buildInverse transform untransform dom rng =
           -- Untransform to get the domain value
           result = untransform tx
         in
-          if Num.isFinite result then Just result
+          if Num.isFinite result then
+            Just (if isClamped then clampNum (Num.min d0 d1) (Num.max d0 d1) result else result)
           else Nothing
 
 -- | Rebuild a scale's forward/inverse/ticks after a configuration change
@@ -188,7 +194,7 @@ rebuild :: ContinuousScale -> ContinuousScale
 rebuild (Scale s) =
   let
     fwd = buildForward s.transform s.untransform s.domain_ s.range_ s.clamped
-    inv = buildInverse s.transform s.untransform s.domain_ s.range_
+    inv = buildInverse s.transform s.untransform s.domain_ s.range_ s.clamped
     tks = \count -> ticksImpl count (head0 s.domain_) (last1 s.domain_)
   in
     Scale s { forward = fwd, inverse = inv, ticks_ = tks }
@@ -196,6 +202,7 @@ rebuild (Scale s) =
 -- ============================================================================
 -- D3-COMPATIBLE TICK ALGORITHM
 -- ============================================================================
+-- Ported faithfully from https://github.com/d3/d3-array/blob/main/src/ticks.js
 
 -- | D3-compatible tick constants
 e10 :: Number
@@ -207,13 +214,15 @@ e5 = Num.sqrt 10.0   -- 3.162...
 e2 :: Number
 e2 = Num.sqrt 2.0    -- 1.414...
 
--- | Compute tick increment following D3's tickIncrement.
--- | Returns negative values for step sizes < 1 (encoding trick: -n means 1/n).
--- | This encoding is used by the nice algorithm for correct floor/ceil.
-tickIncrement :: Number -> Number -> Int -> Number
-tickIncrement start stop count =
+-- | D3's tickSpec — the core tick computation.
+-- | Returns { i1, i2, inc } where i1/i2 are integer-valued boundary indices
+-- | and inc encodes the step: positive means multiply, negative means divide by -inc.
+type TickSpec = { i1 :: Number, i2 :: Number, inc :: Number }
+
+tickSpec :: Number -> Number -> Number -> TickSpec
+tickSpec start stop count =
   let
-    step = (stop - start) / max 1.0 (Int.toNumber count)
+    step = (stop - start) / max 0.0 count
     power = Num.floor (Num.log step / Num.ln10)
     err = step / Num.pow 10.0 power
     factor = if err >= e10 then 10.0
@@ -221,8 +230,36 @@ tickIncrement start stop count =
              else if err >= e2 then 2.0
              else 1.0
   in
-    if power < 0.0 then negate (Num.pow 10.0 (negate power)) / factor
-    else Num.pow 10.0 power * factor
+    if power < 0.0 then
+      let
+        inc0 = Num.pow 10.0 (negate power) / factor
+        i1_0 = roundNum (start * inc0)
+        i2_0 = roundNum (stop * inc0)
+        i1 = if i1_0 / inc0 < start then i1_0 + 1.0 else i1_0
+        i2 = if i2_0 / inc0 > stop then i2_0 - 1.0 else i2_0
+        inc = negate inc0
+      in
+        if i2 < i1 && 0.5 <= count && count < 2.0
+          then tickSpec start stop (count * 2.0)
+          else { i1, i2, inc }
+    else
+      let
+        inc0 = Num.pow 10.0 power * factor
+        i1_0 = roundNum (start / inc0)
+        i2_0 = roundNum (stop / inc0)
+        i1 = if i1_0 * inc0 < start then i1_0 + 1.0 else i1_0
+        i2 = if i2_0 * inc0 > stop then i2_0 - 1.0 else i2_0
+      in
+        if i2 < i1 && 0.5 <= count && count < 2.0
+          then tickSpec start stop (count * 2.0)
+          else { i1, i2, inc: inc0 }
+
+-- | Compute tick increment following D3's tickIncrement.
+-- | Returns negative values for step sizes < 1 (encoding trick: -n means 1/n).
+-- | This encoding is used by the nice algorithm for correct floor/ceil.
+tickIncrement :: Number -> Number -> Int -> Number
+tickIncrement start stop count =
+  (tickSpec start stop (Int.toNumber count)).inc
 
 -- | Compute tick step size (always positive).
 -- | Converts tickIncrement's negative encoding to actual step value.
@@ -237,24 +274,28 @@ tickStep start stop count =
   in
     sign * (if inc < 0.0 then 1.0 / negate inc else inc)
 
--- | Generate ticks for a given domain range and count
+-- | Generate ticks for a given domain range and count, matching D3 exactly.
 ticksImpl :: Int -> Number -> Number -> Array Number
 ticksImpl count start stop =
-  if start > stop then
-    -- Reversed domain: generate ascending ticks then reverse
-    Array.reverse (ticksImpl count stop start)
+  if count <= 0 then []
+  else if start == stop then [start]
   else
     let
-      step = tickStep start stop count
-      -- Align start/stop to step boundaries
-      tickStart = Num.ceil (start / step) * step
-      tickStop  = Num.floor (stop / step) * step
-      -- Number of ticks (add small epsilon for floating point)
-      n = Int.floor ((tickStop - tickStart) / step + 0.5) + 1
+      reverse = stop < start
+      spec = if reverse
+             then tickSpec stop start (Int.toNumber count)
+             else tickSpec start stop (Int.toNumber count)
+      n = Int.floor (spec.i2 - spec.i1) + 1
     in
-      if step <= 0.0 || not (Num.isFinite step) then [start, stop]
+      if n <= 0 then []
+      else if reverse then
+        if spec.inc < 0.0
+          then Array.range 0 (n - 1) <#> \i -> (spec.i2 - Int.toNumber i) / negate spec.inc
+          else Array.range 0 (n - 1) <#> \i -> (spec.i2 - Int.toNumber i) * spec.inc
       else
-        Array.range 0 (n - 1) <#> \i -> tickStart + Int.toNumber i * step
+        if spec.inc < 0.0
+          then Array.range 0 (n - 1) <#> \i -> (spec.i1 + Int.toNumber i) / negate spec.inc
+          else Array.range 0 (n - 1) <#> \i -> (spec.i1 + Int.toNumber i) * spec.inc
 
 -- ============================================================================
 -- D3-COMPATIBLE NICE ALGORITHM
@@ -265,13 +306,15 @@ ticksImpl count start stop =
 -- | and ceil the max to multiples of that step.
 niceImpl :: Int -> Number -> Number -> { min :: Number, max :: Number }
 niceImpl count lo hi =
-  if lo > hi then
+  if lo == hi then { min: lo, max: hi }
+  else if lo > hi then
     -- Reversed domain: nice the swapped version, then swap back
     let result = niceImpl count hi lo
     in { min: result.max, max: result.min }
   else
     -- D3's nice is iterative: apply floor/ceil, recompute step, repeat until stable
-    niceLoop 10 (-1.0) lo hi count
+    -- NaN sentinel: never equals any step, matching D3's initial `undefined`
+    niceLoop 10 (0.0 / 0.0) lo hi count
 
 -- | Iterative nice loop — matches D3's behavior exactly
 -- | Uses tickIncrement (with negative encoding for sub-1 steps)
@@ -291,8 +334,8 @@ niceLoop maxIter prestep lo hi count =
       else if step < 0.0 then
         let
           negStep = negate step
-          newLo = Num.ceil (lo * negStep) / negStep
-          newHi = Num.floor (hi * negStep) / negStep
+          newLo = Num.floor (lo * negStep) / negStep
+          newHi = Num.ceil (hi * negStep) / negStep
         in niceLoop (maxIter - 1) step newLo newHi count
       else { min: lo, max: hi }
 
