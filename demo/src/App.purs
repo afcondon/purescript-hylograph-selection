@@ -415,25 +415,37 @@ renderChapter5 =
         , HH.text " pattern in functional programming."
         ]
     , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "Here\x2019s the same HATS tree interpreted two ways. The English interpreter describes what the tree will build. The SVG interpreter actually builds it." ]
+        [ HH.text "Here\x2019s the same tree interpreted two ways. The English interpreter is pure \x2014 no "
+        , HH.code_ [ HH.text "Effect" ]
+        , HH.text ", no DOM, just a "
+        , HH.code_ [ HH.text "String" ]
+        , HH.text ". The SVG interpreter runs in "
+        , HH.code_ [ HH.text "Effect" ]
+        , HH.text " and writes to the DOM. Same tree, different worlds."
+        ]
 
-    -- Side by side: English | SVG
-    , HH.div [ HP.class_ (HH.ClassName "code-output-row") ]
-        [ -- English interpretation
-          HH.div [ HP.class_ (HH.ClassName "code-panel") ]
-            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "English Interpreter" ]
+    -- Three columns: HATS input | English result | SVG result
+    , HH.div [ HP.class_ (HH.ClassName "equation-row") ]
+        [ -- HATS input
+          HH.div [ HP.class_ (HH.ClassName "eq-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Tree" ]
+            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
+                [ HH.text (runEnglish Ch5.sampleTree) ]
+            ]
+        , HH.div [ HP.class_ (HH.ClassName "eq-op") ] [ HH.text "\x2192" ]
+        -- English result
+        , HH.div [ HP.class_ (HH.ClassName "eq-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Result of English Interpreter" ]
             , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
                 [ HH.text Ch5.englishOutput ]
             ]
-        -- SVG interpretation
-        , HH.div [ HP.class_ (HH.ClassName "output-panel") ]
-            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "SVG Interpreter" ]
-            , HH.div [ HP.class_ (HH.ClassName "output-content"), HP.id "ch5-svg" ] []
+        , HH.div [ HP.class_ (HH.ClassName "eq-op") ] [ HH.text "\x2192" ]
+        -- SVG result
+        , HH.div [ HP.class_ (HH.ClassName "eq-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Result of SVG Interpreter" ]
+            , HH.div [ HP.class_ (HH.ClassName "eq-content"), HP.id "ch5-svg" ] []
             ]
         ]
-
-    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "Same tree. One produces text, the other produces a visual. The tree doesn\x2019t know or care which interpreter reads it." ]
     ]
 
 -- =============================================================================
