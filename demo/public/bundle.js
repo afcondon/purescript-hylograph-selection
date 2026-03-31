@@ -222,10 +222,10 @@
   };
   var applySecond = function(dictApply) {
     var apply1 = apply(dictApply);
-    var map24 = map(dictApply.Functor0());
+    var map25 = map(dictApply.Functor0());
     return function(a2) {
       return function(b2) {
-        return apply1(map24($$const(identity2))(a2))(b2);
+        return apply1(map25($$const(identity2))(a2))(b2);
       };
     };
   };
@@ -545,8 +545,42 @@
     var str = n.toString();
     return isNaN(str + ".0") ? str : str + ".0";
   };
+  var showStringImpl = function(s) {
+    var l = s.length;
+    return '"' + s.replace(
+      /[\0-\x1F\x7F"\\]/g,
+      // eslint-disable-line no-control-regex
+      function(c, i2) {
+        switch (c) {
+          case '"':
+          case "\\":
+            return "\\" + c;
+          case "\x07":
+            return "\\a";
+          case "\b":
+            return "\\b";
+          case "\f":
+            return "\\f";
+          case "\n":
+            return "\\n";
+          case "\r":
+            return "\\r";
+          case "	":
+            return "\\t";
+          case "\v":
+            return "\\v";
+        }
+        var k = i2 + 1;
+        var empty8 = k < l && s[k] >= "0" && s[k] <= "9" ? "\\&" : "";
+        return "\\" + c.charCodeAt(0).toString(10) + empty8;
+      }
+    ) + '"';
+  };
 
   // output/Data.Show/index.js
+  var showString = {
+    show: showStringImpl
+  };
   var showNumber = {
     show: showNumberImpl
   };
@@ -1254,6 +1288,9 @@
       return foldMapDefaultR(foldableArray)(dictMonoid);
     }
   };
+  var foldMap = function(dict) {
+    return dict.foldMap;
+  };
 
   // output/Data.Function.Uncurried/foreign.js
   var runFn2 = function(fn) {
@@ -1330,7 +1367,7 @@
       };
     }
     return function(apply2) {
-      return function(map24) {
+      return function(map25) {
         return function(pure13) {
           return function(f) {
             return function(array) {
@@ -1339,14 +1376,14 @@
                   case 0:
                     return pure13([]);
                   case 1:
-                    return map24(array1)(f(array[bot]));
+                    return map25(array1)(f(array[bot]));
                   case 2:
-                    return apply2(map24(array2)(f(array[bot])))(f(array[bot + 1]));
+                    return apply2(map25(array2)(f(array[bot])))(f(array[bot + 1]));
                   case 3:
-                    return apply2(apply2(map24(array3)(f(array[bot])))(f(array[bot + 1])))(f(array[bot + 2]));
+                    return apply2(apply2(map25(array3)(f(array[bot])))(f(array[bot + 1])))(f(array[bot + 2]));
                   default:
                     var pivot = bot + Math.floor((top2 - bot) / 4) * 2;
-                    return apply2(map24(concat2)(go2(bot, pivot)))(go2(pivot, top2));
+                    return apply2(map25(concat2)(go2(bot, pivot)))(go2(pivot, top2));
                 }
               }
               return go2(0, array.length);
@@ -1402,6 +1439,13 @@
           head: x3,
           tail: xs
         });
+      };
+    });
+  })();
+  var tail = /* @__PURE__ */ (function() {
+    return runFn3(unconsImpl)($$const(Nothing.value))(function(v) {
+      return function(xs) {
+        return new Just(xs);
       };
     });
   })();
@@ -3702,6 +3746,16 @@
   var length2 = function(s) {
     return s.length;
   };
+  var take = function(n) {
+    return function(s) {
+      return s.substr(0, n);
+    };
+  };
+  var drop = function(n) {
+    return function(s) {
+      return s.substring(n);
+    };
+  };
 
   // output/Chapters.Chapter1/index.js
   var show5 = /* @__PURE__ */ show(showNumber);
@@ -4557,10 +4611,10 @@
   var $$try = function(dictMonadError) {
     var catchError1 = catchError(dictMonadError);
     var Monad0 = dictMonadError.MonadThrow0().Monad0();
-    var map24 = map(Monad0.Bind1().Apply0().Functor0());
+    var map25 = map(Monad0.Bind1().Apply0().Functor0());
     var pure13 = pure(Monad0.Applicative0());
     return function(a2) {
-      return catchError1(map24(Right.create)(a2))(function($52) {
+      return catchError1(map25(Right.create)(a2))(function($52) {
         return pure13(Left.create($52));
       });
     };
@@ -4608,10 +4662,10 @@
     };
   };
   var functorWriterT = function(dictFunctor) {
-    var map24 = map(dictFunctor);
+    var map25 = map(dictFunctor);
     return {
       map: function(f) {
-        return mapWriterT(map24(function(v) {
+        return mapWriterT(map25(function(v) {
           return new Tuple(f(v.value0), v.value1);
         }));
       }
@@ -4622,7 +4676,7 @@
     return function(dictApply) {
       var apply2 = apply(dictApply);
       var Functor0 = dictApply.Functor0();
-      var map24 = map(Functor0);
+      var map25 = map(Functor0);
       var functorWriterT1 = functorWriterT(Functor0);
       return {
         apply: function(v) {
@@ -4632,7 +4686,7 @@
                 return new Tuple(v3.value0(v4.value0), append8(v3.value1)(v4.value1));
               };
             };
-            return apply2(map24(k)(v))(v1);
+            return apply2(map25(k)(v))(v1);
           };
         },
         Functor0: function() {
@@ -4647,14 +4701,14 @@
     return function(dictBind) {
       var bind7 = bind(dictBind);
       var Apply0 = dictBind.Apply0();
-      var map24 = map(Apply0.Functor0());
+      var map25 = map(Apply0.Functor0());
       var applyWriterT2 = applyWriterT1(Apply0);
       return {
         bind: function(v) {
           return function(k) {
             return bind7(v)(function(v1) {
               var v2 = k(v1.value0);
-              return map24(function(v3) {
+              return map25(function(v3) {
                 return new Tuple(v3.value0, append8(v1.value1)(v3.value1));
               })(v2);
             });
@@ -5904,6 +5958,11 @@
     };
   };
   var empty4 = empty2;
+
+  // output/Data.String.Common/foreign.js
+  var toUpper = function(s) {
+    return s.toUpperCase();
+  };
 
   // output/Halogen.Query.Input/index.js
   var RefUpdate = /* @__PURE__ */ (function() {
@@ -8153,7 +8212,7 @@
       function kill2(error4, par2, cb2) {
         var step3 = par2;
         var head3 = null;
-        var tail = null;
+        var tail2 = null;
         var count = 0;
         var kills2 = {};
         var tmp, kid;
@@ -8176,11 +8235,11 @@
                 break loop;
               }
               step3 = head3._2;
-              if (tail === null) {
+              if (tail2 === null) {
                 head3 = null;
               } else {
-                head3 = tail._1;
-                tail = tail._2;
+                head3 = tail2._1;
+                tail2 = tail2._2;
               }
               break;
             case MAP:
@@ -8189,7 +8248,7 @@
             case APPLY:
             case ALT:
               if (head3) {
-                tail = new Aff2(CONS, head3, tail);
+                tail2 = new Aff2(CONS, head3, tail2);
               }
               head3 = step3;
               step3 = step3._1;
@@ -8207,7 +8266,7 @@
         }
         return kills2;
       }
-      function join3(result, head3, tail) {
+      function join3(result, head3, tail2) {
         var fail2, step3, lhs, rhs, tmp, kid;
         if (util.isLeft(result)) {
           fail2 = result;
@@ -8252,10 +8311,10 @@
                     delete kills[kid];
                     if (tmp) {
                       tmp = false;
-                    } else if (tail === null) {
+                    } else if (tail2 === null) {
                       join3(fail2, null, null);
                     } else {
-                      join3(fail2, tail._1, tail._2);
+                      join3(fail2, tail2._1, tail2._2);
                     }
                   };
                 });
@@ -8289,10 +8348,10 @@
                     delete kills[kid];
                     if (tmp) {
                       tmp = false;
-                    } else if (tail === null) {
+                    } else if (tail2 === null) {
                       join3(step3, null, null);
                     } else {
-                      join3(step3, tail._1, tail._2);
+                      join3(step3, tail2._1, tail2._2);
                     }
                   };
                 });
@@ -8303,11 +8362,11 @@
               }
               break;
           }
-          if (tail === null) {
+          if (tail2 === null) {
             head3 = null;
           } else {
-            head3 = tail._1;
-            tail = tail._2;
+            head3 = tail2._1;
+            tail2 = tail2._2;
           }
         }
       }
@@ -8324,7 +8383,7 @@
         var status = CONTINUE;
         var step3 = par;
         var head3 = null;
-        var tail = null;
+        var tail2 = null;
         var tmp, fid;
         loop: while (true) {
           tmp = null;
@@ -8334,21 +8393,21 @@
               switch (step3.tag) {
                 case MAP:
                   if (head3) {
-                    tail = new Aff2(CONS, head3, tail);
+                    tail2 = new Aff2(CONS, head3, tail2);
                   }
                   head3 = new Aff2(MAP, step3._1, EMPTY, EMPTY);
                   step3 = step3._2;
                   break;
                 case APPLY:
                   if (head3) {
-                    tail = new Aff2(CONS, head3, tail);
+                    tail2 = new Aff2(CONS, head3, tail2);
                   }
                   head3 = new Aff2(APPLY, EMPTY, step3._2, EMPTY);
                   step3 = step3._1;
                   break;
                 case ALT:
                   if (head3) {
-                    tail = new Aff2(CONS, head3, tail);
+                    tail2 = new Aff2(CONS, head3, tail2);
                   }
                   head3 = new Aff2(ALT, EMPTY, step3._2, EMPTY);
                   step3 = step3._1;
@@ -8357,7 +8416,7 @@
                   fid = fiberId++;
                   status = RETURN;
                   tmp = step3;
-                  step3 = new Aff2(FORKED, fid, new Aff2(CONS, head3, tail), EMPTY);
+                  step3 = new Aff2(FORKED, fid, new Aff2(CONS, head3, tail2), EMPTY);
                   tmp = Fiber(util, supervisor, tmp);
                   tmp.onComplete({
                     rethrow: false,
@@ -8381,11 +8440,11 @@
               } else {
                 head3._2 = step3;
                 step3 = head3;
-                if (tail === null) {
+                if (tail2 === null) {
                   head3 = null;
                 } else {
-                  head3 = tail._1;
-                  tail = tail._2;
+                  head3 = tail2._1;
+                  tail2 = tail2._2;
                 }
               }
           }
@@ -12368,11 +12427,462 @@
     };
   };
 
+  // output/TreePretty/foreign.js
+  var trimStart = (s) => s.trimStart();
+
+  // output/TreePretty/index.js
+  var foldMap2 = /* @__PURE__ */ foldMap(foldableArray)(monoidString);
+  var show14 = /* @__PURE__ */ show(showString);
+  var map17 = /* @__PURE__ */ map(functorArray);
+  var show15 = /* @__PURE__ */ show(showInt);
+  var titleCase = function(s) {
+    return toUpper(take(1)(s)) + drop(1)(s);
+  };
+  var showElemType2 = function(v) {
+    if (v instanceof SVG) {
+      return "SVG";
+    }
+    ;
+    if (v instanceof Group) {
+      return "G";
+    }
+    ;
+    if (v instanceof Rect) {
+      return "Rect";
+    }
+    ;
+    if (v instanceof Circle) {
+      return "Circle";
+    }
+    ;
+    if (v instanceof Path) {
+      return "Path";
+    }
+    ;
+    if (v instanceof Line) {
+      return "Line";
+    }
+    ;
+    if (v instanceof Text) {
+      return "Text";
+    }
+    ;
+    if (v instanceof Polygon) {
+      return "Polygon";
+    }
+    ;
+    if (v instanceof Defs) {
+      return "Defs";
+    }
+    ;
+    if (v instanceof LinearGradient) {
+      return "LinearGradient";
+    }
+    ;
+    if (v instanceof Stop) {
+      return "Stop";
+    }
+    ;
+    if (v instanceof PatternFill) {
+      return "Pattern";
+    }
+    ;
+    if (v instanceof Title) {
+      return "Title";
+    }
+    ;
+    if (v instanceof Div) {
+      return "Div";
+    }
+    ;
+    if (v instanceof Span) {
+      return "Span";
+    }
+    ;
+    if (v instanceof Table) {
+      return "Table";
+    }
+    ;
+    if (v instanceof Tr) {
+      return "Tr";
+    }
+    ;
+    if (v instanceof Td) {
+      return "Td";
+    }
+    ;
+    if (v instanceof Th) {
+      return "Th";
+    }
+    ;
+    if (v instanceof Tbody) {
+      return "Tbody";
+    }
+    ;
+    if (v instanceof Thead) {
+      return "Thead";
+    }
+    ;
+    if (v instanceof Code) {
+      return "Code";
+    }
+    ;
+    if (v instanceof Var) {
+      return "Var";
+    }
+    ;
+    if (v instanceof Dfn) {
+      return "Dfn";
+    }
+    ;
+    if (v instanceof Dl) {
+      return "Dl";
+    }
+    ;
+    if (v instanceof Dt) {
+      return "Dt";
+    }
+    ;
+    if (v instanceof Dd) {
+      return "Dd";
+    }
+    ;
+    if (v instanceof Ol) {
+      return "Ol";
+    }
+    ;
+    if (v instanceof Ul) {
+      return "Ul";
+    }
+    ;
+    if (v instanceof Li) {
+      return "Li";
+    }
+    ;
+    if (v instanceof Small) {
+      return "Small";
+    }
+    ;
+    if (v instanceof Em) {
+      return "Em";
+    }
+    ;
+    if (v instanceof Strong) {
+      return "Strong";
+    }
+    ;
+    if (v instanceof Anchor) {
+      return "Anchor";
+    }
+    ;
+    if (v instanceof P) {
+      return "P";
+    }
+    ;
+    if (v instanceof Pre) {
+      return "Pre";
+    }
+    ;
+    if (v instanceof Section) {
+      return "Section";
+    }
+    ;
+    if (v instanceof Mark) {
+      return "Mark";
+    }
+    ;
+    if (v instanceof Abbr) {
+      return "Abbr";
+    }
+    ;
+    throw new Error("Failed pattern match at TreePretty (line 65, column 16 - line 104, column 17): " + [v.constructor.name]);
+  };
+  var joinWith2 = function(sep) {
+    return function(arr) {
+      var v = tail(arr);
+      var v1 = head(arr);
+      if (v1 instanceof Nothing) {
+        return "";
+      }
+      ;
+      if (v1 instanceof Just && v instanceof Nothing) {
+        return v1.value0;
+      }
+      ;
+      if (v1 instanceof Just && v instanceof Just) {
+        return v1.value0 + foldMap2(function(s) {
+          return sep + s;
+        })(v.value0);
+      }
+      ;
+      throw new Error("Failed pattern match at TreePretty (line 130, column 3 - line 133, column 54): " + [v1.constructor.name, v.constructor.name]);
+    };
+  };
+  var joinAttrs = function(sep) {
+    return function(arr) {
+      var v = tail(arr);
+      var v1 = head(arr);
+      if (v1 instanceof Nothing) {
+        return "";
+      }
+      ;
+      if (v1 instanceof Just && v instanceof Nothing) {
+        return v1.value0;
+      }
+      ;
+      if (v1 instanceof Just && v instanceof Just) {
+        return v1.value0 + foldMap2(function(s) {
+          return "\n" + (sep + s);
+        })(v.value0);
+      }
+      ;
+      throw new Error("Failed pattern match at TreePretty (line 116, column 3 - line 119, column 62): " + [v1.constructor.name, v.constructor.name]);
+    };
+  };
+  var isNumeric = function(s) {
+    var c = take(1)(s);
+    return c >= "0" && c <= "9" || c === "-";
+  };
+  var friendlyName = function(v) {
+    if (v === "width") {
+      return new Just("width");
+    }
+    ;
+    if (v === "height") {
+      return new Just("height");
+    }
+    ;
+    if (v === "x") {
+      return new Just("x");
+    }
+    ;
+    if (v === "y") {
+      return new Just("y");
+    }
+    ;
+    if (v === "x1") {
+      return new Just("x1");
+    }
+    ;
+    if (v === "y1") {
+      return new Just("y1");
+    }
+    ;
+    if (v === "x2") {
+      return new Just("x2");
+    }
+    ;
+    if (v === "y2") {
+      return new Just("y2");
+    }
+    ;
+    if (v === "cx") {
+      return new Just("cx");
+    }
+    ;
+    if (v === "cy") {
+      return new Just("cy");
+    }
+    ;
+    if (v === "r") {
+      return new Just("r");
+    }
+    ;
+    if (v === "rx") {
+      return new Just("rx");
+    }
+    ;
+    if (v === "ry") {
+      return new Just("ry");
+    }
+    ;
+    if (v === "fill") {
+      return new Just("fill");
+    }
+    ;
+    if (v === "stroke") {
+      return new Just("stroke");
+    }
+    ;
+    if (v === "stroke-width") {
+      return new Just("strokeWidth");
+    }
+    ;
+    if (v === "opacity") {
+      return new Just("opacity");
+    }
+    ;
+    if (v === "text-anchor") {
+      return new Just("textAnchor");
+    }
+    ;
+    if (v === "font-family") {
+      return new Just("fontFamily");
+    }
+    ;
+    if (v === "font-size") {
+      return new Just("fontSize");
+    }
+    ;
+    if (v === "font-weight") {
+      return new Just("fontWeight");
+    }
+    ;
+    if (v === "transform") {
+      return new Just("transform");
+    }
+    ;
+    if (v === "d") {
+      return new Just("d");
+    }
+    ;
+    if (v === "class") {
+      return new Just("class_");
+    }
+    ;
+    if (v === "viewBox") {
+      return new Just("viewBox");
+    }
+    ;
+    if (v === "id") {
+      return new Just("id");
+    }
+    ;
+    return Nothing.value;
+  };
+  var showAttr = function(v) {
+    if (v instanceof StaticAttr) {
+      var v1 = friendlyName(v.value0);
+      if (v1 instanceof Just && isNumeric(v.value1)) {
+        return "F." + (v1.value0 + (" " + v.value1));
+      }
+      ;
+      if (v1 instanceof Just) {
+        return "F." + (v1.value0 + (" " + show14(v.value1)));
+      }
+      ;
+      if (v1 instanceof Nothing && isNumeric(v.value1)) {
+        return 'staticNum "' + (v.value0 + ('" ' + v.value1));
+      }
+      ;
+      if (v1 instanceof Nothing) {
+        return 'staticStr "' + (v.value0 + ('" ' + show14(v.value1)));
+      }
+      ;
+      throw new Error("Failed pattern match at TreePretty (line 137, column 3 - line 141, column 59): " + [v1.constructor.name]);
+    }
+    ;
+    if (v instanceof ThunkedAttr) {
+      var v1 = friendlyName(v.value0);
+      if (v1 instanceof Just) {
+        return "thunked" + (titleCase(v1.value0) + (" datum." + v.value0));
+      }
+      ;
+      if (v1 instanceof Nothing) {
+        return 'thunked "' + (v.value0 + ('" datum.' + v.value0));
+      }
+      ;
+      throw new Error("Failed pattern match at TreePretty (line 143, column 3 - line 145, column 59): " + [v1.constructor.name]);
+    }
+    ;
+    throw new Error("Failed pattern match at TreePretty (line 135, column 1 - line 135, column 27): " + [v.constructor.name]);
+  };
+  var prettyAttrs = function(attrs) {
+    var v = length(attrs);
+    if (v === 0) {
+      return "[]";
+    }
+    ;
+    return "[ " + (joinWith2(", ")(map17(showAttr)(attrs)) + " ]");
+  };
+  var prettyAttrsMultiline = function(indent2) {
+    return function(attrs) {
+      var v = length(attrs);
+      if (v === 0) {
+        return "[]";
+      }
+      ;
+      return "[ " + (joinAttrs(indent2 + ", ")(map17(showAttr)(attrs)) + ("\n" + (indent2 + "]")));
+    };
+  };
+  var prettyTree = /* @__PURE__ */ (function() {
+    var repeatStr = function(v) {
+      return function(v1) {
+        if (v === 0) {
+          return "";
+        }
+        ;
+        return v1 + repeatStr(v - 1 | 0)(v1);
+      };
+    };
+    var indentStr = function(n) {
+      return repeatStr(n)("  ");
+    };
+    var go2 = function(v) {
+      return function(v1) {
+        if (v1 instanceof Empty) {
+          return "";
+        }
+        ;
+        if (v1 instanceof Elem) {
+          var ind = indentStr(v);
+          var hasChildren = length(v1.value0.children) > 0;
+          var hasAttrs = length(v1.value0.attrs) > 0;
+          var elemName = showElemType2(v1.value0.elemType);
+          if (hasChildren) {
+            return ind + ("elem " + (elemName + ("\n" + ((function() {
+              if (hasAttrs) {
+                return ind + ("  " + (prettyAttrsMultiline(ind + "  ")(v1.value0.attrs) + "\n"));
+              }
+              ;
+              return ind + "  []\n";
+            })() + (ind + ("  [ " + (function() {
+              var $67 = length(v1.value0.children) === 1;
+              if ($67) {
+                return trimStart(go2(0)(fromMaybe(Empty.value)(head(v1.value0.children)))) + (ind + "  ]\n");
+              }
+              ;
+              return "\n" + (foldMap2(go2(v + 2 | 0))(v1.value0.children) + (ind + "  ]\n"));
+            })()))))));
+          }
+          ;
+          return ind + ("elem " + (elemName + (" " + (prettyAttrs(v1.value0.attrs) + " []\n"))));
+        }
+        ;
+        if (v1 instanceof MkFold) {
+          return runSomeFold(v1.value0)(function(spec) {
+            var ind2 = indentStr(v);
+            var elemType = showElemType2(spec.elementType);
+            var countStr = (function() {
+              if (spec.enumerate instanceof FromArray) {
+                return show15(length(spec.enumerate.value0));
+              }
+              ;
+              if (spec.enumerate instanceof WithContext) {
+                return show15(length(spec.enumerate.value0));
+              }
+              ;
+              if (spec.enumerate instanceof FromTree) {
+                return "n";
+              }
+              ;
+              throw new Error("Failed pattern match at TreePretty (line 48, column 20 - line 51, column 28): " + [spec.enumerate.constructor.name]);
+            })();
+            return ind2 + ('forEach "' + (spec.name + ('" ' + (elemType + (" data  -- \xD7" + (countStr + ("\n" + (ind2 + "  \\datum -> ... -- template\n"))))))));
+          });
+        }
+        ;
+        throw new Error("Failed pattern match at TreePretty (line 20, column 3 - line 20, column 30): " + [v.constructor.name, v1.constructor.name]);
+      };
+    };
+    return go2(0);
+  })();
+
   // output/App/index.js
   var append7 = /* @__PURE__ */ append(semigroupArray);
   var discard3 = /* @__PURE__ */ discard(discardUnit);
   var for_3 = /* @__PURE__ */ for_(applicativeEffect)(foldableArray);
-  var show14 = /* @__PURE__ */ show(showInt);
+  var show16 = /* @__PURE__ */ show(showInt);
   var bind12 = /* @__PURE__ */ bind(bindHalogenM);
   var get2 = /* @__PURE__ */ get(monadStateHalogenM);
   var discard22 = /* @__PURE__ */ discard3(bindHalogenM);
@@ -12520,7 +13030,7 @@
     rerender("#ch6-br")(metaTree)();
     return unit;
   };
-  var renderChapter6 = /* @__PURE__ */ section([/* @__PURE__ */ class_2("chapter"), /* @__PURE__ */ id2("ch6")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("chapter-number")])([/* @__PURE__ */ text("Chapter 6")]), /* @__PURE__ */ h1_([/* @__PURE__ */ text("The Meta Fold")]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("One more thing. If a HATS tree is just data, and an interpreter is just a function\u2026 what if an interpreter produced another HATS tree?")]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("The structure diagrams you\u2019ve been seeing throughout this guide? They\u2019re HATS trees. Produced by a meta interpreter that reads one tree and writes another. Then the SVG interpreter renders "), /* @__PURE__ */ em_([/* @__PURE__ */ text("that")]), /* @__PURE__ */ text(" tree, the same way it renders anything else.")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quadrant")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-tl")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("HATS Tree")]), /* @__PURE__ */ pre([/* @__PURE__ */ class_2("english-output")])([/* @__PURE__ */ text(/* @__PURE__ */ runEnglish(diagramTree))])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-right")])([/* @__PURE__ */ text("\u2192")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-tr")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("SVG Interpreter")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-content"), /* @__PURE__ */ id2("ch6-tr")])([])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-down-left")])([/* @__PURE__ */ text("\u2193")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-spacer")])([]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-bl")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("Meta Interpreter \u2192 new HATS")]), /* @__PURE__ */ pre([/* @__PURE__ */ class_2("english-output")])([/* @__PURE__ */ text(/* @__PURE__ */ runEnglish(metaTree))])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-right")])([/* @__PURE__ */ text("\u2192")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-br")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("SVG Interpreter (again)")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-content"), /* @__PURE__ */ id2("ch6-br")])([])])]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("The fold folds itself. Every visualisation in this guide \u2014 the dots, the boards, the function diagram, the structure trees \u2014 was produced by the same machinery. It\u2019s folds all the way down.")])]);
+  var renderChapter6 = /* @__PURE__ */ section([/* @__PURE__ */ class_2("chapter"), /* @__PURE__ */ id2("ch6")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("chapter-number")])([/* @__PURE__ */ text("Chapter 6")]), /* @__PURE__ */ h1_([/* @__PURE__ */ text("The Meta Fold")]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("One more thing. If a HATS tree is just data, and an interpreter is just a function\u2026 what if an interpreter produced another HATS tree?")]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("The structure diagrams you\u2019ve been seeing throughout this guide? They\u2019re HATS trees. Produced by a meta interpreter that reads one tree and writes another. Then the SVG interpreter renders "), /* @__PURE__ */ em_([/* @__PURE__ */ text("that")]), /* @__PURE__ */ text(" tree, the same way it renders anything else.")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quadrant")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-tl")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("HATS Code")]), /* @__PURE__ */ pre([/* @__PURE__ */ class_2("hats-code")])([/* @__PURE__ */ text(/* @__PURE__ */ prettyTree(diagramTree))])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-right")])([/* @__PURE__ */ text("\u2192")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-tr")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("SVG Interpreter")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-content"), /* @__PURE__ */ id2("ch6-tr")])([])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-down-left")])([/* @__PURE__ */ text("\u2193")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-spacer")])([]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-bl")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("Meta Interpreter \u2192 new HATS Code")]), /* @__PURE__ */ pre([/* @__PURE__ */ class_2("hats-code")])([/* @__PURE__ */ text(/* @__PURE__ */ prettyTree(metaTree))])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-arrow quad-right")])([/* @__PURE__ */ text("\u2192")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-cell quad-br")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("eq-label")])([/* @__PURE__ */ text("SVG Interpreter (again)")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("quad-content"), /* @__PURE__ */ id2("ch6-br")])([])])]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("The fold folds itself. Every visualisation in this guide \u2014 the dots, the boards, the function diagram, the structure trees \u2014 was produced by the same machinery. It\u2019s folds all the way down.")])]);
   var renderChapter5Trees = function __do3() {
     clearElement("#ch5-svg")();
     rerender("#ch5-svg")(sampleTree)();
@@ -12594,7 +13104,7 @@
       };
     })(foldDiagrams);
     return for_3(indexed)(function(fd) {
-      var sel = "#ch0-fold-" + show14(fd.i);
+      var sel = "#ch0-fold-" + show16(fd.i);
       return function __do5() {
         clearElement(sel)();
         rerender(sel)(fd.tree)();
@@ -12604,7 +13114,7 @@
   };
   var renderChapter0 = /* @__PURE__ */ section([/* @__PURE__ */ class_2("chapter"), /* @__PURE__ */ id2("ch0")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("chapter-header")])([/* @__PURE__ */ img([/* @__PURE__ */ src2("hylo-twins.png"), /* @__PURE__ */ class_2("logo")]), /* @__PURE__ */ div_([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("chapter-number")])([/* @__PURE__ */ text("Hylograph")]), /* @__PURE__ */ h1_([/* @__PURE__ */ text("The Hylographic Fold")])])]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("D3\u2019s join binds data to the DOM one\u2011to\u2011one: an array of values produces an array of elements. It\u2019s powerful, but it\u2019s a special case.")]), /* @__PURE__ */ p([/* @__PURE__ */ class_2("chapter-subtitle")])([/* @__PURE__ */ text("The hylographic fold generalizes both sides. The left side can be any structure you can take apart \u2014 an array, a tree, a map. The right side can be any structure you can assemble. The fold is the bridge between them.")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-section")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-label")])([/* @__PURE__ */ text("The Join")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-sublabel")])([/* @__PURE__ */ text("Array \u2192 Array, one\u2011to\u2011one")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-box"), /* @__PURE__ */ id2("ch0-join")])([])]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-section")])([/* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-label")])([/* @__PURE__ */ text("The Fold")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-sublabel")])([/* @__PURE__ */ text("Any structure in, any structure out")]), /* @__PURE__ */ div2([/* @__PURE__ */ class_2("diagram-row")])(/* @__PURE__ */ mapWithIndex2(function(i2) {
     return function(fd) {
-      return div2([class_2("diagram-cell")])([div2([class_2("diagram-cell-label")])([text(fd.label)]), div2([class_2("diagram-box"), id2("ch0-fold-" + show14(i2))])([])]);
+      return div2([class_2("diagram-cell")])([div2([class_2("diagram-cell-label")])([text(fd.label)]), div2([class_2("diagram-box"), id2("ch0-fold-" + show16(i2))])([])]);
     };
   })(foldDiagrams))])]);
   var padTo = function(n) {
@@ -12700,7 +13210,7 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at App (line 531, column 16 - line 553, column 41): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at App (line 532, column 16 - line 554, column 41): " + [v.constructor.name]);
     };
   };
   var exBtn = function(current) {
@@ -12753,7 +13263,7 @@
   var pure8 = /* @__PURE__ */ pure(applicativeAff);
   var bindFlipped1 = /* @__PURE__ */ bindFlipped(bindMaybe);
   var pure1 = /* @__PURE__ */ pure(applicativeEffect);
-  var map17 = /* @__PURE__ */ map(functorEffect);
+  var map18 = /* @__PURE__ */ map(functorEffect);
   var discard4 = /* @__PURE__ */ discard(discardUnit);
   var throwError2 = /* @__PURE__ */ throwError(monadThrowAff);
   var selectElement2 = function(query2) {
@@ -12771,7 +13281,7 @@
     return function __do5() {
       var rs = bindFlipped4(readyState)(bindFlipped4(document2)(windowImpl))();
       if (rs instanceof Loading) {
-        var et = map17(toEventTarget2)(windowImpl)();
+        var et = map18(toEventTarget2)(windowImpl)();
         var listener = eventListener(function(v) {
           return callback(new Right(unit));
         })();
@@ -12891,7 +13401,7 @@
   var fork3 = /* @__PURE__ */ fork(monadForkAff);
   var parSequence_2 = /* @__PURE__ */ parSequence_(parallelAff)(applicativeParAff)(foldableList);
   var pure9 = /* @__PURE__ */ pure(applicativeAff);
-  var map19 = /* @__PURE__ */ map(functorCoyoneda);
+  var map20 = /* @__PURE__ */ map(functorCoyoneda);
   var parallel3 = /* @__PURE__ */ parallel(parallelAff);
   var map110 = /* @__PURE__ */ map(functorAff);
   var sequential2 = /* @__PURE__ */ sequential(parallelAff);
@@ -12965,7 +13475,7 @@
     return function(ref2) {
       return function(q2) {
         return bind13(liftEffect4(read(ref2)))(function(v) {
-          return evalM(render2)(ref2)(v["component"]["eval"](new Query(map19(Just.create)(liftCoyoneda(q2)), $$const(Nothing.value))));
+          return evalM(render2)(ref2)(v["component"]["eval"](new Query(map20(Just.create)(liftCoyoneda(q2)), $$const(Nothing.value))));
         });
       };
     };
@@ -13175,7 +13685,7 @@
   var parSequence_3 = /* @__PURE__ */ parSequence_(parallelAff)(applicativeParAff)(foldableList);
   var liftEffect5 = /* @__PURE__ */ liftEffect(monadEffectAff);
   var pure10 = /* @__PURE__ */ pure(applicativeEffect);
-  var map20 = /* @__PURE__ */ map(functorEffect);
+  var map21 = /* @__PURE__ */ map(functorEffect);
   var pure12 = /* @__PURE__ */ pure(applicativeAff);
   var when3 = /* @__PURE__ */ when(applicativeEffect);
   var renderStateX2 = /* @__PURE__ */ renderStateX(functorEffect);
@@ -13273,7 +13783,7 @@
               return function(childrenOutRef) {
                 return unComponentSlot(function(slot) {
                   return function __do5() {
-                    var childrenIn = map20(slot.pop)(read(childrenInRef))();
+                    var childrenIn = map21(slot.pop)(read(childrenInRef))();
                     var $$var2 = (function() {
                       if (childrenIn instanceof Just) {
                         write(childrenIn.value0.value1)(childrenInRef)();
@@ -13303,7 +13813,7 @@
                       ;
                       throw new Error("Failed pattern match at Halogen.Aff.Driver (line 213, column 14 - line 222, column 98): " + [childrenIn.constructor.name]);
                     })();
-                    var isDuplicate = map20(function($69) {
+                    var isDuplicate = map21(function($69) {
                       return isJust(slot.get($69));
                     })(read(childrenOutRef))();
                     when3(isDuplicate)(warn("Halogen: Duplicate slot address was detected during rendering, unexpected results may occur"))();
@@ -13329,7 +13839,7 @@
           return function($$var2) {
             return function __do5() {
               var v = read($$var2)();
-              var shouldProcessHandlers = map20(isNothing)(read(v.pendingHandlers))();
+              var shouldProcessHandlers = map21(isNothing)(read(v.pendingHandlers))();
               when3(shouldProcessHandlers)(write(new Just(Nil.value))(v.pendingHandlers))();
               write(empty4)(v.childrenOut)();
               write(v.children)(v.childrenIn)();
@@ -13500,7 +14010,7 @@
   var identity8 = /* @__PURE__ */ identity(categoryFn);
   var bind15 = /* @__PURE__ */ bind(bindAff);
   var liftEffect6 = /* @__PURE__ */ liftEffect(monadEffectAff);
-  var map21 = /* @__PURE__ */ map(functorEffect);
+  var map24 = /* @__PURE__ */ map(functorEffect);
   var bindFlipped7 = /* @__PURE__ */ bindFlipped(bindEffect);
   var substInParent = function(v) {
     return function(v1) {
@@ -13648,7 +14158,7 @@
   var runUI2 = function(component3) {
     return function(i2) {
       return function(element3) {
-        return bind15(liftEffect6(map21(toDocument)(bindFlipped7(document2)(windowImpl))))(function(document3) {
+        return bind15(liftEffect6(map24(toDocument)(bindFlipped7(document2)(windowImpl))))(function(document3) {
           return runUI(renderSpec(document3)(element3))(component3)(i2);
         });
       };

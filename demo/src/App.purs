@@ -23,6 +23,7 @@ import Chapters.Chapter5 as Ch5
 import Chapters.Chapter6 as Ch6
 import Examples.MetaHATS as Meta
 import Hylograph.Interpreter.English (runEnglish)
+import TreePretty (prettyTree)
 
 -- =============================================================================
 -- FFI
@@ -473,9 +474,9 @@ renderChapter6 =
     , HH.div [ HP.class_ (HH.ClassName "quadrant") ]
         [ -- Top row
           HH.div [ HP.class_ (HH.ClassName "quad-cell quad-tl") ]
-            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Tree" ]
-            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
-                [ HH.text (runEnglish Ch6.diagramTree) ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Code" ]
+            , HH.pre [ HP.class_ (HH.ClassName "hats-code") ]
+                [ HH.text (prettyTree Ch6.diagramTree) ]
             ]
         , HH.div [ HP.class_ (HH.ClassName "quad-arrow quad-right") ]
             [ HH.text "\x2192" ]
@@ -489,9 +490,9 @@ renderChapter6 =
         , HH.div [ HP.class_ (HH.ClassName "quad-spacer") ] []
         -- Bottom row
         , HH.div [ HP.class_ (HH.ClassName "quad-cell quad-bl") ]
-            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Meta Interpreter \x2192 new HATS" ]
-            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
-                [ HH.text (runEnglish Ch6.metaTree) ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Meta Interpreter \x2192 new HATS Code" ]
+            , HH.pre [ HP.class_ (HH.ClassName "hats-code") ]
+                [ HH.text (prettyTree Ch6.metaTree) ]
             ]
         , HH.div [ HP.class_ (HH.ClassName "quad-arrow quad-right") ]
             [ HH.text "\x2192" ]
