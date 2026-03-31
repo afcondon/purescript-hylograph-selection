@@ -457,6 +457,61 @@
     }
 
     /* ================================================================
+       Code + Output layout (Chapter 4)
+       ================================================================ */
+    .code-output-row {
+      display: flex;
+      gap: 2rem;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .code-panel {
+      flex: 1;
+      background: var(--dark-panel);
+      border: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .output-panel {
+      flex: 1;
+      background: var(--dark-panel);
+      border: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .output-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .hats-code {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: var(--gold-bright);
+      background: transparent;
+      padding: 0.75rem 1rem;
+      margin: 0;
+      white-space: pre;
+      overflow-x: auto;
+      flex: 1;
+    }
+
+    .example-caption {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    /* ================================================================
        Scroll hint
        ================================================================ */
     .scroll-hint {

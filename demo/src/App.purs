@@ -17,6 +17,7 @@ import Chapters.Chapter0 as Ch0
 import Chapters.Chapter1 as Ch1
 import Chapters.Chapter2 as Ch2
 import Chapters.Chapter3 as Ch3
+import Chapters.Chapter4 as Ch4
 import Examples.MetaHATS as Meta
 
 -- =============================================================================
@@ -32,12 +33,14 @@ foreign import clearElement :: String -> Effect Unit
 type State =
   { selectedTab :: Ch1.FoldExample
   , selectedStage :: Ch3.Stage
+  , selectedExample :: Ch4.Example
   }
 
 data Action
   = Initialize
   | SelectTab Ch1.FoldExample
   | SelectStage Ch3.Stage
+  | SelectExample Ch4.Example
 
 -- =============================================================================
 -- Component
@@ -46,7 +49,7 @@ data Action
 component :: forall q i o m. MonadAff m => H.Component q i o m
 component =
   H.mkComponent
-    { initialState: \_ -> { selectedTab: Ch1.ExHTML, selectedStage: Ch3.Stage1 }
+    { initialState: \_ -> { selectedTab: Ch1.ExHTML, selectedStage: Ch3.Stage1, selectedExample: Ch4.ExBars }
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction
@@ -66,6 +69,7 @@ render state =
     , renderChapter1 state
     , renderChapter2
     , renderChapter3 state
+    , renderChapter4 state
     ]
 
 renderNav :: forall w i. HH.HTML w i
@@ -75,6 +79,7 @@ renderNav =
     , navDot "#ch1"
     , navDot "#ch2"
     , navDot "#ch3"
+    , navDot "#ch4"
     ]
 
 navDot :: forall w i. String -> HH.HTML w i
@@ -287,6 +292,68 @@ sameStage Ch3.Stage4 Ch3.Stage4 = true
 sameStage _ _ = false
 
 -- =============================================================================
+-- Chapter 4: HATS Revealed
+-- =============================================================================
+
+renderChapter4 :: forall m. State -> H.ComponentHTML Action () m
+renderChapter4 state =
+  HH.section
+    [ HP.class_ (HH.ClassName "chapter")
+    , HP.id "ch4"
+    ]
+    [ HH.div [ HP.class_ (HH.ClassName "chapter-number") ]
+        [ HH.text "Chapter 4" ]
+    , HH.h1_ [ HH.text "HATS" ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "Now that you understand the structure of the transformation from data to visualisation, let\x2019s look at how we actually do this in code. The trees you\x2019ve been seeing are representations of a fully declarative abstract syntax tree we call "
+        , HH.strong_ [ HH.text "HATS" ]
+        , HH.text " \x2014 Hylomorphic Abstract Tree Syntax."
+        ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "HATS is an embedded DSL with full access to PureScript. The tree is evaluated by an interpreter at runtime using the data you provide \x2014 but it\x2019s type-checked at compile time, so you get type safety across the entire pipeline. Here\x2019s what some simple HATS visualisations look like:" ]
+
+    -- Example selector
+    , HH.div [ HP.class_ (HH.ClassName "tabs") ]
+        [ exBtn state.selectedExample Ch4.ExBars "Bar Chart"
+        , exBtn state.selectedExample Ch4.ExDots "Dots"
+        , exBtn state.selectedExample Ch4.ExComposed "Composed"
+        ]
+
+    -- Caption
+    , HH.div [ HP.class_ (HH.ClassName "example-caption") ]
+        [ HH.text (Ch4.exampleCaption state.selectedExample) ]
+
+    -- Code + rendered output
+    , HH.div [ HP.class_ (HH.ClassName "code-output-row") ]
+        [ -- Code
+          HH.div [ HP.class_ (HH.ClassName "code-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Code" ]
+            , HH.pre [ HP.class_ (HH.ClassName "hats-code") ]
+                [ HH.text (Ch4.exampleCode state.selectedExample) ]
+            ]
+        -- Rendered output
+        , HH.div [ HP.class_ (HH.ClassName "output-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Rendered" ]
+            , HH.div [ HP.class_ (HH.ClassName "output-content"), HP.id "ch4-output" ] []
+            ]
+        ]
+    ]
+
+exBtn :: forall m. Ch4.Example -> Ch4.Example -> String -> H.ComponentHTML Action () m
+exBtn current this label =
+  HH.button
+    [ HP.class_ (HH.ClassName (if sameExample current this then "tab selected" else "tab"))
+    , HE.onClick \_ -> SelectExample this
+    ]
+    [ HH.text label ]
+
+sameExample :: Ch4.Example -> Ch4.Example -> Boolean
+sameExample Ch4.ExBars Ch4.ExBars = true
+sameExample Ch4.ExDots Ch4.ExDots = true
+sameExample Ch4.ExComposed Ch4.ExComposed = true
+sameExample _ _ = false
+
+-- =============================================================================
 -- Chapter 1 helpers
 -- =============================================================================
 
@@ -317,6 +384,7 @@ handleAction = case _ of
       renderChapter1Trees state.selectedTab
       renderChapter2Trees
       renderChapter3Trees state.selectedStage
+      renderChapter4Trees state.selectedExample
 
   SelectTab t -> do
     H.modify_ _ { selectedTab = t }
@@ -325,6 +393,10 @@ handleAction = case _ of
   SelectStage s -> do
     H.modify_ _ { selectedStage = s }
     H.liftEffect (renderChapter3Trees s)
+
+  SelectExample e -> do
+    H.modify_ _ { selectedExample = e }
+    H.liftEffect (renderChapter4Trees e)
 
 -- =============================================================================
 -- Tree rendering
@@ -354,6 +426,12 @@ renderChapter2Trees = do
   _ <- rerender "#ch2-flat-meta" flatMeta
   _ <- rerender "#ch2-nested-board" Ch2.nestedBoardTree
   _ <- rerender "#ch2-nested-meta" nestedMeta
+  pure unit
+
+renderChapter4Trees :: Ch4.Example -> Effect Unit
+renderChapter4Trees ex = do
+  clearElement "#ch4-output"
+  _ <- rerender "#ch4-output" (Ch4.exampleTree ex)
   pure unit
 
 renderChapter3Trees :: Ch3.Stage -> Effect Unit
