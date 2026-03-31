@@ -6,6 +6,7 @@ import Prelude
 import Data.Array (mapWithIndex)
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..))
+import Data.String.CodeUnits as SCU
 import Effect (Effect)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -310,7 +311,17 @@ renderChapter4 state =
         , HH.text " \x2014 Hylomorphic Abstract Tree Syntax."
         ]
     , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "HATS is an embedded DSL with full access to PureScript. The tree is evaluated by an interpreter at runtime using the data you provide \x2014 but it\x2019s type-checked at compile time, so you get type safety across the entire pipeline. Here\x2019s what some simple HATS visualisations look like:" ]
+        [ HH.text "HATS is an embedded DSL with full access to PureScript. Attributes like "
+        , HH.code_ [ HH.text "F.height d.value" ]
+        , HH.text " are normal PureScript expressions \x2014 lambdas that capture fields from the datum. The compiler type-checks these against the data you feed the fold, so if your datum doesn\x2019t have a "
+        , HH.code_ [ HH.text "value" ]
+        , HH.text " field, you get an error at compile time, not a blank screen at runtime."
+        ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "The empty "
+        , HH.code_ [ HH.text "[]" ]
+        , HH.text " at the end of each element is where children, behaviors, and update machinery live \x2014 coordinated highlighting, transitions, enter/update/exit. For now, it\x2019s just a quiet placeholder."
+        ]
 
     -- Example selector
     , HH.div [ HP.class_ (HH.ClassName "tabs") ]
@@ -329,7 +340,7 @@ renderChapter4 state =
           HH.div [ HP.class_ (HH.ClassName "code-panel") ]
             [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Code" ]
             , HH.pre [ HP.class_ (HH.ClassName "hats-code") ]
-                [ HH.text (Ch4.exampleCode state.selectedExample) ]
+                (Ch4.exampleCode state.selectedExample <#> renderCodeLine)
             ]
         -- Rendered output
         , HH.div [ HP.class_ (HH.ClassName "output-panel") ]
@@ -352,6 +363,27 @@ sameExample Ch4.ExBars Ch4.ExBars = true
 sameExample Ch4.ExDots Ch4.ExDots = true
 sameExample Ch4.ExComposed Ch4.ExComposed = true
 sameExample _ _ = false
+
+renderCodeLine :: forall w i. Ch4.CodeLine -> HH.HTML w i
+renderCodeLine line =
+  HH.div [ HP.class_ (HH.ClassName "code-line") ]
+    ( if line.comment == "" then
+        [ HH.span [ HP.class_ (HH.ClassName "code-text") ] [ HH.text line.text ] ]
+      else
+        [ HH.span [ HP.class_ (HH.ClassName "code-text") ] [ HH.text (padTo 30 line.text) ]
+        , HH.span [ HP.class_ (HH.ClassName "code-comment") ] [ HH.text line.comment ]
+        ]
+    )
+
+padTo :: Int -> String -> String
+padTo n s =
+  let len = SCU.length s
+  in if len >= n then s <> " "
+     else s <> SCU.fromCharArray (replicate (n - len) ' ')
+
+replicate :: Int -> Char -> Array Char
+replicate 0 _ = []
+replicate i c = [c] <> replicate (i - 1) c
 
 -- =============================================================================
 -- Chapter 1 helpers

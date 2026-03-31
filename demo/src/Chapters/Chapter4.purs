@@ -4,6 +4,7 @@
 -- | Small, readable examples demonstrating the embedded DSL.
 module Chapters.Chapter4
   ( Example(..)
+  , CodeLine
   , exampleTree
   , exampleCode
   , exampleCaption
@@ -74,22 +75,32 @@ barTree =
               ]
       ]
 
-barCode :: String
+-- | Code lines: { text, comment } — comment rendered dimmer
+type CodeLine = { text :: String, comment :: String }
+
+cl :: String -> String -> CodeLine
+cl t c = { text: t, comment: c }
+
+barCode :: Array CodeLine
 barCode =
-  "forEach \"bars\" Group data _.label \\d ->\n\
-  \  elem Group [ transform ... ]\n\
-  \    [ elem Rect\n\
-  \        [ F.x 0.0\n\
-  \        , F.y (baseY - d.value)\n\
-  \        , F.width 50.0\n\
-  \        , F.height d.value\n\
-  \        , F.fill \"#C9A962\"\n\
-  \        ] []\n\
-  \    , elem Text\n\
-  \        [ F.textAnchor \"middle\"\n\
-  \        , textContent d.label\n\
-  \        ] []\n\
-  \    ]"
+  [ cl "forEach \"bars\" Group"  "-- iterate the data"
+  , cl "  data"                  "-- your Array, Map, Tree..."
+  , cl "  _.label"               "-- key function (a -> String)"
+  , cl "  \\d ->"                "-- template receives each datum"
+  , cl "  elem Group"            "-- outer element type"
+  , cl "    [ transform ... ]"   "-- attrs: normal PureScript"
+  , cl "    [ elem Rect"         ""
+  , cl "        [ F.y (baseY - d.value)"  "-- d is type-checked!"
+  , cl "        , F.width 50.0"  ""
+  , cl "        , F.height d.value" "-- datum fields are lambdas"
+  , cl "        , F.fill \"#C9A962\"" ""
+  , cl "        ] []"            "-- [] = children, behaviors"
+  , cl "    , elem Text"         ""
+  , cl "        [ F.textAnchor \"middle\"" ""
+  , cl "        , textContent d.label"     "-- also type-checked"
+  , cl "        ] []"            ""
+  , cl "    ]"                   ""
+  ]
 
 -- =============================================================================
 -- Example 2: Labeled dots with varying size
@@ -137,20 +148,22 @@ dotTree =
               ]
       ]
 
-dotCode :: String
+dotCode :: Array CodeLine
 dotCode =
-  "forEach \"dots\" Group data _.name \\d ->\n\
-  \  elem Group [ transform ... ]\n\
-  \    [ elem Circle\n\
-  \        [ F.cx 0.0, F.cy 0.0\n\
-  \        , F.r d.size\n\
-  \        , F.fill \"#C9A962\"\n\
-  \        ] []\n\
-  \    , elem Text\n\
-  \        [ F.textAnchor \"middle\"\n\
-  \        , textContent d.name\n\
-  \        ] []\n\
-  \    ]"
+  [ cl "forEach \"dots\" Group"  "-- name, element type"
+  , cl "  data _.name \\d ->"    "-- key fn, then template"
+  , cl "  elem Group [ ... ]"    ""
+  , cl "    [ elem Circle"       ""
+  , cl "        [ F.cx 0.0"      ""
+  , cl "        , F.cy 0.0"      ""
+  , cl "        , F.r d.size"    "-- size from datum"
+  , cl "        , F.fill \"#C9A962\"" ""
+  , cl "        ] []"            ""
+  , cl "    , elem Text"         ""
+  , cl "        [ textContent d.name" "-- name from datum"
+  , cl "        ] []"            "-- no children needed"
+  , cl "    ]"                   ""
+  ]
 
 -- =============================================================================
 -- Example 3: Composed fragments (bars + trend line + markers)
@@ -212,24 +225,27 @@ composedTree =
           ]
       ]
 
-composedCode :: String
+composedCode :: Array CodeLine
 composedCode =
-  "siblings\n\
-  \  [ -- Fragment 1: bars\n\
-  \    forEach \"bars\" Rect data _.label \\d ->\n\
-  \      elem Rect [ F.x ..., F.height d.value\n\
-  \               , F.fill \"#C9A962\" ] []\n\
-  \\n\
-  \  -- Fragment 2: trend line\n\
-  \  , elem Polygon\n\
-  \      [ F.points polyline\n\
-  \      , F.stroke \"#C9A962\" ] []\n\
-  \\n\
-  \  -- Fragment 3: markers\n\
-  \  , forEach \"markers\" Circle data _.label \\d ->\n\
-  \      elem Circle [ F.cx ..., F.cy ...\n\
-  \                  , F.r 4.0 ] []\n\
-  \  ]"
+  [ cl "siblings"                "-- compose fragments"
+  , cl "  ["                     ""
+  , cl "    -- Fragment 1: bars" ""
+  , cl "    forEach \"bars\" Rect data _.label \\d ->" ""
+  , cl "      elem Rect"         ""
+  , cl "        [ F.height d.value"  "-- datum drives height"
+  , cl "        , F.fill \"#C9A962\"" ""
+  , cl "        ] []"            ""
+  , cl ""                        ""
+  , cl "  -- Fragment 2: trend"  ""
+  , cl "  , elem Polygon"        "-- static element, no fold"
+  , cl "      [ F.points polyline" "-- computed from data"
+  , cl "      , F.stroke \"#C9A962\"" ""
+  , cl "      ] []"              ""
+  , cl ""                        ""
+  , cl "  -- Fragment 3: markers" ""
+  , cl "  , forEach \"markers\" Circle data ..." ""
+  , cl "  ]"                     ""
+  ]
 
 -- =============================================================================
 -- Dispatch
@@ -241,7 +257,7 @@ exampleTree = case _ of
   ExDots -> dotTree
   ExComposed -> composedTree
 
-exampleCode :: Example -> String
+exampleCode :: Example -> Array CodeLine
 exampleCode = case _ of
   ExBars -> barCode
   ExDots -> dotCode

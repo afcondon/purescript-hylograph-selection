@@ -1112,7 +1112,7 @@
   var intercalate = function(dictFoldable) {
     var foldl22 = foldl(dictFoldable);
     return function(dictMonoid) {
-      var append7 = append(dictMonoid.Semigroup0());
+      var append8 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(sep) {
         return function(xs) {
@@ -1127,7 +1127,7 @@
               ;
               return {
                 init: false,
-                acc: append7(v.acc)(append7(sep)(v1))
+                acc: append8(v.acc)(append8(sep)(v1))
               };
             };
           };
@@ -1190,12 +1190,12 @@
   var foldMapDefaultR = function(dictFoldable) {
     var foldr22 = foldr(dictFoldable);
     return function(dictMonoid) {
-      var append7 = append(dictMonoid.Semigroup0());
+      var append8 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(f) {
         return foldr22(function(x3) {
           return function(acc) {
-            return append7(f(x3))(acc);
+            return append8(f(x3))(acc);
           };
         })(mempty2);
       };
@@ -1473,13 +1473,13 @@
   var foldMapWithIndexDefaultR = function(dictFoldableWithIndex) {
     var foldrWithIndex1 = foldrWithIndex(dictFoldableWithIndex);
     return function(dictMonoid) {
-      var append7 = append(dictMonoid.Semigroup0());
+      var append8 = append(dictMonoid.Semigroup0());
       var mempty2 = mempty(dictMonoid);
       return function(f) {
         return foldrWithIndex1(function(i2) {
           return function(x3) {
             return function(acc) {
-              return append7(f(i2)(x3))(acc);
+              return append8(f(i2)(x3))(acc);
             };
           };
         })(mempty2);
@@ -3582,20 +3582,20 @@
     return elem2(SVG.value)([viewBox(0)(0)(220)(120), width(220), height(120)])([treeShape(60)(20)(cfg.structColor), foldArrow(60 + 35)(rightX2 - 35)(20 + 25), treeShape(rightX2)(20)(cfg.structColor)]);
   })();
   var arrayOfN = function(n) {
-    var replicate = function(v) {
+    var replicate2 = function(v) {
       return function(v1) {
         if (v === 0) {
           return [];
         }
         ;
-        return append12([unit])(replicate(v - 1 | 0)(unit));
+        return append12([unit])(replicate2(v - 1 | 0)(unit));
       };
     };
     return mapWithIndex2(function(v) {
       return function(v1) {
         return unit;
       };
-    })(replicate(n)(unit));
+    })(replicate2(n)(unit));
   };
   var arrows1to1 = function(leftX2) {
     return function(rightX2) {
@@ -3650,6 +3650,9 @@
   }];
 
   // output/Data.String.CodeUnits/foreign.js
+  var fromCharArray = function(a2) {
+    return a2.join("");
+  };
   var length2 = function(s) {
     return s.length;
   };
@@ -4351,7 +4354,7 @@
       return "Three fragments composed as siblings: bars, a trend line, and dot markers.";
     }
     ;
-    throw new Error("Failed pattern match at Chapters.Chapter4 (line 251, column 18 - line 254, column 93): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Chapters.Chapter4 (line 267, column 18 - line 270, column 93): " + [v.constructor.name]);
   };
   var dotData = /* @__PURE__ */ mapWithIndex2(function(i2) {
     return function(r2) {
@@ -4382,8 +4385,16 @@
       return elem2(Group.value)([transform("translate(" + (show8(x3) + ("," + (show8(80) + ")"))))])([elem2(Circle.value)([cx(0), cy(0), r(d2.size), fill("#C9A962"), opacity("0.8")])([]), elem2(Text.value)([x(0), y(d2.size + 16), textAnchor("middle"), fontSize("10"), fontFamily("'Josefin Sans', sans-serif"), fill("#8B7355"), staticStr("textContent")(d2.name)])([])]);
     })]);
   })();
-  var dotCode = 'forEach "dots" Group data _.name \\d ->\n  elem Group [ transform ... ]\n    [ elem Circle\n        [ F.cx 0.0, F.cy 0.0\n        , F.r d.size\n        , F.fill "#C9A962"\n        ] []\n    , elem Text\n        [ F.textAnchor "middle"\n        , textContent d.name\n        ] []\n    ]';
-  var composedCode = 'siblings\n  [ -- Fragment 1: bars\n    forEach "bars" Rect data _.label \\d ->\n      elem Rect [ F.x ..., F.height d.value\n               , F.fill "#C9A962" ] []\n\n  -- Fragment 2: trend line\n  , elem Polygon\n      [ F.points polyline\n      , F.stroke "#C9A962" ] []\n\n  -- Fragment 3: markers\n  , forEach "markers" Circle data _.label \\d ->\n      elem Circle [ F.cx ..., F.cy ...\n                  , F.r 4.0 ] []\n  ]';
+  var cl = function(t) {
+    return function(c) {
+      return {
+        text: t,
+        comment: c
+      };
+    };
+  };
+  var composedCode = [/* @__PURE__ */ cl("siblings")("-- compose fragments"), /* @__PURE__ */ cl("  [")(""), /* @__PURE__ */ cl("    -- Fragment 1: bars")(""), /* @__PURE__ */ cl('    forEach "bars" Rect data _.label \\d ->')(""), /* @__PURE__ */ cl("      elem Rect")(""), /* @__PURE__ */ cl("        [ F.height d.value")("-- datum drives height"), /* @__PURE__ */ cl('        , F.fill "#C9A962"')(""), /* @__PURE__ */ cl("        ] []")(""), /* @__PURE__ */ cl("")(""), /* @__PURE__ */ cl("  -- Fragment 2: trend")(""), /* @__PURE__ */ cl("  , elem Polygon")("-- static element, no fold"), /* @__PURE__ */ cl("      [ F.points polyline")("-- computed from data"), /* @__PURE__ */ cl('      , F.stroke "#C9A962"')(""), /* @__PURE__ */ cl("      ] []")(""), /* @__PURE__ */ cl("")(""), /* @__PURE__ */ cl("  -- Fragment 3: markers")(""), /* @__PURE__ */ cl('  , forEach "markers" Circle data ...')(""), /* @__PURE__ */ cl("  ]")("")];
+  var dotCode = [/* @__PURE__ */ cl('forEach "dots" Group')("-- name, element type"), /* @__PURE__ */ cl("  data _.name \\d ->")("-- key fn, then template"), /* @__PURE__ */ cl("  elem Group [ ... ]")(""), /* @__PURE__ */ cl("    [ elem Circle")(""), /* @__PURE__ */ cl("        [ F.cx 0.0")(""), /* @__PURE__ */ cl("        , F.cy 0.0")(""), /* @__PURE__ */ cl("        , F.r d.size")("-- size from datum"), /* @__PURE__ */ cl('        , F.fill "#C9A962"')(""), /* @__PURE__ */ cl("        ] []")(""), /* @__PURE__ */ cl("    , elem Text")(""), /* @__PURE__ */ cl("        [ textContent d.name")("-- name from datum"), /* @__PURE__ */ cl("        ] []")("-- no children needed"), /* @__PURE__ */ cl("    ]")("")];
   var barData = /* @__PURE__ */ mapWithIndex2(function(i2) {
     return function(r2) {
       return {
@@ -4451,9 +4462,9 @@
       return composedTree;
     }
     ;
-    throw new Error("Failed pattern match at Chapters.Chapter4 (line 239, column 15 - line 242, column 29): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Chapters.Chapter4 (line 255, column 15 - line 258, column 29): " + [v.constructor.name]);
   };
-  var barCode = 'forEach "bars" Group data _.label \\d ->\n  elem Group [ transform ... ]\n    [ elem Rect\n        [ F.x 0.0\n        , F.y (baseY - d.value)\n        , F.width 50.0\n        , F.height d.value\n        , F.fill "#C9A962"\n        ] []\n    , elem Text\n        [ F.textAnchor "middle"\n        , textContent d.label\n        ] []\n    ]';
+  var barCode = [/* @__PURE__ */ cl('forEach "bars" Group')("-- iterate the data"), /* @__PURE__ */ cl("  data")("-- your Array, Map, Tree..."), /* @__PURE__ */ cl("  _.label")("-- key function (a -> String)"), /* @__PURE__ */ cl("  \\d ->")("-- template receives each datum"), /* @__PURE__ */ cl("  elem Group")("-- outer element type"), /* @__PURE__ */ cl("    [ transform ... ]")("-- attrs: normal PureScript"), /* @__PURE__ */ cl("    [ elem Rect")(""), /* @__PURE__ */ cl("        [ F.y (baseY - d.value)")("-- d is type-checked!"), /* @__PURE__ */ cl("        , F.width 50.0")(""), /* @__PURE__ */ cl("        , F.height d.value")("-- datum fields are lambdas"), /* @__PURE__ */ cl('        , F.fill "#C9A962"')(""), /* @__PURE__ */ cl("        ] []")("-- [] = children, behaviors"), /* @__PURE__ */ cl("    , elem Text")(""), /* @__PURE__ */ cl('        [ F.textAnchor "middle"')(""), /* @__PURE__ */ cl("        , textContent d.label")("-- also type-checked"), /* @__PURE__ */ cl("        ] []")(""), /* @__PURE__ */ cl("    ]")("")];
   var exampleCode = function(v) {
     if (v instanceof ExBars) {
       return barCode;
@@ -4467,7 +4478,7 @@
       return composedCode;
     }
     ;
-    throw new Error("Failed pattern match at Chapters.Chapter4 (line 245, column 15 - line 248, column 29): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Chapters.Chapter4 (line 261, column 15 - line 264, column 29): " + [v.constructor.name]);
   };
 
   // output/Control.Monad.State.Class/index.js
@@ -8709,10 +8720,13 @@
   var p = /* @__PURE__ */ element2("p");
   var pre = /* @__PURE__ */ element2("pre");
   var section = /* @__PURE__ */ element2("section");
+  var span2 = /* @__PURE__ */ element2("span");
   var strong = /* @__PURE__ */ element2("strong");
   var strong_ = /* @__PURE__ */ strong([]);
   var div2 = /* @__PURE__ */ element2("div");
   var div_ = /* @__PURE__ */ div2([]);
+  var code = /* @__PURE__ */ element2("code");
+  var code_ = /* @__PURE__ */ code([]);
   var button = /* @__PURE__ */ element2("button");
   var a = /* @__PURE__ */ element2("a");
 
@@ -11862,6 +11876,7 @@
   };
 
   // output/App/index.js
+  var append7 = /* @__PURE__ */ append(semigroupArray);
   var discard2 = /* @__PURE__ */ discard(discardUnit);
   var for_2 = /* @__PURE__ */ for_(applicativeEffect)(foldableArray);
   var show10 = /* @__PURE__ */ show(showInt);
@@ -11869,6 +11884,7 @@
   var get2 = /* @__PURE__ */ get(monadStateHalogenM);
   var discard22 = /* @__PURE__ */ discard2(bindHalogenM);
   var modify_3 = /* @__PURE__ */ modify_2(monadStateHalogenM);
+  var mapFlipped3 = /* @__PURE__ */ mapFlipped(functorArray);
   var Initialize2 = /* @__PURE__ */ (function() {
     function Initialize3() {
     }
@@ -11927,8 +11943,8 @@
     return function($$this) {
       return function(label5) {
         return button([class_2((function() {
-          var $35 = sameTab(current)($$this);
-          if ($35) {
+          var $42 = sameTab(current)($$this);
+          if ($42) {
             return "tab selected";
           }
           ;
@@ -11964,8 +11980,8 @@
     return function($$this) {
       return function(label5) {
         return button([class_2((function() {
-          var $38 = sameStage(current)($$this);
-          if ($38) {
+          var $45 = sameStage(current)($$this);
+          if ($45) {
             return "tab selected";
           }
           ;
@@ -11991,6 +12007,15 @@
       }
       ;
       return false;
+    };
+  };
+  var replicate = function(v) {
+    return function(v1) {
+      if (v === 0) {
+        return [];
+      }
+      ;
+      return append7([v1])(replicate(v - 1 | 0)(v1));
     };
   };
   var renderChapter4Trees = function(ex) {
@@ -12073,6 +12098,27 @@
       return div2([class_2("diagram-cell")])([div2([class_2("diagram-cell-label")])([text(fd.label)]), div2([class_2("diagram-box"), id2("ch0-fold-" + show10(i2))])([])]);
     };
   })(foldDiagrams))])]);
+  var padTo = function(n) {
+    return function(s) {
+      var len = length2(s);
+      var $50 = len >= n;
+      if ($50) {
+        return s + " ";
+      }
+      ;
+      return s + fromCharArray(replicate(n - len | 0)(" "));
+    };
+  };
+  var renderCodeLine = function(line) {
+    return div2([class_2("code-line")])((function() {
+      var $51 = line.comment === "";
+      if ($51) {
+        return [span2([class_2("code-text")])([text(line.text)])];
+      }
+      ;
+      return [span2([class_2("code-text")])([text(padTo(30)(line.text))]), span2([class_2("code-comment")])([text(line.comment)])];
+    })());
+  };
   var navDot = function(href5) {
     return a([href(href5)])([]);
   };
@@ -12094,16 +12140,16 @@
       ;
       if (v instanceof SelectTab) {
         return discard22(modify_3(function(v1) {
-          var $42 = {};
-          for (var $43 in v1) {
-            if ({}.hasOwnProperty.call(v1, $43)) {
-              $42[$43] = v1[$43];
+          var $53 = {};
+          for (var $54 in v1) {
+            if ({}.hasOwnProperty.call(v1, $54)) {
+              $53[$54] = v1[$54];
             }
             ;
           }
           ;
-          $42.selectedTab = v.value0;
-          return $42;
+          $53.selectedTab = v.value0;
+          return $53;
         }))(function() {
           return liftEffect7(renderChapter1Trees(v.value0));
         });
@@ -12111,16 +12157,16 @@
       ;
       if (v instanceof SelectStage) {
         return discard22(modify_3(function(v1) {
-          var $46 = {};
-          for (var $47 in v1) {
-            if ({}.hasOwnProperty.call(v1, $47)) {
-              $46[$47] = v1[$47];
+          var $57 = {};
+          for (var $58 in v1) {
+            if ({}.hasOwnProperty.call(v1, $58)) {
+              $57[$58] = v1[$58];
             }
             ;
           }
           ;
-          $46.selectedStage = v.value0;
-          return $46;
+          $57.selectedStage = v.value0;
+          return $57;
         }))(function() {
           return liftEffect7(renderChapter3Trees(v.value0));
         });
@@ -12128,30 +12174,30 @@
       ;
       if (v instanceof SelectExample) {
         return discard22(modify_3(function(v1) {
-          var $50 = {};
-          for (var $51 in v1) {
-            if ({}.hasOwnProperty.call(v1, $51)) {
-              $50[$51] = v1[$51];
+          var $61 = {};
+          for (var $62 in v1) {
+            if ({}.hasOwnProperty.call(v1, $62)) {
+              $61[$62] = v1[$62];
             }
             ;
           }
           ;
-          $50.selectedExample = v.value0;
-          return $50;
+          $61.selectedExample = v.value0;
+          return $61;
         }))(function() {
           return liftEffect7(renderChapter4Trees(v.value0));
         });
       }
       ;
-      throw new Error("Failed pattern match at App (line 379, column 16 - line 399, column 41): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at App (line 411, column 16 - line 431, column 41): " + [v.constructor.name]);
     };
   };
   var exBtn = function(current) {
     return function($$this) {
       return function(label5) {
         return button([class_2((function() {
-          var $54 = sameExample(current)($$this);
-          if ($54) {
+          var $65 = sameExample(current)($$this);
+          if ($65) {
             return "tab selected";
           }
           ;
@@ -12163,7 +12209,7 @@
     };
   };
   var renderChapter4 = function(state3) {
-    return section([class_2("chapter"), id2("ch4")])([div2([class_2("chapter-number")])([text("Chapter 4")]), h1_([text("HATS")]), p([class_2("chapter-subtitle")])([text("Now that you understand the structure of the transformation from data to visualisation, let\u2019s look at how we actually do this in code. The trees you\u2019ve been seeing are representations of a fully declarative abstract syntax tree we call "), strong_([text("HATS")]), text(" \u2014 Hylomorphic Abstract Tree Syntax.")]), p([class_2("chapter-subtitle")])([text("HATS is an embedded DSL with full access to PureScript. The tree is evaluated by an interpreter at runtime using the data you provide \u2014 but it\u2019s type-checked at compile time, so you get type safety across the entire pipeline. Here\u2019s what some simple HATS visualisations look like:")]), div2([class_2("tabs")])([exBtn(state3.selectedExample)(ExBars.value)("Bar Chart"), exBtn(state3.selectedExample)(ExDots.value)("Dots"), exBtn(state3.selectedExample)(ExComposed.value)("Composed")]), div2([class_2("example-caption")])([text(exampleCaption(state3.selectedExample))]), div2([class_2("code-output-row")])([div2([class_2("code-panel")])([div2([class_2("eq-label")])([text("HATS Code")]), pre([class_2("hats-code")])([text(exampleCode(state3.selectedExample))])]), div2([class_2("output-panel")])([div2([class_2("eq-label")])([text("Rendered")]), div2([class_2("output-content"), id2("ch4-output")])([])])])]);
+    return section([class_2("chapter"), id2("ch4")])([div2([class_2("chapter-number")])([text("Chapter 4")]), h1_([text("HATS")]), p([class_2("chapter-subtitle")])([text("Now that you understand the structure of the transformation from data to visualisation, let\u2019s look at how we actually do this in code. The trees you\u2019ve been seeing are representations of a fully declarative abstract syntax tree we call "), strong_([text("HATS")]), text(" \u2014 Hylomorphic Abstract Tree Syntax.")]), p([class_2("chapter-subtitle")])([text("HATS is an embedded DSL with full access to PureScript. Attributes like "), code_([text("F.height d.value")]), text(" are normal PureScript expressions \u2014 lambdas that capture fields from the datum. The compiler type-checks these against the data you feed the fold, so if your datum doesn\u2019t have a "), code_([text("value")]), text(" field, you get an error at compile time, not a blank screen at runtime.")]), p([class_2("chapter-subtitle")])([text("The empty "), code_([text("[]")]), text(" at the end of each element is where children, behaviors, and update machinery live \u2014 coordinated highlighting, transitions, enter/update/exit. For now, it\u2019s just a quiet placeholder.")]), div2([class_2("tabs")])([exBtn(state3.selectedExample)(ExBars.value)("Bar Chart"), exBtn(state3.selectedExample)(ExDots.value)("Dots"), exBtn(state3.selectedExample)(ExComposed.value)("Composed")]), div2([class_2("example-caption")])([text(exampleCaption(state3.selectedExample))]), div2([class_2("code-output-row")])([div2([class_2("code-panel")])([div2([class_2("eq-label")])([text("HATS Code")]), pre([class_2("hats-code")])(mapFlipped3(exampleCode(state3.selectedExample))(renderCodeLine))]), div2([class_2("output-panel")])([div2([class_2("eq-label")])([text("Rendered")]), div2([class_2("output-content"), id2("ch4-output")])([])])])]);
   };
   var render = function(state3) {
     return div_([renderNav, renderChapter0, renderChapter1(state3), renderChapter2, renderChapter3(state3), renderChapter4(state3)]);

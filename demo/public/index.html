@@ -493,15 +493,36 @@
 
     .hats-code {
       font-family: var(--font-mono);
-      font-size: 0.78rem;
-      line-height: 1.65;
-      color: var(--gold-bright);
+      font-size: 0.75rem;
+      line-height: 1.1;
       background: transparent;
       padding: 0.75rem 1rem;
       margin: 0;
-      white-space: pre;
       overflow-x: auto;
       flex: 1;
+    }
+
+    .code-line {
+      white-space: pre;
+      min-height: 1.4em;
+    }
+
+    .code-text {
+      color: var(--gold-bright);
+    }
+
+    .code-comment {
+      color: var(--gold-dim);
+      opacity: 0.7;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      color: var(--gold);
+      background: rgba(201, 169, 98, 0.1);
+      padding: 0.15em 0.35em;
+      border-radius: 2px;
     }
 
     .example-caption {
