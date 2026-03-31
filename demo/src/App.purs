@@ -19,7 +19,10 @@ import Chapters.Chapter1 as Ch1
 import Chapters.Chapter2 as Ch2
 import Chapters.Chapter3 as Ch3
 import Chapters.Chapter4 as Ch4
+import Chapters.Chapter5 as Ch5
+import Chapters.Chapter6 as Ch6
 import Examples.MetaHATS as Meta
+import Hylograph.Interpreter.English (runEnglish)
 
 -- =============================================================================
 -- FFI
@@ -71,6 +74,8 @@ render state =
     , renderChapter2
     , renderChapter3 state
     , renderChapter4 state
+    , renderChapter5
+    , renderChapter6
     ]
 
 renderNav :: forall w i. HH.HTML w i
@@ -81,6 +86,8 @@ renderNav =
     , navDot "#ch2"
     , navDot "#ch3"
     , navDot "#ch4"
+    , navDot "#ch5"
+    , navDot "#ch6"
     ]
 
 navDot :: forall w i. String -> HH.HTML w i
@@ -386,6 +393,107 @@ replicate 0 _ = []
 replicate i c = [c] <> replicate (i - 1) c
 
 -- =============================================================================
+-- Chapter 5: Multiple Interpreters
+-- =============================================================================
+
+renderChapter5 :: forall w i. HH.HTML w i
+renderChapter5 =
+  HH.section
+    [ HP.class_ (HH.ClassName "chapter")
+    , HP.id "ch5"
+    ]
+    [ HH.div [ HP.class_ (HH.ClassName "chapter-number") ]
+        [ HH.text "Chapter 5" ]
+    , HH.h1_ [ HH.text "Interpreters" ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "A HATS tree is data, not instructions. It describes "
+        , HH.em_ [ HH.text "what" ]
+        , HH.text " to build, not "
+        , HH.em_ [ HH.text "how" ]
+        , HH.text ". Different interpreters can walk the same tree and produce entirely different outputs \x2014 an approach closely related to the "
+        , HH.em_ [ HH.text "Finally Tagless" ]
+        , HH.text " pattern in functional programming."
+        ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "Here\x2019s the same HATS tree interpreted two ways. The English interpreter describes what the tree will build. The SVG interpreter actually builds it." ]
+
+    -- Side by side: English | SVG
+    , HH.div [ HP.class_ (HH.ClassName "code-output-row") ]
+        [ -- English interpretation
+          HH.div [ HP.class_ (HH.ClassName "code-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "English Interpreter" ]
+            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
+                [ HH.text Ch5.englishOutput ]
+            ]
+        -- SVG interpretation
+        , HH.div [ HP.class_ (HH.ClassName "output-panel") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "SVG Interpreter" ]
+            , HH.div [ HP.class_ (HH.ClassName "output-content"), HP.id "ch5-svg" ] []
+            ]
+        ]
+
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "Same tree. One produces text, the other produces a visual. The tree doesn\x2019t know or care which interpreter reads it." ]
+    ]
+
+-- =============================================================================
+-- Chapter 6: The Meta Fold
+-- =============================================================================
+
+renderChapter6 :: forall w i. HH.HTML w i
+renderChapter6 =
+  HH.section
+    [ HP.class_ (HH.ClassName "chapter")
+    , HP.id "ch6"
+    ]
+    [ HH.div [ HP.class_ (HH.ClassName "chapter-number") ]
+        [ HH.text "Chapter 6" ]
+    , HH.h1_ [ HH.text "The Meta Fold" ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "One more thing. If a HATS tree is just data, and an interpreter is just a function\x2026 what if an interpreter produced another HATS tree?" ]
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "The structure diagrams you\x2019ve been seeing throughout this guide? They\x2019re HATS trees. Produced by a meta interpreter that reads one tree and writes another. Then the SVG interpreter renders "
+        , HH.em_ [ HH.text "that" ]
+        , HH.text " tree, the same way it renders anything else."
+        ]
+
+    -- Quadrant: TL=HATS, TR=rendered, BL=MetaHATS, BR=meta rendered
+    , HH.div [ HP.class_ (HH.ClassName "quadrant") ]
+        [ -- Top row
+          HH.div [ HP.class_ (HH.ClassName "quad-cell quad-tl") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "HATS Tree" ]
+            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
+                [ HH.text (runEnglish Ch6.diagramTree) ]
+            ]
+        , HH.div [ HP.class_ (HH.ClassName "quad-arrow quad-right") ]
+            [ HH.text "\x2192" ]
+        , HH.div [ HP.class_ (HH.ClassName "quad-cell quad-tr") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "SVG Interpreter" ]
+            , HH.div [ HP.class_ (HH.ClassName "quad-content"), HP.id "ch6-tr" ] []
+            ]
+        -- Vertical arrows
+        , HH.div [ HP.class_ (HH.ClassName "quad-arrow quad-down-left") ]
+            [ HH.text "\x2193" ]
+        , HH.div [ HP.class_ (HH.ClassName "quad-spacer") ] []
+        -- Bottom row
+        , HH.div [ HP.class_ (HH.ClassName "quad-cell quad-bl") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "Meta Interpreter \x2192 new HATS" ]
+            , HH.pre [ HP.class_ (HH.ClassName "english-output") ]
+                [ HH.text (runEnglish Ch6.metaTree) ]
+            ]
+        , HH.div [ HP.class_ (HH.ClassName "quad-arrow quad-right") ]
+            [ HH.text "\x2192" ]
+        , HH.div [ HP.class_ (HH.ClassName "quad-cell quad-br") ]
+            [ HH.div [ HP.class_ (HH.ClassName "eq-label") ] [ HH.text "SVG Interpreter (again)" ]
+            , HH.div [ HP.class_ (HH.ClassName "quad-content"), HP.id "ch6-br" ] []
+            ]
+        ]
+
+    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+        [ HH.text "The fold folds itself. Every visualisation in this guide \x2014 the dots, the boards, the function diagram, the structure trees \x2014 was produced by the same machinery. It\x2019s folds all the way down." ]
+    ]
+
+-- =============================================================================
 -- Chapter 1 helpers
 -- =============================================================================
 
@@ -417,6 +525,8 @@ handleAction = case _ of
       renderChapter2Trees
       renderChapter3Trees state.selectedStage
       renderChapter4Trees state.selectedExample
+      renderChapter5Trees
+      renderChapter6Trees
 
   SelectTab t -> do
     H.modify_ _ { selectedTab = t }
@@ -458,6 +568,23 @@ renderChapter2Trees = do
   _ <- rerender "#ch2-flat-meta" flatMeta
   _ <- rerender "#ch2-nested-board" Ch2.nestedBoardTree
   _ <- rerender "#ch2-nested-meta" nestedMeta
+  pure unit
+
+renderChapter6Trees :: Effect Unit
+renderChapter6Trees = do
+  clearElement "#ch6-tl"
+  clearElement "#ch6-tr"
+  clearElement "#ch6-bl"
+  clearElement "#ch6-br"
+  _ <- rerender "#ch6-tr" Ch6.diagramTree
+  _ <- rerender "#ch6-br" Ch6.metaTree
+  -- TL and BL show English descriptions of each tree
+  pure unit
+
+renderChapter5Trees :: Effect Unit
+renderChapter5Trees = do
+  clearElement "#ch5-svg"
+  _ <- rerender "#ch5-svg" Ch5.sampleTree
   pure unit
 
 renderChapter4Trees :: Ch4.Example -> Effect Unit

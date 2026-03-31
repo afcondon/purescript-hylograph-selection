@@ -533,6 +533,85 @@
     }
 
     /* ================================================================
+       English interpreter output
+       ================================================================ */
+    .english-output {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: var(--gold-dim);
+      background: transparent;
+      padding: 0.75rem 1rem;
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      flex: 1;
+    }
+
+    /* ================================================================
+       Quadrant layout (Chapter 6)
+       ================================================================ */
+    .quadrant {
+      display: grid;
+      grid-template-columns: 1fr 40px 1fr;
+      grid-template-rows: 1fr 30px 1fr;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .quad-cell {
+      background: var(--dark-panel);
+      border: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .quad-tl { grid-column: 1; grid-row: 1; }
+    .quad-tr { grid-column: 3; grid-row: 1; }
+    .quad-bl { grid-column: 1; grid-row: 3; }
+    .quad-br { grid-column: 3; grid-row: 3; }
+
+    .quad-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      overflow: auto;
+    }
+
+    .quad-content svg {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .quad-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: var(--gold-dim);
+      user-select: none;
+    }
+
+    .quad-right {
+      grid-row: span 1;
+    }
+
+    .quad-down-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .quad-spacer {
+      grid-column: 2 / 4;
+      grid-row: 2;
+    }
+
+    /* ================================================================
        Scroll hint
        ================================================================ */
     .scroll-hint {
