@@ -104,10 +104,21 @@
       font-size: 0.95rem;
       color: var(--text-muted);
       max-width: 48em;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       font-weight: 300;
       line-height: 1.7;
       letter-spacing: 0.02em;
+    }
+
+    .two-col-text {
+      columns: 2;
+      column-gap: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .two-col-text .chapter-subtitle {
+      max-width: none;
+      margin-bottom: 0.75rem;
     }
 
     /* ================================================================
@@ -495,11 +506,13 @@
       font-family: var(--font-mono);
       font-size: 0.75rem;
       line-height: 1.1;
+      color: var(--gold);
       background: transparent;
       padding: 0.75rem 1rem;
       margin: 0;
       overflow-x: auto;
       flex: 1;
+      white-space: pre;
     }
 
     .code-line {

@@ -462,12 +462,14 @@ renderChapter6 =
     [ HH.div [ HP.class_ (HH.ClassName "chapter-number") ]
         [ HH.text "Chapter 6" ]
     , HH.h1_ [ HH.text "The Meta Fold" ]
-    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "One more thing. If a HATS tree is just data, and an interpreter is just a function\x2026 what if an interpreter produced another HATS tree?" ]
-    , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
-        [ HH.text "The structure diagrams you\x2019ve been seeing throughout this guide? They\x2019re HATS trees. Produced by a meta interpreter that reads one tree and writes another. Then the SVG interpreter renders "
-        , HH.em_ [ HH.text "that" ]
-        , HH.text " tree, the same way it renders anything else."
+    , HH.div [ HP.class_ (HH.ClassName "two-col-text") ]
+        [ HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+            [ HH.text "One more thing. If a HATS tree is just data, and an interpreter is just a function\x2026 what if an interpreter produced another HATS tree?" ]
+        , HH.p [ HP.class_ (HH.ClassName "chapter-subtitle") ]
+            [ HH.text "The structure diagrams you\x2019ve been seeing throughout this guide? They\x2019re HATS trees. Produced by a meta interpreter that reads one tree and writes another. Then the SVG interpreter renders "
+            , HH.em_ [ HH.text "that" ]
+            , HH.text " tree, the same way it renders anything else."
+            ]
         ]
 
     -- Quadrant: TL=HATS, TR=rendered, BL=MetaHATS, BR=meta rendered
