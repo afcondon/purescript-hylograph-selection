@@ -601,6 +601,7 @@ elementTypeToTagName = case _ of
   SVG -> "svg"
   Defs -> "defs"
   LinearGradient -> "linearGradient"
+  RadialGradient -> "radialGradient"
   Stop -> "stop"
   PatternFill -> "pattern"
   Title -> "title"

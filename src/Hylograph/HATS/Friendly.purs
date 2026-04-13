@@ -20,6 +20,10 @@ module Hylograph.HATS.Friendly
   , textAnchor, fontSize, fontFamily, fontWeight
   , preserveAspectRatio
   , points
+  -- Gradient stop attributes
+  , stopColor
+  , stopOpacity
+  , offset
   ) where
 
 import Prelude
@@ -174,3 +178,19 @@ fontWeight = staticStr "font-weight"
 -- | preserveAspectRatio attribute
 preserveAspectRatio :: String -> Attr
 preserveAspectRatio = staticStr "preserveAspectRatio"
+
+-- =============================================================================
+-- Gradient Stop Attributes
+-- =============================================================================
+
+-- | stop-color attribute (for gradient stops)
+stopColor :: String -> Attr
+stopColor = staticStr "stop-color"
+
+-- | stop-opacity attribute (for gradient stops)
+stopOpacity :: String -> Attr
+stopOpacity = staticStr "stop-opacity"
+
+-- | offset attribute (for gradient stops)
+offset :: String -> Attr
+offset = staticStr "offset"

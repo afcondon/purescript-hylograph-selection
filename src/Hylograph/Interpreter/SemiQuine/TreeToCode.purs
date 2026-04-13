@@ -162,6 +162,7 @@ showElemType = case _ of
   Th -> "Th"
   Defs -> "Defs"
   LinearGradient -> "LinearGradient"
+  RadialGradient -> "RadialGradient"
   Stop -> "Stop"
   PatternFill -> "PatternFill"
   Title -> "Title"

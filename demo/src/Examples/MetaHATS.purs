@@ -582,6 +582,7 @@ showElementType = case _ of
   SVG -> "SVG"
   Defs -> "Defs"
   LinearGradient -> "Gradient"
+  RadialGradient -> "Gradient"
   Stop -> "Stop"
   PatternFill -> "Pattern"
   Title -> "Title"

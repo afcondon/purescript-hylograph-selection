@@ -7,8 +7,6 @@ module Chapters.Chapter6
   , metaTree
   ) where
 
-import Prelude
-
 import Hylograph.HATS (Tree)
 import Chapters.Chapter3 as Ch3
 import Examples.MetaHATS as Meta

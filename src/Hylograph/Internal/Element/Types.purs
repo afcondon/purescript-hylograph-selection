@@ -41,6 +41,7 @@ data ElementType
   | SVG
   | Defs
   | LinearGradient
+  | RadialGradient
   | Stop
   | PatternFill  -- SVG pattern element for fills (used in fast/slow visual treatment)
   | Title        -- SVG <title> element (native tooltip on hover)
@@ -91,6 +92,7 @@ elementContext Group = SVGContext
 elementContext SVG = SVGContext
 elementContext Defs = SVGContext
 elementContext LinearGradient = SVGContext
+elementContext RadialGradient = SVGContext
 elementContext Stop = SVGContext
 elementContext PatternFill = SVGContext
 elementContext Title = SVGContext

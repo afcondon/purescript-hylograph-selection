@@ -73,6 +73,7 @@ showElemType = case _ of
   Polygon -> "Polygon"
   Defs -> "Defs"
   LinearGradient -> "LinearGradient"
+  RadialGradient -> "RadialGradient"
   Stop -> "Stop"
   PatternFill -> "Pattern"
   Title -> "Title"
