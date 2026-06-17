@@ -4,7 +4,9 @@
 
 Declarative DOM tree construction and interpretation for PureScript. Zero runtime dependencies on D3 or any other JavaScript visualization library.
 
-**[Interactive Demo: The Hylographic Fold](https://afcondon.github.io/purescript-hylograph-selection/)** — a seven-chapter guide explaining how HATS works, built entirely with HATS.
+Live interactive demo can be seen as part of the [suite of Hylograph library demos](https://afcondon.github.io/purescript-hylograph-demos/). Click the screenshot below for **The Hylographic Fold** — a seven-chapter guide explaining how HATS works, built entirely with HATS.
+
+[![The Hylographic Fold Demo](https://afcondon.github.io/purescript-hylograph-demos/thumbnails/HATS.jpg)](https://afcondon.github.io/purescript-hylograph-demos/selection/)
 
 ## Installation
 
