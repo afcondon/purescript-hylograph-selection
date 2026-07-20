@@ -21,3 +21,4 @@ Thumbs.db
 *.pdf
 
 # Spago lock (generated)
+.direnv/
