@@ -13,7 +13,10 @@ module Hylograph.Internal.Behavior.FFI
   , attachZoomWithTransform_
   , attachZoomWithCallback_
   , getZoomTransform_
-  , ZoomTransform
+  -- `ZoomTransform` now lives in `Hylograph.Behavior.Types` with the rest of
+  -- the public behaviour vocabulary. Re-exported here so the existing
+  -- importers of this module keep working unchanged.
+  , module ReExportBehaviorTypes
   , updateAttr_
   , attachSimpleDrag_
   , attachSimulationDrag_
@@ -51,6 +54,8 @@ import Prelude
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2)
+import Hylograph.Behavior.Types (ZoomTransform)
+import Hylograph.Behavior.Types (ZoomTransform) as ReExportBehaviorTypes
 import Hylograph.Foreign.Types (D3Simulation_)
 import Web.DOM.Element (Element)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -70,9 +75,6 @@ foreign import attachZoom_
   -> Number
   -> String
   -> Effect Element
-
--- | Zoom transform record {k, x, y} for scale and translation
-type ZoomTransform = { k :: Number, x :: Number, y :: Number }
 
 -- | Update an element's attribute by CSS selector
 -- | Useful for imperatively updating elements (e.g., arrows during zoom)

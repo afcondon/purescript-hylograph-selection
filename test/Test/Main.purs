@@ -4,6 +4,7 @@ import Prelude
 
 import Effect (Effect)
 import Effect.Console (log)
+import Test.PublicBehavior as PublicBehavior
 import Test.Expr.ExprSpec as ExprSpec
 import Test.Expr.PathSpec as PathSpec
 import Test.Expr.PolymorphismSpec as PolymorphismSpec
@@ -50,5 +51,8 @@ main = do
   TreeExample.runExample
 
   UpdatePatternExample.runExample
+
+  log "\n=== Public API Surface Tests ==="
+  PublicBehavior.runTests
 
   log "\n=== All tests passed! ==="

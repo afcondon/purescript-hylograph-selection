@@ -18,6 +18,7 @@ module Hylograph.Behavior.Types
   , ZoomConfig(..)
   , DragConfig(..)
   , ScaleExtent(..)
+  , ZoomTransform
   , simulationDragNested
   , defaultDrag
   , simulationDrag
@@ -53,6 +54,14 @@ import Effect (Effect)
 -- | - `ScaleExtent 0.5 4.0` allows zooming from 50% to 400%
 -- | - `ScaleExtent 1.0 1.0` disables zoom (fixed at 100%)
 data ScaleExtent = ScaleExtent Number Number
+
+-- | A zoom transform: scale `k`, and translation `x`/`y`.
+-- |
+-- | Produced by every zoom event and accepted by the attach functions in
+-- | `Hylograph.Behavior`, which is how zoom state survives a re-render.
+-- | `{ k: 1.0, x: 0.0, y: 0.0 }` is the identity, available there as
+-- | `identityTransform`.
+type ZoomTransform = { k :: Number, x :: Number, y :: Number }
 
 -- | Style changes for hover highlight effect
 -- |
