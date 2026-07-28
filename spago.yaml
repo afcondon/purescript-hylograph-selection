@@ -7,7 +7,7 @@ package:
   name: hylograph-selection
   description: Declarative DOM tree construction and interpretation for PureScript
   publish:
-    version: 0.5.1
+    version: 0.5.2
     license: MIT AND ISC
     location:
       githubOwner: afcondon

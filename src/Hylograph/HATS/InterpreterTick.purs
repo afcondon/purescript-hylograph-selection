@@ -31,11 +31,11 @@ import Effect (Effect)
 
 import Hylograph.HATS (Tree(..), SomeFold, runSomeFold, Enumeration(..), Assembly(..), TraversalOrder(..), Attr(..), ThunkedBehavior(..), GUPSpec, PhaseSpec)
 import Hylograph.HATS.Transitions (HATSTransitions(..), ElementTransitions, AttrTransition, toTickEasing)
-import Hylograph.Internal.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
-import Hylograph.Internal.Behavior.Types (HighlightClass(..)) as HC
+import Hylograph.Behavior.Types (DragConfig(..), ZoomConfig(..), ScaleExtent(..), HighlightClass(..), TooltipTrigger(..))
+import Hylograph.Behavior.Types (HighlightClass(..)) as HC
 import Hylograph.Interaction.Coordinated (InteractionState(..), InteractionTrigger(..), BoundingBox)
 import Hylograph.Interaction.Coordinated (InteractionState(..)) as IS
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Element.Types (ElementType(..))
 import Hylograph.Internal.Element.Operations (createElementWithNS)
 import Web.DOM.Element (Element)
 import Web.DOM.Element (toNode, toEventTarget) as Element

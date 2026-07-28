@@ -12,7 +12,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Hylograph.Internal.Element.Types (ElementType(..), RenderContext(..), elementContext)
+import Hylograph.Element.Types (ElementType(..), RenderContext(..), elementContext)
 import Web.DOM.Document (Document)
 import Web.DOM.Document as Document
 import Web.DOM.Element (Element)

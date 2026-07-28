@@ -24,7 +24,7 @@ import Data.String.Pattern (Pattern(..), Replacement(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold)
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Element.Types (ElementType(..))
 
 -- | Node ID for tracking connections in Mermaid diagram
 type NodeID = Int

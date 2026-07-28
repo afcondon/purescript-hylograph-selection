@@ -148,7 +148,7 @@ import Hylograph.Expr.Expr as E
 import Hylograph.Expr.Datum (class DatumExpr)
 import Hylograph.Expr.Datum as D
 import Hylograph.Expr.Interpreter.Eval (EvalD, runEvalD)
-import Hylograph.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
+import Hylograph.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
 
 -- Re-exports for when users need the underlying type classes
 import Hylograph.Expr.Expr (class NumExpr, class StringExpr, class BoolExpr) as ReExports

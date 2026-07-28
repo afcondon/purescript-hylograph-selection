@@ -51,7 +51,7 @@ import Prelude
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2)
-import Hylograph.Internal.Types (D3Simulation_)
+import Hylograph.Foreign.Types (D3Simulation_)
 import Web.DOM.Element (Element)
 import Web.UIEvent.MouseEvent (MouseEvent)
 

@@ -69,8 +69,8 @@ import Prelude
 
 import Data.Array (index)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Hylograph.Internal.Attribute (AnimatedValue(..), AnimationConfig, AttributeName(..), Attribute(..), EasingType(..), defaultAnimationConfig)
-import Hylograph.Internal.Attribute (EasingType(..)) as AttrTypes
+import Hylograph.Attribute (AnimatedValue(..), AnimationConfig, AttributeName(..), Attribute(..), EasingType(..), defaultAnimationConfig)
+import Hylograph.Attribute (EasingType(..)) as AttrTypes
 import Hylograph.Expr.Interpreter.Eval (EvalD, runEvalD)
 
 -- =============================================================================

@@ -57,6 +57,8 @@ module Hylograph.HATS
   , onDrag
   , onZoom
   , onPointerDown
+  -- Element vocabulary — re-exported so that `elem` needs no second import
+  , module ReExportElement
   -- Coordinated highlighting
   , module ReExportHighlight
   , onCoordinatedHighlight
@@ -77,11 +79,12 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), snd)
 import Effect (Effect)
-import Hylograph.Internal.Element.Types (ElementType(..))
-import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..)) as ReExportHighlight
-import Hylograph.Internal.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..))
+import Hylograph.Element.Types (ElementType(..))
+import Hylograph.Element.Types (ElementType(..), RenderContext(..)) as ReExportElement
+import Hylograph.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..)) as ReExportHighlight
+import Hylograph.Behavior.Types (DragConfig, ZoomConfig, HighlightClass(..), TooltipTrigger(..))
 import Hylograph.Interaction.Coordinated (InteractionTrigger(..), InteractionState(..), BoundingBox)
-import Hylograph.Internal.Transition.Types (TransitionConfig)
+import Hylograph.Transition.Types (TransitionConfig)
 
 -- ============================================================================
 -- Core AST (Unparameterized)

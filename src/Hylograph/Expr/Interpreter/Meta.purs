@@ -21,7 +21,7 @@ import Data.Symbol (class IsSymbol, reflectSymbol)
 import Prim.Row as Row
 import Type.Proxy (Proxy(..))
 
-import Hylograph.Internal.Attribute (AttrSource(..))
+import Hylograph.Attribute (AttrSource(..))
 import Hylograph.Expr.Expr (class NumExpr, class StringExpr, class BoolExpr, class CompareExpr, class StringCompareExpr, class TrigExpr)
 import Hylograph.Expr.Datum (class DatumExpr)
 import Hylograph.Expr.Interpreter.Eval (EvalD(..), unsafeGetField)

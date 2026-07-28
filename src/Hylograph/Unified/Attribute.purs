@@ -58,8 +58,8 @@ module Hylograph.Unified.Attribute
 
 import Prelude hiding ((>>>))
 
-import Hylograph.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
-import Hylograph.Internal.Attribute (Attribute, AttributeName, AttributeValue, AttrSource) as Exports
+import Hylograph.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
+import Hylograph.Attribute (Attribute, AttributeName, AttributeValue, AttrSource) as Exports
 import Hylograph.Unified.Display (Display, runDisplay, showNumD, idD, (>>>))
 import Hylograph.Unified.Display as D
 

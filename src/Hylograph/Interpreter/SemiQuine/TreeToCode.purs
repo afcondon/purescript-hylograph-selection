@@ -15,7 +15,7 @@ import Data.Array (concat, drop, head, length, mapWithIndex, null, replicate) as
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (joinWith) as String
 import Hylograph.HATS (Tree(..), Attr(..), Enumeration(..), Assembly(..), runSomeFold)
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Element.Types (ElementType(..))
 
 -- | Convert a HATS Tree to PureScript code
 treeToCode :: Tree -> String

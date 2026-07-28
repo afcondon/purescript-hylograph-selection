@@ -25,7 +25,7 @@ import Data.Newtype (unwrap)
 import Data.Nullable (Nullable, toNullable)
 import Data.Time.Duration (Milliseconds)
 import Effect (Effect)
-import Hylograph.Internal.Transition.Types (Easing)
+import Hylograph.Transition.Types (Easing)
 import Web.DOM.Element (Element)
 
 -- | Opaque type representing a D3 transition

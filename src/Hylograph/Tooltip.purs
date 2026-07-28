@@ -19,7 +19,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Hylograph.Internal.Behavior.Types (Behavior(..), MouseEventInfo)
+import Hylograph.Behavior.Types (Behavior(..), MouseEventInfo)
 
 -- | Show tooltip with HTML content at screen position
 -- |

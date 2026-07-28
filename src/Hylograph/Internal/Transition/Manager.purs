@@ -62,7 +62,7 @@ import Effect.Ref as Ref
 import Web.DOM.Element (Element)
 import Web.DOM.Element as Element
 
-import Hylograph.Internal.Attribute (AnimatedValue(..), AnimationConfig, EasingType(..))
+import Hylograph.Attribute (AnimatedValue(..), AnimationConfig, EasingType(..))
 
 -- =============================================================================
 -- Types

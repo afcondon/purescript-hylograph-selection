@@ -38,12 +38,12 @@ module Hylograph.Expr.Integration
     -- * Batch Conversion
   , evalAttrs
     -- * Re-exports for convenience
-  , module Hylograph.Internal.Attribute
+  , module Hylograph.Attribute
   ) where
 
 import Prelude
 
-import Hylograph.Internal.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
+import Hylograph.Attribute (Attribute(..), AttributeName(..), AttributeValue(..), AttrSource(..))
 import Hylograph.Expr.Interpreter.Eval (EvalD(..), runEvalD)
 
 -- | Convert a datum expression to a data-driven attribute.

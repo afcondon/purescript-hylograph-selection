@@ -16,7 +16,7 @@ module Hylograph.Internal.FFI
   , swizzledLinkKey_
   ) where
 
-import Hylograph.Internal.Types (Datum_, Index_)
+import Hylograph.Foreign.Types (Datum_, Index_)
 
 foreign import getIndexFromDatum_    :: Datum_ -> Int
 

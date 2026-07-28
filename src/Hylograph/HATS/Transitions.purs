@@ -44,7 +44,7 @@ import Data.Newtype (unwrap)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Hylograph.Internal.Transition.Types (Easing(..)) as HATS
+import Hylograph.Transition.Types (Easing(..)) as HATS
 import Hylograph.Transition.Tick (Progress, lerp)
 import Hylograph.Transition.Tick as Tick
 import Web.DOM.Element (Element)
