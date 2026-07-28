@@ -15,13 +15,13 @@ module Chapters.Chapter3
 
 import Prelude
 
-import Data.Array (mapWithIndex, length)
+import Data.Array (length)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Hylograph.HATS (Tree, ThunkedBehavior, elem, forEach, staticStr, withBehaviors, onCoordinatedHighlight, siblings)
 import Hylograph.HATS.Friendly as F
-import Hylograph.Internal.Behavior.Types (HighlightClass(..))
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Behavior.Types (HighlightClass(..))
+import Hylograph.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Stages
@@ -128,20 +128,20 @@ dataTree =
   let
     boxH = 28.0
     gap = 3.0
-    svgW = 160.0
+    panelW = 160.0
     n = length entries
-    svgH = Int.toNumber n * (boxH + gap) + 16.0
+    panelH = Int.toNumber n * (boxH + gap) + 16.0
     monoFont = "'JetBrains Mono', monospace"
   in
     elem SVG
-      [ F.viewBox 0.0 0.0 svgW svgH, F.width svgW, F.height svgH ]
+      [ F.viewBox 0.0 0.0 panelW panelH, F.width panelW, F.height panelH ]
       [ forEach "tuples" Group entries _.key \e ->
           let y = 8.0 + Int.toNumber e.keyIdx * (boxH + gap)
           in withBehaviors [ hlKey e.key ] $
              elem Group [ F.transform ("translate(0," <> show y <> ")") ]
                [ elem Rect
                    [ F.x 2.0, F.y 0.0
-                   , F.width (svgW - 4.0), F.height boxH
+                   , F.width (panelW - 4.0), F.height boxH
                    , staticStr "rx" "2"
                    , F.fill "#1a1a1a"
                    , F.stroke goldDim

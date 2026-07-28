@@ -23,8 +23,8 @@ import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits as SCU
 import Hylograph.HATS (Tree, ThunkedBehavior, elem, forEach, staticStr, withBehaviors, onCoordinatedHighlight)
 import Hylograph.HATS.Friendly as F
-import Hylograph.Internal.Behavior.Types (HighlightClass(..))
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Behavior.Types (HighlightClass(..))
+import Hylograph.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Data

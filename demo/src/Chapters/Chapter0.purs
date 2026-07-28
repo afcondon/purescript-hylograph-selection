@@ -12,11 +12,11 @@ module Chapters.Chapter0
 
 import Prelude
 
-import Data.Array (length, mapWithIndex)
+import Data.Array (mapWithIndex)
 import Data.Int as Int
 import Hylograph.HATS (Tree, elem, staticStr)
 import Hylograph.HATS.Friendly as F
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Element.Types (ElementType(..))
 
 -- =============================================================================
 -- Configuration

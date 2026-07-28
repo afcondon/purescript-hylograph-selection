@@ -10,14 +10,17 @@ module Chapters.Chapter2
 
 import Prelude
 
-import Prelude
+-- | `Row` here is a row of the chess board, which shadows `Prim.Row`, the
+-- | kind of row types. Hidden explicitly so the shadowing is deliberate
+-- | rather than reported.
+import Prim hiding (Row)
 
 import Data.Array (range)
 import Data.Int as Int
 import Hylograph.HATS (Tree, ThunkedBehavior, elem, forEach, staticStr, withBehaviors, onCoordinatedHighlight)
 import Hylograph.HATS.Friendly as F
-import Hylograph.Internal.Behavior.Types (HighlightClass(..))
-import Hylograph.Internal.Element.Types (ElementType(..))
+import Hylograph.Behavior.Types (HighlightClass(..))
+import Hylograph.Element.Types (ElementType(..))
 import Data.Maybe (Maybe(..))
 
 -- =============================================================================
