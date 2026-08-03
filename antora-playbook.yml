@@ -3,8 +3,8 @@
 
 site:
   title: PSD3 Documentation
-  url: https://psd3.github.io
-  start_page: psd3-selection::index.adoc
+  url: https://hylograph.net
+  start_page: hylograph-selection::index.adoc
 
 content:
   sources:
