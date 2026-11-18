@@ -103,6 +103,9 @@ showElemType = case _ of
   Section -> "Section"
   Mark -> "Mark"
   Abbr -> "Abbr"
+  Button -> "Button"
+  Input -> "Input"
+  Label -> "Label"
 
 -- | Pretty-print attributes on multiple lines
 prettyAttrsMultiline :: String -> Array Attr -> String

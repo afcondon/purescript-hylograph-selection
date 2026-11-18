@@ -25,7 +25,7 @@ data Graph a =
 |===
 | Algorithm | Use Case | Complexity
 
-| *A**
+| *A** (not implemented; `findPath` is an alias for Dijkstra's `shortestPath`)
 | Single-source with heuristic
 | O((V+E) log V)
 

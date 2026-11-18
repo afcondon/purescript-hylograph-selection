@@ -108,6 +108,9 @@ showElement Pre = "pre"
 showElement Section = "section"
 showElement Mark = "mark"
 showElement Abbr = "abbr"
+showElement Button = "button"
+showElement Input = "input"
+showElement Label = "label"
 
 -- | Format a single attribute for display
 formatAttr :: Attr -> String

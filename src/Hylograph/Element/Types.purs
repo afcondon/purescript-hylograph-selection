@@ -78,6 +78,10 @@ data ElementType
   | Section   -- <section> thematic grouping
   | Mark      -- <mark> highlighted text
   | Abbr      -- <abbr> abbreviation (title attr for tooltip)
+  -- Interactive HTML elements
+  | Button    -- <button> something to press (focusable, and pressed from the keyboard)
+  | Input     -- <input> a field, checkbox, radio button or slider (the `type` attribute says which)
+  | Label     -- <label> the caption of an input
 
 derive instance Eq ElementType
 derive instance Ord ElementType
@@ -127,3 +131,6 @@ elementContext Pre = HTMLContext
 elementContext Section = HTMLContext
 elementContext Mark = HTMLContext
 elementContext Abbr = HTMLContext
+elementContext Button = HTMLContext
+elementContext Input = HTMLContext
+elementContext Label = HTMLContext

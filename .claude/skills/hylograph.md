@@ -10,7 +10,7 @@ Hylograph is a declarative, type-safe visualization ecosystem for PureScript. It
 - **Finally-tagless expressions**: Attributes are defined via type classes (`NumExpr`, `AttrExpr`, `DatumExpr`), enabling the same visualization spec to be interpreted as D3/SVG rendering, English descriptions, Mermaid diagrams, or generated PureScript code.
 - **Phantom-typed selections**: The `Selection state parent datum` type uses phantom types to track binding state (`SEmpty`, `SBoundOwns`, `SPending`, `SExiting`), making invalid D3 operations a compile-time error.
 - **Pure layout algorithms**: Tree, treemap, circle packing, Sankey, chord, partition, and edge bundling are all implemented in pure PureScript (no FFI).
-- **Dual-engine simulation**: Force-directed layouts work through a kernel abstraction -- same API for D3.js or Rust/WASM physics (3-4x faster).
+- **Dual-engine simulation**: Force-directed layouts work through a kernel abstraction -- same API over `d3-force`'s force functions (run by the library's own simulation loop) or a Rust/WASM kernel (speed unmeasured).
 
 **Philosophy**: Declarative over imperative. D3's algorithms, PureScript's type system and state management. Pass structure in, get visualization out.
 
@@ -24,7 +24,7 @@ Hylograph is a declarative, type-safe visualization ecosystem for PureScript. It
 |---------|-------------|-----------------|
 | `hylograph-selection` | Core: HATS trees, attributes, scales, interactions, D3 interpreter | **Always** -- this is the foundation |
 | `hylograph-layout` | Pure layout algorithms (tree, treemap, pack, partition, sankey, chord, adjacency, edge bundling) | Hierarchical data, flow diagrams, matrix views |
-| `hylograph-graph` | Graph data structures, pathfinding (A*, Dijkstra, BFS/DFS), DAG operations, topological sort | Graph algorithms, network analysis |
+| `hylograph-graph` | Graph data structures, pathfinding (Dijkstra, BFS/DFS; no A*), DAG operations, topological sort | Graph algorithms, network analysis |
 | `hylograph-simulation` | Force-directed simulation (unified D3/WASM API) | Force-directed layouts, physics-based positioning |
 | `hylograph-simulation-core` | Scene orchestration, engine adapter interface | Multi-scene transitions, scene lifecycle |
 | `hylograph-d3-kernel` | D3.js force simulation FFI | Default physics engine |

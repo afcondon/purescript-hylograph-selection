@@ -69,6 +69,9 @@ elementTypeToString Pre = "pre"
 elementTypeToString Section = "section"
 elementTypeToString Mark = "mark"
 elementTypeToString Abbr = "abbr"
+elementTypeToString Button = "button"
+elementTypeToString Input = "input"
+elementTypeToString Label = "label"
 
 -- | Convert string to ElementType (inverse of elementTypeToString)
 stringToElementType :: String -> ElementType
@@ -112,4 +115,7 @@ stringToElementType "pre" = Pre
 stringToElementType "section" = Section
 stringToElementType "mark" = Mark
 stringToElementType "abbr" = Abbr
+stringToElementType "button" = Button
+stringToElementType "input" = Input
+stringToElementType "label" = Label
 stringToElementType _ = Group -- Default to Group for unknown types

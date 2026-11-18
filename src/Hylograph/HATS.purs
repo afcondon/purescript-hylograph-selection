@@ -1,6 +1,10 @@
 -- | HATS: Hylomorphic Abstract Tree Syntax
 -- |
--- | A principled AST for data visualization based on recursion schemes.
+-- | An AST for data visualization, organised around the idea of a
+-- | hylomorphism (an unfold followed by a fold). It is the *syntax* of one,
+-- | not the combinator: a fold node records an enumeration and a template,
+-- | and an interpreter walks the tree. No recursion-scheme library or
+-- | cata/ana/hylo machinery is used.
 -- |
 -- | The core insight: a visualization is a **transduction** from data to DOM,
 -- | composed of two orthogonal choices:
@@ -241,9 +245,19 @@ data TraversalOrder
 -- ============================================================================
 
 -- | How to structure the output DOM.
+-- |
+-- | NOT YET HONOURED BY THE DOM INTERPRETER. `InterpreterTick` never reads a
+-- | fold's `assemble` field: every fold is rendered as siblings, so `Nested`
+-- | draws exactly what `Siblings` does. The English, Mermaid, MetaHATS and
+-- | SemiQuine interpreters report the field; none of them acts on it either.
+-- | To nest output today, put a fold inside a template (a fold of rows whose
+-- | template holds a fold of cells), which every interpreter does handle.
+-- | Found 2026-11-18 while checking claims for the film series; what `Nested`
+-- | should mean under a keyed update is an open design question, not a bug
+-- | with an obvious fix.
 data Assembly
   = Siblings  -- All elements as siblings at the same level
-  | Nested    -- Preserve input structure in output
+  | Nested    -- Intended: preserve input structure in output (see above)
 
 -- ============================================================================
 -- GUP (General Update Pattern)
@@ -387,7 +401,10 @@ fromTree name elementType root children keyFn order includeInternal template = M
   , gup: Nothing
   }
 
--- | Unfold a tree structure preserving hierarchy in output
+-- | Unfold a tree structure, asking for the hierarchy to be preserved in the
+-- | output. The DOM interpreter does not yet honour that request (see
+-- | `Assembly`): today this draws the same flat siblings as `fromTree` with
+-- | `DepthFirst` and `includeInternal = true`.
 preserveTree
   :: forall a
    . String

@@ -111,6 +111,9 @@ showElemType Pre = "preformatted"
 showElemType Section = "section"
 showElemType Mark = "highlight"
 showElemType Abbr = "abbreviation"
+showElemType Button = "button"
+showElemType Input = "input"
+showElemType Label = "label"
 
 -- | Show enumeration strategy as English
 showEnumeration :: forall a. Enumeration a -> String

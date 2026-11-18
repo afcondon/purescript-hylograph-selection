@@ -184,6 +184,9 @@ showElemType = case _ of
   Section -> "Section"
   Mark -> "Mark"
   Abbr -> "Abbr"
+  Button -> "Button"
+  Input -> "Input"
+  Label -> "Label"
 
 -- | Generate indentation (2 spaces per level)
 indent :: Int -> String

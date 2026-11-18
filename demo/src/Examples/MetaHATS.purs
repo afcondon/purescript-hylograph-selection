@@ -612,6 +612,9 @@ showElementType = case _ of
   Section -> "Section"
   Mark -> "Mark"
   Abbr -> "Abbr"
+  Button -> "Button"
+  Input -> "Input"
+  Label -> "Label"
 
 showEnumeration :: forall a. Enumeration a -> String
 showEnumeration = case _ of

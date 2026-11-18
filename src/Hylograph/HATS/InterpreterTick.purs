@@ -20,6 +20,7 @@ import Data.Array as Array
 import Data.Int (toNumber)
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Tuple (Tuple(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Set as Set
@@ -38,11 +39,7 @@ import Hylograph.Interaction.Coordinated (InteractionState(..)) as IS
 import Hylograph.Element.Types (ElementType(..))
 import Hylograph.Internal.Element.Operations (createElementWithNS)
 import Web.DOM.Element (Element)
-import Web.DOM.Element (toNode, toEventTarget) as Element
-import Web.Event.Event (stopPropagation)
-import Web.Event.Event (EventType(..)) as Event
-import Web.Event.EventTarget (addEventListener, eventListener)
-import Web.UIEvent.MouseEvent as MouseEvent
+import Web.DOM.Element (toNode) as Element
 import Web.DOM.Node (appendChild) as Node
 import Web.DOM.Document (Document)
 import Web.HTML (window)
@@ -163,6 +160,11 @@ rerenderTree doc parent tree = do
         pure { key: k, element: el }
       ) existingEls
 
+      -- Where this fold's elements belong among their siblings: in front of
+      -- whatever follows the fold's last element. Read before EXIT, which may
+      -- remove that last element.
+      anchor <- foldAnchor p existingEls domIdx
+
       let existingKeys = Set.fromFoldable (map _.key existingKeysAndEls)
       let enterKeys = Set.difference newKeys existingKeys
       let updateKeys = Set.intersection newKeys existingKeys
@@ -203,6 +205,11 @@ rerenderTree doc parent tree = do
               let templateChildren = case templateTree of
                     Elem elemSpec -> elemSpec.children
                     _ -> []
+              -- The kept element gets this render's behaviours, which close
+              -- over this render's datum.
+              case templateTree of
+                Elem elemSpec -> applyBehaviors element elemSpec.behaviors
+                _ -> pure unit
               case spec.gup of
                 Just gupSpec -> case gupSpec.update of
                   Just phaseSpec -> do
@@ -232,13 +239,35 @@ rerenderTree doc parent tree = do
       let enterItems = Array.filter (\d -> Set.member (spec.keyFn d) enterKeys) items
       enterResults <- traverseWithIndex (renderEnteringItem p spec.name spec.keyFn spec.template spec.gup) enterItems
 
-      let updateElements = map _.element (Array.filter (\{ key } -> Set.member key updateKeys) existingKeysAndEls)
+      let updateKeysAndEls = Array.filter (\{ key } -> Set.member key updateKeys) existingKeysAndEls
+      let updateElements = map _.element updateKeysAndEls
       let enterElements = map _.element enterResults
       let childMaps = Array.foldl Map.union Map.empty (map _.childSelections enterResults)
-      let selections = Map.insert spec.name (updateElements <> enterElements) childMaps
 
-      -- Count total elements: updated + entered (exited are removed)
-      let totalElements = Array.length updateElements + Array.length enterElements
+      -- ORDER: the kept and the entering elements, in the order of the data.
+      -- Entering elements were appended to the parent; without this step the
+      -- document order (which in SVG is the paint order) would depend on the
+      -- history of the data rather than on the data. D3's `selection.join`
+      -- ends with `.order()` for the same reason.
+      let elementByKey = Map.fromFoldable
+            ( map (\{ key, element } -> Tuple key element) updateKeysAndEls
+                <> Array.zipWith (\d r -> Tuple (spec.keyFn d) r.element) enterItems enterResults
+            )
+      let inDataOrder = Array.mapMaybe (\d -> Map.lookup (spec.keyFn d) elementByKey) items
+      placeInDataOrder p inDataOrder anchor
+
+      -- Count the positions this fold occupies in its parent: updated, entered,
+      -- and exiting elements that stay in the DOM until their transition ends.
+      let lingering = Array.length (Array.catMaybes exitTransitions)
+      let liveElements = Array.length updateElements + Array.length enterElements
+      let totalElements = liveElements + lingering
+
+      -- With duplicate keys `inDataOrder` names an element twice and misses
+      -- another; fall back to kept-then-entered so no element is dropped.
+      let selected =
+            if Array.length inDataOrder == liveElements then inDataOrder
+            else updateElements <> enterElements
+      let selections = Map.insert spec.name selected childMaps
 
       pure
         { result:
@@ -360,10 +389,16 @@ rerenderTree doc parent tree = do
   -- Behavior Application (Thunked)
   -- ==========================================================================
 
+  -- Give an element the behaviours of the tree being drawn, and only those.
+  -- An element is drawn many times (every rerender), so this replaces what
+  -- the last tree gave it: handlers are swapped, not stacked, and a
+  -- behaviour the new tree does not ask for is taken away. Called for new
+  -- elements and for kept ones alike; see the FFI for how.
   applyBehaviors :: Element -> Array ThunkedBehavior -> Effect Unit
   applyBehaviors el behaviors = do
-    _ <- traverse (applyBehavior el) behaviors
-    pure unit
+    beginBehaviors el
+    traverse_ (applyBehavior el) behaviors
+    endBehaviors el
 
   applyBehavior :: Element -> ThunkedBehavior -> Effect Unit
   applyBehavior el = case _ of
@@ -372,12 +407,14 @@ rerenderTree doc parent tree = do
     ThunkedClick handler -> attachClickThunked el handler
     ThunkedClickWithModifier plainHandler modifierHandler ->
       attachClickWithModifierPurs el plainHandler modifierHandler
-    ThunkedDrag SimpleDrag -> attachSimpleDrag el
-    ThunkedDrag (SimulationDrag simId) -> attachSimulationDragById el simId
-    ThunkedDrag (SimulationDragNested simId) -> attachSimulationDragNestedById el simId
+    -- Drag, zoom and brush configure the element; they are attached the
+    -- first time an element is given them and left alone after that.
+    ThunkedDrag SimpleDrag -> attachOnce el "drag" (attachSimpleDrag el)
+    ThunkedDrag (SimulationDrag simId) -> attachOnce el "drag" (attachSimulationDragById el simId)
+    ThunkedDrag (SimulationDragNested simId) -> attachOnce el "drag" (attachSimulationDragNestedById el simId)
     ThunkedZoom (ZoomConfig cfg) ->
       let ScaleExtent minScale maxScale = cfg.scaleExtent
-      in attachZoom el minScale maxScale cfg.targetSelector
+      in attachOnce el "zoom" (attachZoom el minScale maxScale cfg.targetSelector)
     ThunkedCoordinatedHighlight config ->
       let
         -- Wrap classify to convert HighlightClass to Int for FFI
@@ -401,7 +438,7 @@ rerenderTree doc parent tree = do
         respondToClear _ = interactionStateToInt (config.respond ClearTrigger)
       in attachCoordinatedInteractionThunked el config.identify respondToHover respondToBrush respondToClear config.position (toNullable config.group)
     ThunkedBrush config ->
-      void $ attachCoordinatedBrushThunked el config.extent (toNullable config.group)
+      attachOnce el "brush" (void $ attachCoordinatedBrushThunked el config.extent (toNullable config.group))
     ThunkedPointerDown handler -> attachPointerDownThunked el handler
 
   -- ==========================================================================
@@ -586,6 +623,11 @@ foreign import setFoldName :: Element -> String -> Effect Unit
 foreign import getChildElements :: Element -> Effect (Array Element)
 foreign import getChildElementsForFold :: Element -> String -> String -> Effect (Array Element)
 foreign import removeElement :: Element -> Effect Unit
+
+-- | The sibling a fold's elements are kept in front of (or the end of the parent).
+foreign import data Anchor :: Type
+foreign import foldAnchor :: Element -> Array Element -> Int -> Effect Anchor
+foreign import placeInDataOrder :: Element -> Array Element -> Anchor -> Effect Unit
 foreign import bindDatum :: forall a. Element -> a -> Effect Unit
 
 -- | Convert ElementType to tag name (lowercase)
@@ -631,12 +673,26 @@ elementTypeToTagName = case _ of
   Section -> "section"
   Mark -> "mark"
   Abbr -> "abbr"
+  Button -> "button"
+  Input -> "input"
+  Label -> "label"
 
 -- Thunked behavior FFI - handlers are invoked without datum
 foreign import attachMouseEnterThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachMouseLeaveThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachClickThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachPointerDownThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
+foreign import attachClickWithModifierThunked :: Element -> (Unit -> Effect Unit) -> (Unit -> Effect Unit) -> Effect Unit
+
+-- | Forget the handlers an element was given by the tree drawn before; the
+-- | `attach*` calls that follow give it this tree's. `endBehaviors` then
+-- | drops what was not asked for again.
+foreign import beginBehaviors :: Element -> Effect Unit
+foreign import endBehaviors :: Element -> Effect Unit
+
+-- | Run an attachment the first time an element is given a behaviour of this
+-- | kind, and not again.
+foreign import attachOnce :: Element -> String -> Effect Unit -> Effect Unit
 foreign import attachZoom :: Element -> Number -> Number -> String -> Effect Unit
 foreign import attachSimpleDrag :: Element -> Effect Unit
 foreign import attachSimulationDragById :: Element -> String -> Effect Unit
@@ -679,27 +735,13 @@ clearAllHighlights :: Effect Unit
 clearAllHighlights = clearAllHatsHighlights
 
 -- | Attach modifier-aware click handler using purescript-web-uievents
--- | No FFI — uses Web.UIEvent.MouseEvent for modifier key detection
+-- | (The name is historical: it was once written without FFI.)
 attachClickWithModifierPurs
   :: Element
   -> (Unit -> Effect Unit)
   -> (Unit -> Effect Unit)
   -> Effect Unit
-attachClickWithModifierPurs el plainHandler modifierHandler = do
-  listener <- eventListener \event -> do
-    stopPropagation event
-    case MouseEvent.fromEvent event of
-      Just mouseEvt ->
-        let hasModifier = MouseEvent.metaKey mouseEvt
-              || MouseEvent.ctrlKey mouseEvt
-              || MouseEvent.shiftKey mouseEvt
-        in if hasModifier
-           then modifierHandler unit
-           else plainHandler unit
-      Nothing ->
-        plainHandler unit  -- Fallback: treat as plain click
-  addEventListener (Event.EventType "click") listener false (Element.toEventTarget el)
-  setCursorPointer el
+attachClickWithModifierPurs = attachClickWithModifierThunked
 
 -- | Convert HighlightClass to Int for FFI
 -- | Must match the constants in InterpreterTick.js

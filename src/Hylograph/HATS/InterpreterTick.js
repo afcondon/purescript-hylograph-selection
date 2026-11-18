@@ -90,6 +90,31 @@ export const getChildElementsForFold = parent => tagName => foldName => () => {
   );
 };
 
+// The node a fold's elements must stay in front of: whatever follows the fold's
+// last existing element or, for a fold that has no elements yet, the child
+// currently at the fold's position. null means the end of the parent.
+export const foldAnchor = parent => existing => domIdx => () => {
+  if (existing.length > 0) return existing[existing.length - 1].nextSibling;
+  return parent.children[domIdx] || null;
+};
+
+// Put `elements` (given in data order) into that order in the document, in
+// front of `anchor`. Walks backwards and moves an element only when it is not
+// already in front of its successor, so an unchanged order costs no DOM writes
+// and exiting elements keep their place until they are removed.
+export const placeInDataOrder = parent => elements => anchor => () => {
+  let next = anchor;
+  for (let i = elements.length - 1; i >= 0; i--) {
+    const el = elements[i];
+    if (el === next || el.parentNode !== parent) continue;
+    if (next && next.parentNode === parent) {
+      // 4 = DOCUMENT_POSITION_FOLLOWING: `next` comes after `el`
+      if (!(el.compareDocumentPosition(next) & 4)) parent.insertBefore(el, next);
+    }
+    next = el;
+  }
+};
+
 // Remove element from DOM
 export const removeElement = el => () => {
   if (el.parentNode) {
@@ -154,29 +179,106 @@ export const attachMouseDown = el => handler => () => {
 // Thunked event handlers (closure-based - new)
 // =============================================================================
 
+// An element is drawn many times: every rerender hands the interpreter a new
+// tree, and an element that is kept gets the new tree's behaviours. So a
+// behaviour is never "one more listener". The element carries, per event, the
+// handlers the LATEST tree gave it, and one DOM listener per event (added the
+// first time that event is asked for) calls whatever is there now.
+//
+// Each time the interpreter applies a tree's behaviours to an element it
+// calls beginBehaviors (forget what the last tree asked for), then the
+// attach* functions for what this tree asks for, then endBehaviors (drop what
+// was not asked for again). For an element drawn once that is exactly what
+// adding the listeners directly used to do.
+
+const handlersOf = (el) => el.__hatsHandlers || (el.__hatsHandlers = Object.create(null));
+
+function addHandler(el, event, handler) {
+  const handlers = handlersOf(el);
+  if (!(event in handlers)) {
+    handlers[event] = [];
+    el.addEventListener(event, function(e) {
+      // A copy: a handler may rerender, which replaces the list.
+      for (const h of handlers[event].slice()) h(e);
+    });
+  }
+  handlers[event].push(handler);
+}
+
+export const beginBehaviors = el => () => {
+  const handlers = el.__hatsHandlers;
+  if (handlers) for (const event in handlers) handlers[event] = [];
+  if (el.__hatsCursor) { el.style.cursor = ''; el.__hatsCursor = false; }
+  if (el.__hatsHighlight) el.__hatsHighlight.stale = true;
+  if (el.__hatsInteraction) el.__hatsInteraction.stale = true;
+};
+
+export const endBehaviors = el => () => {
+  const highlight = el.__hatsHighlight;
+  if (highlight && highlight.stale) {
+    removeEntry(getHatsHighlightGroup(highlight.group), highlight);
+    el.__hatsHighlight = null;
+  }
+  const interaction = el.__hatsInteraction;
+  if (interaction && interaction.stale) {
+    removeEntry(getCoordInteractionGroup(interaction.group), interaction);
+    el.__hatsInteraction = null;
+  }
+};
+
+function removeEntry(entries, entry) {
+  const at = entries.indexOf(entry);
+  if (at >= 0) entries.splice(at, 1);
+}
+
+// Behaviours that configure the element rather than handle an event with a
+// closure (drag, zoom, brush) are attached the first time and left alone.
+export const attachOnce = el => kind => attach => () => {
+  const attached = el.__hatsAttached || (el.__hatsAttached = Object.create(null));
+  if (!attached[kind]) {
+    attached[kind] = true;
+    attach();
+  }
+};
+
+function pointerCursor(el) {
+  el.style.cursor = 'pointer';
+  el.__hatsCursor = true;
+}
+
 // Thunked handlers capture their data in closures, so we just invoke the thunk
 export const attachMouseEnterThunked = el => handler => () => {
-  el.addEventListener('mouseenter', function(event) {
+  addHandler(el, 'mouseenter', function(event) {
     handler()();  // handler is (Unit -> Effect Unit), invoke with unit then run effect
   });
 };
 
 export const attachMouseLeaveThunked = el => handler => () => {
-  el.addEventListener('mouseleave', function(event) {
+  addHandler(el, 'mouseleave', function(event) {
     handler()();
   });
 };
 
 export const attachClickThunked = el => handler => () => {
-  el.addEventListener('click', function(event) {
+  addHandler(el, 'click', function(event) {
     event.stopPropagation();  // Prevent bubbling to parent handlers
     handler()();
   });
-  el.style.cursor = 'pointer';
+  pointerCursor(el);
+};
+
+// A click that tells a plain click from one with meta, ctrl or shift held.
+export const attachClickWithModifierThunked = el => plainHandler => modifierHandler => () => {
+  addHandler(el, 'click', function(event) {
+    event.stopPropagation();
+    const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey;
+    (hasModifier ? modifierHandler : plainHandler)()();
+  });
+  pointerCursor(el);
 };
 
 export const attachPointerDownThunked = el => handler => () => {
-  el.addEventListener('pointerdown', function(event) {
+  addHandler(el, 'pointerdown', function(event) {
     event.stopPropagation();
     handler()();
   });
@@ -414,20 +516,36 @@ function hideHatsTooltip(tooltip) {
 export const attachCoordinatedHighlightThunked = element => identifyThunk => classifyFn => groupName => tooltipContentThunk => tooltipTrigger => tooltipBorderColor => () => {
   const group = groupName; // null means global
 
-  // Register this element with tooltip info
-  const entry = { element, identifyThunk, classifyFn, tooltipContentThunk, tooltipTrigger, tooltipBorderColor };
-  getHatsHighlightGroup(group).push(entry);
+  // The element's one entry in its group. A rerender replaces what the entry
+  // says (the thunks close over the new datum) rather than adding another.
+  const fields = { element, identifyThunk, classifyFn, tooltipContentThunk, tooltipTrigger, tooltipBorderColor, group, stale: false };
+  const existing = element.__hatsHighlight;
+  if (existing) {
+    if (existing.group !== group) {
+      removeEntry(getHatsHighlightGroup(existing.group), existing);
+      getHatsHighlightGroup(group).push(existing);
+    }
+    Object.assign(existing, fields);
+    return;
+  }
+  element.__hatsHighlight = fields;
+  getHatsHighlightGroup(group).push(fields);
+  if (element.__hatsHighlightListening) return;
+  element.__hatsHighlightListening = true;
 
-  // Attach mouseenter handler
+  // The listeners are added once and read the entry as it is when they fire.
   element.addEventListener('mouseenter', function(event) {
+    const entry = element.__hatsHighlight;
+    if (!entry) return;
     // Get identity by invoking the thunk (datum is captured in closure)
-    const hoveredId = identifyThunk();
-    applyHatsHighlightsWithTooltips(group, hoveredId, element, event);
+    const hoveredId = entry.identifyThunk();
+    applyHatsHighlightsWithTooltips(entry.group, hoveredId, element, event);
   });
 
-  // Attach mouseleave handler
   element.addEventListener('mouseleave', function(event) {
-    clearHatsHighlightsInGroupWithTooltips(group);
+    const entry = element.__hatsHighlight;
+    if (!entry) return;
+    clearHatsHighlightsInGroupWithTooltips(entry.group);
   });
 };
 
@@ -707,19 +825,32 @@ export const attachCoordinatedInteractionThunked = element => identifyThunk => r
   // Extract position thunk if present (Maybe is encoded as { value0: fn } or null/undefined)
   const getPosition = positionThunk && positionThunk.value0 ? positionThunk.value0 : null;
 
-  // Register this element with separate respond functions
-  const entry = { element, identifyThunk, respondToHover, respondToBrush, respondToClear, getPosition };
-  getCoordInteractionGroup(group).push(entry);
+  // The element's one entry in its group; a rerender replaces what it says.
+  const fields = { element, identifyThunk, respondToHover, respondToBrush, respondToClear, getPosition, group, stale: false };
+  const existing = element.__hatsInteraction;
+  if (existing) {
+    if (existing.group !== group) {
+      removeEntry(getCoordInteractionGroup(existing.group), existing);
+      getCoordInteractionGroup(group).push(existing);
+    }
+    Object.assign(existing, fields);
+    return;
+  }
+  element.__hatsInteraction = fields;
+  getCoordInteractionGroup(group).push(fields);
+  if (element.__hatsInteractionListening) return;
+  element.__hatsInteractionListening = true;
 
-  // Attach mouseenter handler
   element.addEventListener('mouseenter', function(event) {
-    const hoveredId = identifyThunk();
-    applyHoverInteraction(group, hoveredId);
+    const entry = element.__hatsInteraction;
+    if (!entry) return;
+    applyHoverInteraction(entry.group, entry.identifyThunk());
   });
 
-  // Attach mouseleave handler
   element.addEventListener('mouseleave', function(event) {
-    applyClearInteraction(group);
+    const entry = element.__hatsInteraction;
+    if (!entry) return;
+    applyClearInteraction(entry.group);
   });
 };
 

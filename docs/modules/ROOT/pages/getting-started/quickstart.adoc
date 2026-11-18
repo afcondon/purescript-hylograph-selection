@@ -28,7 +28,7 @@ Phantom-typed selections:: The D3 interpreter tracks binding state at the type l
 | Hierarchical or flow data
 
 | `hylograph-graph`
-| Graph structures, pathfinding (A*, Dijkstra, BFS/DFS), DAG ops
+| Graph structures, pathfinding (Dijkstra, BFS/DFS), DAG ops
 | Network analysis
 
 | `hylograph-simulation`
@@ -286,7 +286,7 @@ import Hylograph.Simulation (runSimulation, Engine(..), setup, manyBody, center,
 import Hylograph.Simulation.Emitter (SimulationEvent(..), subscribe)
 
 { handle, events } <- runSimulation
-  { engine: D3                     -- or WASM for 3-4x speed
+  { engine: D3                     -- or WASM (Rust kernel)
   , setup: setup "physics"
       [ manyBody "charge" # withStrength (static (-100.0))
       , center "center"
