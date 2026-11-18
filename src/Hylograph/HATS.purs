@@ -61,6 +61,7 @@ module Hylograph.HATS
   , onDrag
   , onZoom
   , onPointerDown
+  , onInput
   -- Element vocabulary — re-exported so that `elem` needs no second import
   , module ReExportElement
   -- Coordinated highlighting
@@ -217,6 +218,8 @@ data ThunkedBehavior
       , group :: Maybe String                -- Group to emit triggers to
       }
   | ThunkedPointerDown (Unit -> Effect Unit)
+  | ThunkedInput (String -> Effect Unit)
+  -- ^ given the element's value, each time the user changes it
     -- ^ Fires on pointerdown (not click). Use for drag initiation where
     -- you need the event before mouseup. The handler is thunked to capture datum.
 
@@ -608,6 +611,20 @@ onZoom = ThunkedZoom
 -- | ```
 onPointerDown :: Effect Unit -> ThunkedBehavior
 onPointerDown handler = ThunkedPointerDown (\_ -> handler)
+
+-- | What to do when the user changes an `Input`'s value (a slider dragged, a
+-- | field typed in): the handler is given the new value, as the element
+-- | holds it, on every `input` event.
+-- |
+-- | ```purescript
+-- | withBehaviors [ onInput \value -> for_ (Int.fromString value) moveTo ] $
+-- |   elem Input [ attr "type" "range", attr "min" "0", attr "max" "99", attr "value" (show position) ] []
+-- | ```
+-- |
+-- | The `value` attribute of the tree is where the control should be; a
+-- | rerender puts it there, whatever the user last did to it.
+onInput :: (String -> Effect Unit) -> ThunkedBehavior
+onInput = ThunkedInput
 
 -- | Coordinated highlighting behavior
 -- |

@@ -26,6 +26,10 @@ export const setAttribute = el => name => value => () => {
     el.setAttributeNS('http://www.w3.org/XML/1998/namespace', name, value);
   } else {
     el.setAttribute(name, value);
+    // A form control's `value` attribute is only where it STARTS: once the
+    // user has touched it the attribute no longer moves it. The tree says
+    // where the control should be, so set the live value as well.
+    if (name === 'value' && 'value' in el && el.value !== value) el.value = value;
   }
 };
 
@@ -281,6 +285,13 @@ export const attachPointerDownThunked = el => handler => () => {
   addHandler(el, 'pointerdown', function(event) {
     event.stopPropagation();
     handler()();
+  });
+};
+
+// The user changed a form control: hand the handler the control's value.
+export const attachInputThunked = el => handler => () => {
+  addHandler(el, 'input', function(event) {
+    handler(el.value)();
   });
 };
 

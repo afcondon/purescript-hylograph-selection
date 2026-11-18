@@ -96,6 +96,28 @@ window.scenarios = {
     return asked.sort();
   },
 
+  // A slider: the handler is given the value the user chose, the tree's
+  // `value` moves the control even after the user has moved it, and
+  // redrawing does not stack handlers.
+  slider(renders) {
+    fresh();
+    const Input = Element.Input.value;
+    const heard = [];
+    const tree = (value) => div('outer', [
+      HATS.withBehaviors([HATS.onInput((chosen) => () => { heard.push(chosen); })])(
+        HATS.elem(Input)([HATS.staticStr('id')('slider'), HATS.staticStr('type')('range'), HATS.staticStr('min')('0'), HATS.staticStr('max')('100'), HATS.staticStr('value')(String(value))])([])),
+    ]);
+    for (let i = 0; i < renders; i++) render(tree(10));
+    const slider = document.getElementById('slider');
+    const drag = (to) => { slider.value = String(to); slider.dispatchEvent(new Event('input', { bubbles: true })); };
+    drag(70);
+    const afterDrag = slider.value;
+    render(tree(25)); // the program moves it
+    const afterRender = slider.value;
+    drag(40);
+    return { heard, afterDrag, afterRender };
+  },
+
   // The element is the same element throughout (a behaviour fix must not be
   // "throw the element away and make a new one").
   elementsAreKept() {

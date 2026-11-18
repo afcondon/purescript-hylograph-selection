@@ -46,6 +46,7 @@ try {
   expect('keyed item drawn 10x: the click sees', await run('keyedHandlerSees', 10), ['second']);
   expect('coordinated highlight drawn once: who is asked', await run('highlightAfterRerenders', 1), ['first asked about first-item', 'first-item asked about first-item']);
   expect('coordinated highlight drawn 5x: who is asked', await run('highlightAfterRerenders', 5), ['second asked about second-item', 'second-item asked about second-item']);
+  expect('a slider drawn 5x, dragged to 70, set to 25 by a redraw, dragged to 40', await run('slider', 5), { heard: ['70', '40'], afterDrag: '70', afterRender: '25' });
   expect('kept elements are the same DOM elements', await run('elementsAreKept'), true);
   if (errors.length) { console.log(`FAIL the page threw: ${errors.join(' | ')}`); failed++; }
 } finally {

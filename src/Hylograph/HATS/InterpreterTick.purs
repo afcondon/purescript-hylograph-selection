@@ -440,6 +440,7 @@ rerenderTree doc parent tree = do
     ThunkedBrush config ->
       attachOnce el "brush" (void $ attachCoordinatedBrushThunked el config.extent (toNullable config.group))
     ThunkedPointerDown handler -> attachPointerDownThunked el handler
+    ThunkedInput handler -> attachInputThunked el handler
 
   -- ==========================================================================
   -- Transition Creation
@@ -682,6 +683,7 @@ foreign import attachMouseEnterThunked :: Element -> (Unit -> Effect Unit) -> Ef
 foreign import attachMouseLeaveThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachClickThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
 foreign import attachPointerDownThunked :: Element -> (Unit -> Effect Unit) -> Effect Unit
+foreign import attachInputThunked :: Element -> (String -> Effect Unit) -> Effect Unit
 foreign import attachClickWithModifierThunked :: Element -> (Unit -> Effect Unit) -> (Unit -> Effect Unit) -> Effect Unit
 
 -- | Forget the handlers an element was given by the tree drawn before; the
